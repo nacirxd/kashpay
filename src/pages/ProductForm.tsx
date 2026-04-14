@@ -355,6 +355,7 @@ const ProductForm = () => {
             accept="image/*"
             onChange={handleImageUpload}
           />
+        </div>
         <div className="space-y-2">
           <Label htmlFor="preco">Preço (MZN)</Label>
           <Input
