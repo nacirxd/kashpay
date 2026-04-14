@@ -19,16 +19,21 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get OAuth token
+    // Get OAuth token with timeout
+    const tokenController = new AbortController()
+    const tokenTimeout = setTimeout(() => tokenController.abort(), 15000)
+    
     const tokenResp = await fetch("https://e2payments.explicador.co.mz/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      signal: tokenController.signal,
       body: new URLSearchParams({
         grant_type: "client_credentials",
         client_id: "9ec6e1b3-f7ba-42ce-a580-a781788989ed",
         client_secret: "OukiSHefGsaydwOTRRlLdIY88s4NegQfSjgBofAH",
       }),
     })
+    clearTimeout(tokenTimeout)
 
     const tokenData = await tokenResp.json()
     const token = tokenData.access_token
@@ -40,13 +45,17 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Call payment endpoint
+    // Call payment endpoint with timeout
+    const payController = new AbortController()
+    const payTimeout = setTimeout(() => payController.abort(), 20000)
+
     const endpoint = method === 'mpesa'
       ? 'https://e2payments.explicador.co.mz/v1/c2b/mpesa-payment/993700'
       : 'https://e2payments.explicador.co.mz/v1/c2b/emola-payment/993699'
 
     const payResp = await fetch(endpoint, {
       method: 'POST',
+      signal: payController.signal,
       headers: {
         'Authorization': `Bearer ${token}`,
         'X-Requested-With': 'XMLHttpRequest',
@@ -58,6 +67,7 @@ Deno.serve(async (req) => {
         phone: phone,
       }),
     })
+    clearTimeout(payTimeout)
 
     const payData = await payResp.json()
 
@@ -78,88 +88,68 @@ Deno.serve(async (req) => {
       utm_campaign: utm_campaign || null,
     }).select().single()
 
-    // Get product info for UTMify
-    const { data: productData } = await supabase.from('products').select('nome').eq('id', product_id).single()
-
-    // Check if user has active UTMify integration and send sale
-    const { data: utmifyIntegration } = await supabase
-      .from('integrations')
-      .select('config, ativo')
-      .eq('user_id', user_id)
-      .eq('tipo', 'utmify')
-      .eq('ativo', true)
-      .maybeSingle()
-
-    if (utmifyIntegration?.config && (utmifyIntegration.config as any).api_token) {
-      const apiToken = (utmifyIntegration.config as any).api_token
-      try {
-        const utmifyPayload = {
-          orderId: saleData?.id || crypto.randomUUID(),
-          platform: "MoonPay",
-          paymentMethod: method === 'mpesa' ? 'M-Pesa' : 'e-Mola',
-          status: status === 'approved' ? 'paid' : 'waiting_payment',
-          createdAt: new Date().toISOString(),
-          approvedDate: status === 'approved' ? new Date().toISOString() : null,
-          customer: { phone },
-          products: [{
-            name: productData?.nome || 'Produto',
-            quantity: 1,
-            price: amount,
-          }],
-          trackingParameters: {
-            src: utm_source || null,
-            utm_source: utm_source || null,
-            utm_medium: utm_medium || null,
-            utm_campaign: utm_campaign || null,
-          },
-          commission: { totalPrice: amount, currency: 'MZN' },
-        }
-
-        console.log('Sending to UTMify:', JSON.stringify(utmifyPayload))
-
-        await fetch('https://api.utmify.com.br/api-credentials/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-token': apiToken,
-          },
-          body: JSON.stringify(utmifyPayload),
-        })
-      } catch (utmErr) {
-        console.error('UTMify send error:', utmErr)
-      }
-    }
-
-    // Check if user has active webhook integration and send notification
-    const { data: webhookIntegration } = await supabase
-      .from('integrations')
-      .select('config, ativo')
-      .eq('user_id', user_id)
-      .eq('tipo', 'webhook')
-      .eq('ativo', true)
-      .maybeSingle()
-
-    if (webhookIntegration?.config && (webhookIntegration.config as any).url) {
-      try {
-        await fetch((webhookIntegration.config as any).url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'sale.created',
-            sale: saleData,
-            product: productData,
-            payment_method: method,
-            status,
-          }),
-        })
-      } catch (whErr) {
-        console.error('Webhook send error:', whErr)
-      }
-    }
-
-    return new Response(JSON.stringify({ success: payResp.ok, data: payData, status }), {
+    // Return response immediately, then fire integrations in background
+    const response = new Response(JSON.stringify({ success: payResp.ok, data: payData, status }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+
+    // Fire-and-forget: send to UTMify and webhook (don't block response)
+    const bgWork = async () => {
+      try {
+        const [productResult, utmifyResult, webhookResult] = await Promise.all([
+          supabase.from('products').select('nome').eq('id', product_id).single(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
+        ])
+
+        const productName = productResult.data?.nome || 'Produto'
+
+        // UTMify
+        if (utmifyResult.data?.config && (utmifyResult.data.config as any).api_token) {
+          const apiToken = (utmifyResult.data.config as any).api_token
+          const ctrl = new AbortController()
+          const t = setTimeout(() => ctrl.abort(), 8000)
+          await fetch('https://api.utmify.com.br/api-credentials/orders', {
+            method: 'POST',
+            signal: ctrl.signal,
+            headers: { 'Content-Type': 'application/json', 'x-api-token': apiToken },
+            body: JSON.stringify({
+              orderId: saleData?.id,
+              platform: "MoonPay",
+              paymentMethod: method === 'mpesa' ? 'M-Pesa' : 'e-Mola',
+              status: status === 'approved' ? 'paid' : 'waiting_payment',
+              createdAt: new Date().toISOString(),
+              approvedDate: status === 'approved' ? new Date().toISOString() : null,
+              customer: { phone },
+              products: [{ name: productName, quantity: 1, price: amount }],
+              trackingParameters: { src: utm_source, utm_source, utm_medium, utm_campaign },
+              commission: { totalPrice: amount, currency: 'MZN' },
+            }),
+          }).catch(() => {})
+          clearTimeout(t)
+        }
+
+        // Webhook
+        if (webhookResult.data?.config && (webhookResult.data.config as any).url) {
+          const ctrl = new AbortController()
+          const t = setTimeout(() => ctrl.abort(), 8000)
+          await fetch((webhookResult.data.config as any).url, {
+            method: 'POST',
+            signal: ctrl.signal,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'sale.created', sale: saleData, product: { nome: productName }, payment_method: method, status }),
+          }).catch(() => {})
+          clearTimeout(t)
+        }
+      } catch (e) {
+        console.error('Background integration error:', e)
+      }
+    }
+    
+    // Don't await - let it run in background
+    bgWork()
+
+    return response
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
