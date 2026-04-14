@@ -4,13 +4,37 @@ const corsHeaders = {
 }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
+
+async function convertMznToBrlCents(amountMzn: number) {
+  const fxController = new AbortController()
+  const fxTimeout = setTimeout(() => fxController.abort(), 8000)
+
+  try {
+    const fxResp = await fetch(EXCHANGE_RATE_URL, { signal: fxController.signal })
+    const fxData = await fxResp.json()
+    const rate = Number(fxData?.rates?.BRL)
+
+    if (!fxResp.ok || !Number.isFinite(rate) || rate <= 0) {
+      throw new Error('Falha ao obter cotação MZN→BRL')
+    }
+
+    return {
+      rate,
+      cents: Math.round(amountMzn * rate * 100),
+    }
+  } finally {
+    clearTimeout(fxTimeout)
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { method, phone, amount, reference, product_id, user_id, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
+    const { method, phone, amount, reference, product_id, user_id, name, email, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
     if (!method || !phone || !amount || !product_id || !user_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -77,17 +101,24 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     const status = payResp.ok ? 'approved' : 'pending'
+    const amountNumber = Number(amount)
 
     const { data: saleData } = await supabase.from('sales').insert({
       product_id,
       user_id,
-      valor: amount,
+      valor: amountNumber,
       status,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
       utm_content: utm_content || null,
     }).select().single()
+
+    const { data: productData } = await supabase
+      .from('products')
+      .select('id, nome')
+      .eq('id', product_id)
+      .maybeSingle()
 
     // Return response immediately, then fire integrations in background
     const response = new Response(JSON.stringify({ success: payResp.ok, data: payData, status }), {
@@ -106,11 +137,14 @@ Deno.serve(async (req) => {
         if (status === 'approved' && utmifyResult.data?.config) {
           const config = utmifyResult.data.config as any
           const apiToken = config.api_token || config.token
-          if (apiToken) {
+          if (apiToken && name && email) {
             console.log('Enviando evento UTMify para venda:', saleData?.id)
             const ctrl = new AbortController()
             const t = setTimeout(() => ctrl.abort(), 8000)
             try {
+              const { rate, cents } = await convertMznToBrlCents(amountNumber)
+              console.log('Cotação MZN→BRL utilizada:', rate)
+
               const utmifyResp = await fetch('https://api.utmify.com.br/api-credentials/orders', {
                 method: 'POST',
                 signal: ctrl.signal,
@@ -121,20 +155,38 @@ Deno.serve(async (req) => {
                 body: JSON.stringify({
                   orderId: saleData?.id,
                   platform: 'MoonPay',
-                  paymentMethod: method === 'mpesa' ? 'M-Pesa' : 'e-Mola',
+                  paymentMethod: 'unknown',
                   status: 'paid',
                   createdAt: new Date().toISOString(),
                   approvedDate: new Date().toISOString(),
-                  customer: { phone },
-                  products: [{ name: product_id, quantity: 1, price: amount }],
+                  customer: {
+                    name,
+                    email,
+                    phone,
+                    document: null,
+                  },
+                  products: [{
+                    id: productData?.id || product_id,
+                    name: productData?.nome || product_id,
+                    planId: productData?.id || product_id,
+                    planName: productData?.nome || 'Produto digital',
+                    quantity: 1,
+                    priceInCents: cents,
+                  }],
                   trackingParameters: {
                     src: utm_source || null,
                     utm_source: utm_source || null,
                     utm_medium: utm_medium || null,
                     utm_campaign: utm_campaign || null,
                     utm_content: utm_content || null,
+                    utm_term: null,
                   },
-                  commission: { totalPrice: amount, currency: 'MZN' },
+                  commission: {
+                    totalPriceInCents: cents,
+                    gatewayFeeInCents: 0,
+                    userCommissionInCents: cents,
+                    currency: 'BRL',
+                  },
                 }),
               })
               console.log('UTMify response status:', utmifyResp.status)
@@ -144,6 +196,8 @@ Deno.serve(async (req) => {
               console.error('Erro UTMify:', err)
             }
             clearTimeout(t)
+          } else if (apiToken) {
+            console.error('UTMify ignorado: nome/email do comprador em falta')
           }
         }
 
