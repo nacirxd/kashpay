@@ -115,6 +115,7 @@ export type Database = {
           status: string
           user_id: string
           utm_campaign: string | null
+          utm_content: string | null
           utm_medium: string | null
           utm_source: string | null
           valor: number
@@ -126,6 +127,7 @@ export type Database = {
           status?: string
           user_id: string
           utm_campaign?: string | null
+          utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
           valor: number
@@ -137,6 +139,7 @@ export type Database = {
           status?: string
           user_id?: string
           utm_campaign?: string | null
+          utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
           valor?: number
