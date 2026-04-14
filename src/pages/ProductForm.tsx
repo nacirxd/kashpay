@@ -186,6 +186,7 @@ const ProductForm = () => {
       delivery_type: deliveryType,
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
+      image_url: imageUrl || null,
     };
 
     if (isEditing) {
