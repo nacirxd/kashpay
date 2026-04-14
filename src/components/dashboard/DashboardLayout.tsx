@@ -118,10 +118,26 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       <main className="flex-1 overflow-auto">
-        <header className="sticky top-0 z-30 flex h-16 items-center border-b border-border bg-background/80 backdrop-blur-xl px-6">
-          <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </button>
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
+          <div className="flex items-center">
+            <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-semibold">Olá, <span className="capitalize">{firstName}</span></span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${tier.bg} ${tier.color}`}>
+              <span>{tier.icon}</span>
+              {tier.label}
+              <span className="font-normal opacity-70">MT {formatTierValue(tier.min)} – {formatTierValue(tier.max)}</span>
+            </div>
+            <div className="w-24">
+              <Progress value={progress} className="h-2" />
+            </div>
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase">
+              {firstName.slice(0, 2)}
+            </div>
+          </div>
         </header>
         <div className="p-6">{children}</div>
       </main>
