@@ -42,12 +42,12 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const { data } = await supabase
-        .from("sales")
-        .select("*, products(nome)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setAllSales(data || []);
+      const [{ data: salesData }, { data: profile }] = await Promise.all([
+        supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
+      ]);
+      setAllSales(salesData || []);
+      if (profile?.nome) setUserName(profile.nome);
       setLoading(false);
     };
     fetchData();
