@@ -86,13 +86,22 @@ const Dashboard = () => {
     return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [filteredSales]);
 
-  const utmData = useMemo(() => {
+  const utmSourceData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredSales.filter((s) => s.status === "approved").forEach((s) => {
       const src = s.utm_source || "Direto";
       map[src] = (map[src] || 0) + 1;
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [filteredSales]);
+
+  const utmCampaignData = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredSales.filter((s) => s.status === "approved").forEach((s) => {
+      if (!s.utm_campaign) return;
+      map[s.utm_campaign] = (map[s.utm_campaign] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8);
   }, [filteredSales]);
 
   const productData = useMemo(() => {
@@ -206,13 +215,13 @@ const Dashboard = () => {
 
             <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <h3 className="text-sm font-semibold mb-4">Origem (UTM Source)</h3>
-              {utmData.length === 0 ? (
+              {utmSourceData.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">Sem dados no período.</p>
               ) : (
                 <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
-                    <Pie data={utmData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                      {utmData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+                    <Pie data={utmSourceData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                      {utmSourceData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
                     </Pie>
                     <Legend />
                     <Tooltip />
@@ -221,6 +230,22 @@ const Dashboard = () => {
               )}
             </motion.div>
           </div>
+
+          {/* Campaign performance */}
+          {utmCampaignData.length > 0 && (
+            <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.37 }}>
+              <h3 className="text-sm font-semibold mb-4">Vendas por Campanha (UTM Campaign)</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={utmCampaignData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="hsl(200,80%,50%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </motion.div>
+          )}
 
           {/* Product performance */}
           {productData.length > 0 && (
