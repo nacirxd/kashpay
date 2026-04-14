@@ -108,6 +108,17 @@ const Checkout = () => {
   }
 
   if (done) {
+    const deliveryType = product.delivery_type || "link";
+
+    const handleDownload = async () => {
+      if (!product.file_url) return;
+      const { data } = await supabase.storage
+        .from("product-files")
+        .createSignedUrl(product.file_url, 3600);
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+      else toast.error("Erro ao gerar link de download.");
+    };
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
         <motion.div className="max-w-md text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
@@ -115,7 +126,35 @@ const Checkout = () => {
             <CheckCircle className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Compra realizada!</h1>
-          <p className="text-muted-foreground">Obrigado pela sua compra de <strong>{product.nome}</strong>.</p>
+          <p className="text-muted-foreground mb-6">
+            Obrigado pela sua compra de <strong>{product.nome}</strong>.
+          </p>
+
+          {deliveryType === "file" && product.file_url && (
+            <Button onClick={handleDownload} size="lg" className="gap-2">
+              <Download className="h-5 w-5" /> Baixar arquivo
+            </Button>
+          )}
+
+          {deliveryType === "link" && product.external_url && (
+            <Button asChild size="lg" className="gap-2">
+              <a href={product.external_url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-5 w-5" /> Acessar conteúdo
+              </a>
+            </Button>
+          )}
+
+          {deliveryType === "members" && (
+            <div className="rounded-lg border border-border bg-card p-4 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <Lock className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm">Área de Membros</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Seu acesso foi liberado. Verifique seu email para instruções.
+              </p>
+            </div>
+          )}
         </motion.div>
       </div>
     );
