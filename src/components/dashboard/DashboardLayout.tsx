@@ -4,9 +4,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
+import { useTheme } from "@/hooks/use-theme";
 import {
   LayoutDashboard, Package, Link2, Settings, LogOut,
-  DollarSign, Menu, X
+  DollarSign, Menu, X, Moon, Sun
 } from "lucide-react";
 
 const navItems = [
@@ -37,6 +38,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const { dark, toggle: toggleTheme } = useTheme();
   const [totalRevenue, setTotalRevenue] = useState(0);
 
   const metadataName = useMemo(() => {
@@ -160,6 +162,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title={dark ? "Modo claro" : "Modo escuro"}
+            >
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <div className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${tier.bg} ${tier.color}`}>
               <span>{tier.icon}</span>
               {tier.label}
