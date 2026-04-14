@@ -316,6 +316,45 @@ const ProductForm = () => {
             rows={4}
           />
         </div>
+
+        {/* Product image upload */}
+        <div className="space-y-2">
+          <Label>Imagem do produto</Label>
+          {imagePreview ? (
+            <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-border">
+              <img src={imagePreview} alt="Produto" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:opacity-90"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => imageRef.current?.click()}
+              disabled={uploadingImage}
+              className="w-full rounded-lg border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 py-8 flex flex-col items-center gap-2 transition-colors"
+            >
+              {uploadingImage ? (
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : (
+                <>
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Clique para enviar imagem (JPG, PNG — máx 5MB)</span>
+                </>
+              )}
+            </button>
+          )}
+          <input
+            ref={imageRef}
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageUpload}
+          />
         <div className="space-y-2">
           <Label htmlFor="preco">Preço (MZN)</Label>
           <Input
