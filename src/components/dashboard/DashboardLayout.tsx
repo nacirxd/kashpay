@@ -4,9 +4,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
+import { useTheme } from "@/hooks/use-theme";
 import {
   LayoutDashboard, Package, Link2, Settings, LogOut,
-  DollarSign, Menu, X
+  DollarSign, Menu, X, Moon, Sun
 } from "lucide-react";
 
 const navItems = [
