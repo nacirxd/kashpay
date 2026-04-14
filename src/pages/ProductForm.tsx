@@ -19,6 +19,7 @@ const ProductForm = () => {
   const { id } = useParams();
   const isEditing = !!id;
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
 
   // Step control: editing skips the selector
   const [step, setStep] = useState<"type" | "form">(isEditing ? "form" : "type");
@@ -30,6 +31,9 @@ const ProductForm = () => {
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
