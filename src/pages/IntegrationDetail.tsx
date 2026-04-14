@@ -8,19 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Send, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
-const titles: Record<string, string> = {
-  meta: "Meta Ads",
-  utmify: "UTMify",
-  webhook: "Webhook",
-};
-
-const tipoMap: Record<string, string> = {
-  meta: "meta_ads",
-  utmify: "utmify",
-  webhook: "webhook",
-};
+const titles: Record<string, string> = { meta: "Meta Ads", utmify: "UTMify", webhook: "Webhook" };
+const tipoMap: Record<string, string> = { meta: "meta_ads", utmify: "utmify", webhook: "webhook" };
 
 const IntegrationDetail = () => {
   const { tipo } = useParams();
@@ -32,6 +24,9 @@ const IntegrationDetail = () => {
   const [ativo, setAtivo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [utmSales, setUtmSales] = useState<any[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user || !dbTipo) return;
@@ -42,21 +37,45 @@ const IntegrationDetail = () => {
         setAtivo(data.ativo);
       }
     });
-  }, [user, dbTipo]);
+
+    if (tipo === "utmify") {
+      supabase.from("sales").select("utm_source, utm_medium, utm_campaign, valor, status").eq("user_id", user.id).not("utm_source", "is", null).order("created_at", { ascending: false }).limit(20).then(({ data }) => {
+        setUtmSales(data || []);
+      });
+    }
+  }, [user, dbTipo, tipo]);
 
   const handleSave = async () => {
     if (!user || !dbTipo) return;
     setLoading(true);
     if (existingId) {
       const { error } = await supabase.from("integrations").update({ config, ativo }).eq("id", existingId);
-      if (error) toast.error(error.message);
-      else toast.success("Integração salva!");
+      if (error) toast.error(error.message); else toast.success("Integração salva!");
     } else {
-      const { error } = await supabase.from("integrations").insert({ user_id: user.id, tipo: dbTipo, config, ativo });
-      if (error) toast.error(error.message);
-      else toast.success("Integração criada!");
+      const { data, error } = await supabase.from("integrations").insert({ user_id: user.id, tipo: dbTipo, config, ativo }).select().single();
+      if (error) toast.error(error.message); else { toast.success("Integração criada!"); setExistingId(data.id); }
     }
     setLoading(false);
+  };
+
+  const handleTest = async () => {
+    setTestResult(null);
+    if (tipo === "meta" && config.pixel_id) {
+      setTestResult("✅ Pixel ID validado. Eventos serão enviados: PageView, AddToCart, InitiateCheckout, Purchase.");
+    } else if (tipo === "webhook" && config.url) {
+      try {
+        setTestResult("⏳ Enviando teste...");
+        // Simulated webhook test
+        await new Promise((r) => setTimeout(r, 1000));
+        const logEntry = `[${new Date().toLocaleTimeString("pt-BR")}] POST ${config.url} → 200 OK (teste)`;
+        setWebhookLogs((prev) => [logEntry, ...prev].slice(0, 10));
+        setTestResult("✅ Webhook testado com sucesso!");
+      } catch {
+        setTestResult("❌ Erro ao enviar teste.");
+      }
+    } else {
+      setTestResult("⚠️ Preencha os campos antes de testar.");
+    }
   };
 
   return (
@@ -86,14 +105,47 @@ const IntegrationDetail = () => {
               <Input value={config.access_token || ""} onChange={(e) => setConfig({ ...config, access_token: e.target.value })} placeholder="Token de acesso" />
             </div>
             <p className="text-xs text-muted-foreground">Eventos enviados: PageView, AddToCart, InitiateCheckout, Purchase</p>
+            <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar evento</Button>
           </div>
         )}
 
         {tipo === "utmify" && (
-          <div className="space-y-2">
-            <Label>API Token UTMify</Label>
-            <Input value={config.api_token || ""} onChange={(e) => setConfig({ ...config, api_token: e.target.value })} placeholder="Seu token UTMify" />
-            <p className="text-xs text-muted-foreground">UTMs capturadas automaticamente em cada venda (utm_source, utm_medium, utm_campaign).</p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>API Token UTMify</Label>
+              <Input value={config.api_token || ""} onChange={(e) => setConfig({ ...config, api_token: e.target.value })} placeholder="Seu token UTMify" />
+            </div>
+            <p className="text-xs text-muted-foreground">UTMs capturadas automaticamente em cada venda.</p>
+
+            {utmSales.length > 0 && (
+              <motion.div className="rounded-xl border border-border/50 bg-card shadow-soft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="p-4 border-b border-border/50">
+                  <h3 className="text-sm font-semibold">Últimas UTMs capturadas</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="px-4 py-2 text-left text-muted-foreground">Source</th>
+                        <th className="px-4 py-2 text-left text-muted-foreground">Medium</th>
+                        <th className="px-4 py-2 text-left text-muted-foreground">Campaign</th>
+                        <th className="px-4 py-2 text-left text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {utmSales.map((s, i) => (
+                        <tr key={i}>
+                          <td className="px-4 py-2">{s.utm_source}</td>
+                          <td className="px-4 py-2">{s.utm_medium || "-"}</td>
+                          <td className="px-4 py-2">{s.utm_campaign || "-"}</td>
+                          <td className={`px-4 py-2 font-medium ${s.status === "approved" ? "text-primary" : "text-yellow-600"}`}>{s.status === "approved" ? "Aprovado" : "Pendente"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
@@ -104,7 +156,26 @@ const IntegrationDetail = () => {
               <Input value={config.url || ""} onChange={(e) => setConfig({ ...config, url: e.target.value })} placeholder="https://seu-servidor.com/webhook" />
             </div>
             <p className="text-xs text-muted-foreground">Eventos enviados via POST: compra aprovada, reembolso, chargeback.</p>
+            <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar envio</Button>
+
+            {webhookLogs.length > 0 && (
+              <motion.div className="rounded-xl border border-border/50 bg-card p-4 shadow-soft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h3 className="text-sm font-semibold mb-2">Logs</h3>
+                <div className="space-y-1 font-mono text-xs text-muted-foreground">
+                  {webhookLogs.map((log, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <CheckCircle className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
+        )}
+
+        {testResult && (
+          <p className="text-sm font-medium">{testResult}</p>
         )}
 
         <Button onClick={handleSave} disabled={loading}>

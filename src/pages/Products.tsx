@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, ExternalLink, Pencil } from "lucide-react";
+import { Plus, ExternalLink, Pencil, Trash2, Copy, Package } from "lucide-react";
+import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const Products = () => {
   const { user } = useAuth();
@@ -13,13 +15,27 @@ const Products = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchProducts = () => {
     if (!user) return;
     supabase.from("products").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => {
       setProducts(data || []);
       setLoading(false);
     });
-  }, [user]);
+  };
+
+  useEffect(() => { fetchProducts(); }, [user]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    const { error } = await supabase.from("products").delete().eq("id", id).eq("user_id", user!.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Produto excluído!"); fetchProducts(); }
+  };
+
+  const copyCheckoutLink = (id: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/checkout/${id}`);
+    toast.success("Link copiado!");
+  };
 
   return (
     <DashboardLayout>
@@ -46,13 +62,19 @@ const Products = () => {
             <motion.div key={p.id} className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
               <h3 className="font-semibold mb-1">{p.nome}</h3>
               <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.descricao || "Sem descrição"}</p>
-              <p className="text-lg font-bold text-primary mb-4">R$ {Number(p.preco).toFixed(2)}</p>
-              <div className="flex gap-2">
+              <p className="text-lg font-bold text-primary mb-4">{formatMZN(Number(p.preco))}</p>
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => navigate(`/produtos/${p.id}`)}>
                   <Pencil className="mr-1 h-3 w-3" /> Editar
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => copyCheckoutLink(p.id)}>
+                  <Copy className="mr-1 h-3 w-3" /> Link
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => window.open(`/checkout/${p.id}`, "_blank")}>
                   <ExternalLink className="mr-1 h-3 w-3" /> Checkout
+                </Button>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(p.id)}>
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             </motion.div>
@@ -62,9 +84,5 @@ const Products = () => {
     </DashboardLayout>
   );
 };
-
-function Package(props: any) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>;
-}
 
 export default Products;

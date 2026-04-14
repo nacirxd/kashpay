@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Save } from "lucide-react";
+import { Save, Lock } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -14,6 +14,10 @@ const Settings = () => {
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -35,25 +39,54 @@ const Settings = () => {
     setLoading(false);
   };
 
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres."); return; }
+    if (newPassword !== confirmPassword) { toast.error("As senhas não coincidem."); return; }
+    setPwLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) toast.error(error.message);
+    else { toast.success("Senha alterada com sucesso!"); setNewPassword(""); setConfirmPassword(""); }
+    setPwLoading(false);
+  };
+
   return (
     <DashboardLayout>
       <h1 className="text-lg font-semibold mb-6">Configurações</h1>
-      <div className="max-w-lg space-y-4">
-        <div className="space-y-2">
-          <Label>Nome</Label>
-          <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+
+      <div className="space-y-8 max-w-lg">
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft space-y-4">
+          <h2 className="text-sm font-semibold">Dados pessoais</h2>
+          <div className="space-y-2">
+            <Label>Nome</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input value={email} disabled className="opacity-60" />
+          </div>
+          <div className="space-y-2">
+            <Label>Telefone</Label>
+            <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="+258 84 000 0000" />
+          </div>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
+          </Button>
         </div>
-        <div className="space-y-2">
-          <Label>Email</Label>
-          <Input value={email} disabled className="opacity-60" />
+
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft space-y-4">
+          <h2 className="text-sm font-semibold">Alterar senha</h2>
+          <div className="space-y-2">
+            <Label>Nova senha</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" />
+          </div>
+          <div className="space-y-2">
+            <Label>Confirmar senha</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+          </div>
+          <Button onClick={handlePasswordChange} disabled={pwLoading} variant="outline">
+            {pwLoading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Lock className="mr-2 h-4 w-4" /> Alterar senha</>}
+          </Button>
         </div>
-        <div className="space-y-2">
-          <Label>Telefone</Label>
-          <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="+55 11 99999-9999" />
-        </div>
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
-        </Button>
       </div>
     </DashboardLayout>
   );

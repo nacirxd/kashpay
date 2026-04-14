@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
 import { ShieldCheck, CreditCard } from "lucide-react";
 
@@ -24,7 +25,7 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("products").select("*").eq("id", id).single().then(({ data, error }) => {
+    supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
       if (data) setProduct(data);
       setLoading(false);
     });
@@ -91,7 +92,7 @@ const Checkout = () => {
           <div className="bg-primary/5 p-6 border-b border-border/50">
             <h1 className="text-xl font-bold">{product.nome}</h1>
             {product.descricao && <p className="text-sm text-muted-foreground mt-1">{product.descricao}</p>}
-            <p className="text-3xl font-bold text-primary mt-4">R$ {Number(product.preco).toFixed(2)}</p>
+            <p className="text-3xl font-bold text-primary mt-4">{formatMZN(Number(product.preco))}</p>
           </div>
 
           <form onSubmit={handlePurchase} className="p-6 space-y-4">
