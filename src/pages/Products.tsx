@@ -1,0 +1,70 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { Plus, ExternalLink, Pencil } from "lucide-react";
+import { motion } from "framer-motion";
+
+const Products = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("products").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => {
+      setProducts(data || []);
+      setLoading(false);
+    });
+  }, [user]);
+
+  return (
+    <DashboardLayout>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-lg font-semibold">Produtos</h1>
+        <Button onClick={() => navigate("/produtos/novo")}>
+          <Plus className="mr-2 h-4 w-4" /> Novo produto
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      ) : products.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
+          <Package className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Nenhum produto criado ainda.</p>
+          <Button className="mt-4" onClick={() => navigate("/produtos/novo")}>Criar primeiro produto</Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {products.map((p, i) => (
+            <motion.div key={p.id} className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <h3 className="font-semibold mb-1">{p.nome}</h3>
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.descricao || "Sem descrição"}</p>
+              <p className="text-lg font-bold text-primary mb-4">R$ {Number(p.preco).toFixed(2)}</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate(`/produtos/${p.id}`)}>
+                  <Pencil className="mr-1 h-3 w-3" /> Editar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => window.open(`/checkout/${p.id}`, "_blank")}>
+                  <ExternalLink className="mr-1 h-3 w-3" /> Checkout
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </DashboardLayout>
+  );
+};
+
+function Package(props: any) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>;
+}
+
+export default Products;
