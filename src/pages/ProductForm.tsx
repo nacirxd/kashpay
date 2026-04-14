@@ -124,6 +124,39 @@ const ProductForm = () => {
     setFileName("");
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 5MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(path, file, { upsert: true });
+
+    if (error) {
+      toast.error("Erro ao enviar imagem.");
+    } else {
+      setImageUrl(path);
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      setImagePreview(data.publicUrl);
+      toast.success("Imagem enviada!");
+    }
+    setUploadingImage(false);
+  };
+
+  const removeImage = () => {
+    setImageUrl("");
+    setImagePreview("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
