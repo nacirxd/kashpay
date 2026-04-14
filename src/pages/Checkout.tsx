@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle, Smartphone } from "lucide-react";
+import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
 
 const Checkout = () => {
   const { id } = useParams();
