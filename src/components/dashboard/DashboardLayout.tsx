@@ -38,6 +38,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const { dark, toggle: toggleTheme } = useTheme();
   const [totalRevenue, setTotalRevenue] = useState(0);
 
   const metadataName = useMemo(() => {
