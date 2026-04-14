@@ -45,7 +45,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
         supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
       ]);
-      if (profile?.nome) setUserName(profile.nome);
+      if (profile?.nome && profile.nome.trim()) setUserName(profile.nome.trim());
       setTotalRevenue((sales || []).reduce((a, s) => a + Number(s.valor), 0));
     };
     load();
