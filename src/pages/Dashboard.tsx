@@ -4,7 +4,6 @@ import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import UserProgressHeader from "@/components/dashboard/UserProgressHeader";
 import { formatMZN } from "@/lib/currency";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -25,7 +24,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [allSales, setAllSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("");
   const [preset, setPreset] = useState<FilterPreset>("30d");
   const [customRange, setCustomRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
 
@@ -42,12 +40,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [{ data: salesData }, { data: profile }] = await Promise.all([
-        supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
-      ]);
+      const { data: salesData } = await supabase
+        .from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false });
       setAllSales(salesData || []);
-      if (profile?.nome) setUserName(profile.nome);
       setLoading(false);
     };
     fetchData();
