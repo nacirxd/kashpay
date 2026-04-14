@@ -11,6 +11,7 @@ import { Save, Lock } from "lucide-react";
 const Settings = () => {
   const { user } = useAuth();
   const [nome, setNome] = useState("");
+  const [sobrenome, setSobrenome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,10 @@ const Settings = () => {
     if (!user) return;
     supabase.from("profiles").select("*").eq("user_id", user.id).single().then(({ data }) => {
       if (data) {
-        setNome(data.nome);
+        const fullName = (data.nome || "").trim();
+        const [firstName = "", ...restName] = fullName.split(/\s+/).filter(Boolean);
+        setNome(firstName);
+        setSobrenome(restName.join(" "));
         setEmail(data.email);
         setTelefone(data.telefone || "");
       }
@@ -34,10 +38,17 @@ const Settings = () => {
     if (!user) return;
 
     const trimmedNome = nome.trim();
+    const trimmedSobrenome = sobrenome.trim();
     const trimmedTelefone = telefone.trim();
+    const fullName = [trimmedNome, trimmedSobrenome].filter(Boolean).join(" ");
 
     if (!trimmedNome) {
-      toast.error("Informe o nome completo.");
+      toast.error("Informe o nome.");
+      return;
+    }
+
+    if (!trimmedSobrenome) {
+      toast.error("Informe o sobrenome.");
       return;
     }
 
@@ -45,7 +56,7 @@ const Settings = () => {
 
     const { error: profileError } = await supabase
       .from("profiles")
-      .update({ nome: trimmedNome, telefone: trimmedTelefone })
+      .update({ nome: fullName, telefone: trimmedTelefone })
       .eq("user_id", user.id);
 
     if (profileError) {
@@ -55,13 +66,14 @@ const Settings = () => {
     }
 
     const { error: authError } = await supabase.auth.updateUser({
-      data: { nome: trimmedNome },
+      data: { nome: fullName },
     });
 
     if (authError) {
       toast.error(authError.message);
     } else {
       setNome(trimmedNome);
+      setSobrenome(trimmedSobrenome);
       setTelefone(trimmedTelefone);
       toast.success("Configurações salvas!");
     }
@@ -86,9 +98,15 @@ const Settings = () => {
       <div className="space-y-8 max-w-lg">
         <div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft space-y-4">
           <h2 className="text-sm font-semibold">Dados pessoais</h2>
-          <div className="space-y-2">
-            <Label>Nome</Label>
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Sobrenome</Label>
+              <Input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} />
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
