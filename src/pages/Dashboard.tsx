@@ -4,6 +4,7 @@ import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import UserProgressHeader from "@/components/dashboard/UserProgressHeader";
 import { formatMZN } from "@/lib/currency";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
