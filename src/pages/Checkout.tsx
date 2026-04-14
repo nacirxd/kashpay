@@ -9,6 +9,8 @@ import { formatMZN } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
+import mpesaLogo from "@/assets/mpesa.svg";
+import emolaLogo from "@/assets/emola.svg";
 
 const Checkout = () => {
   const { id } = useParams();
@@ -22,8 +24,9 @@ const Checkout = () => {
   const [method, setMethod] = useState<"mpesa" | "emola">("mpesa");
   const [countdown, setCountdown] = useState(10 * 60);
 
-  // Capture UTMs from current URL on mount
-  useEffect(() => { captureUTMs(); }, []);
+  useEffect(() => {
+    captureUTMs();
+  }, []);
 
   const utms = getStoredUTMs();
 
@@ -167,7 +170,6 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Urgency bar */}
       <div className="bg-destructive text-destructive-foreground text-center py-2.5 text-sm font-bold tracking-wide">
         Oferta expira em <span className="font-mono">{formatTime(countdown)}</span>
       </div>
@@ -175,7 +177,6 @@ const Checkout = () => {
       <div className="flex justify-center px-4 py-8">
         <motion.div className="w-full max-w-[420px]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="rounded-xl border border-border/50 bg-card shadow-card overflow-hidden">
-            {/* Secure badge + flag */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <span className="flex items-center gap-1.5 text-sm font-bold text-foreground">
                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -187,7 +188,6 @@ const Checkout = () => {
               </span>
             </div>
 
-            {/* Product info */}
             <div className="flex items-center gap-3 px-5 pb-4 border-b border-border/50">
               {product.image_url ? (
                 <img
@@ -207,7 +207,6 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Form */}
             <form onSubmit={handlePurchase} className="p-5 space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-sm">Nome completo</Label>
@@ -218,31 +217,32 @@ const Checkout = () => {
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" />
               </div>
 
-              {/* Payment method */}
               <div className="space-y-1.5">
                 <Label className="text-sm">Método de pagamento</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setMethod("mpesa")}
-                    className={`py-3 rounded-lg border-2 text-sm font-bold transition-all ${
+                    className={`flex items-center justify-center rounded-lg border-2 px-3 py-3 transition-all ${
                       method === "mpesa"
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background hover:border-primary/30"
                     }`}
+                    aria-label="Selecionar M-Pesa"
                   >
-                    📱 M-Pesa
+                    <img src={mpesaLogo} alt="M-Pesa" className="h-10 w-auto object-contain" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setMethod("emola")}
-                    className={`py-3 rounded-lg border-2 text-sm font-bold transition-all ${
+                    className={`flex items-center justify-center rounded-lg border-2 px-3 py-3 transition-all ${
                       method === "emola"
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background hover:border-primary/30"
                     }`}
+                    aria-label="Selecionar e-Mola"
                   >
-                    📲 e-Mola
+                    <img src={emolaLogo} alt="e-Mola" className="h-10 w-auto object-contain" />
                   </button>
                 </div>
               </div>
@@ -257,7 +257,6 @@ const Checkout = () => {
                 />
               </div>
 
-              {/* Order summary */}
               <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
                 <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
                 <span className="text-sm font-bold">{formatMZN(Number(product.preco))}</span>
