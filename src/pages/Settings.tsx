@@ -32,10 +32,40 @@ const Settings = () => {
 
   const handleSave = async () => {
     if (!user) return;
+
+    const trimmedNome = nome.trim();
+    const trimmedTelefone = telefone.trim();
+
+    if (!trimmedNome) {
+      toast.error("Informe o nome completo.");
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.from("profiles").update({ nome, telefone }).eq("user_id", user.id);
-    if (error) toast.error(error.message);
-    else toast.success("Configurações salvas!");
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ nome: trimmedNome, telefone: trimmedTelefone })
+      .eq("user_id", user.id);
+
+    if (profileError) {
+      toast.error(profileError.message);
+      setLoading(false);
+      return;
+    }
+
+    const { error: authError } = await supabase.auth.updateUser({
+      data: { nome: trimmedNome },
+    });
+
+    if (authError) {
+      toast.error(authError.message);
+    } else {
+      setNome(trimmedNome);
+      setTelefone(trimmedTelefone);
+      toast.success("Configurações salvas!");
+    }
+
     setLoading(false);
   };
 
