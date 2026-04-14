@@ -111,23 +111,30 @@ Deno.serve(async (req) => {
             const ctrl = new AbortController()
             const t = setTimeout(() => ctrl.abort(), 8000)
             try {
-              const utmifyResp = await fetch('https://api.utmify.com.br/events', {
+              const utmifyResp = await fetch('https://api.utmify.com.br/api-credentials/orders', {
                 method: 'POST',
                 signal: ctrl.signal,
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${apiToken}`,
+                  'x-api-token': apiToken,
                 },
                 body: JSON.stringify({
-                  event: 'purchase',
-                  value: amount,
-                  currency: 'MZN',
-                  utm_source: utm_source || null,
-                  utm_medium: utm_medium || null,
-                  utm_campaign: utm_campaign || null,
-                  utm_content: utm_content || null,
-                  product_id: product_id,
-                  user_id: user_id,
+                  orderId: saleData?.id,
+                  platform: 'MoonPay',
+                  paymentMethod: method === 'mpesa' ? 'M-Pesa' : 'e-Mola',
+                  status: 'paid',
+                  createdAt: new Date().toISOString(),
+                  approvedDate: new Date().toISOString(),
+                  customer: { phone },
+                  products: [{ name: product_id, quantity: 1, price: amount }],
+                  trackingParameters: {
+                    src: utm_source || null,
+                    utm_source: utm_source || null,
+                    utm_medium: utm_medium || null,
+                    utm_campaign: utm_campaign || null,
+                    utm_content: utm_content || null,
+                  },
+                  commission: { totalPrice: amount, currency: 'MZN' },
                 }),
               })
               console.log('UTMify response status:', utmifyResp.status)
