@@ -97,37 +97,47 @@ Deno.serve(async (req) => {
     // Fire-and-forget: send to UTMify and webhook (don't block response)
     const bgWork = async () => {
       try {
-        const [productResult, utmifyResult, webhookResult] = await Promise.all([
-          supabase.from('products').select('nome').eq('id', product_id).single(),
+        const [utmifyResult, webhookResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
         ])
 
-        const productName = productResult.data?.nome || 'Produto'
-
-        // UTMify
-        if (utmifyResult.data?.config && (utmifyResult.data.config as any).api_token) {
-          const apiToken = (utmifyResult.data.config as any).api_token
-          const ctrl = new AbortController()
-          const t = setTimeout(() => ctrl.abort(), 8000)
-          await fetch('https://api.utmify.com.br/api-credentials/orders', {
-            method: 'POST',
-            signal: ctrl.signal,
-            headers: { 'Content-Type': 'application/json', 'x-api-token': apiToken },
-            body: JSON.stringify({
-              orderId: saleData?.id,
-              platform: "MoonPay",
-              paymentMethod: method === 'mpesa' ? 'M-Pesa' : 'e-Mola',
-              status: status === 'approved' ? 'paid' : 'waiting_payment',
-              createdAt: new Date().toISOString(),
-              approvedDate: status === 'approved' ? new Date().toISOString() : null,
-              customer: { phone },
-              products: [{ name: productName, quantity: 1, price: amount }],
-              trackingParameters: { src: utm_source, utm_source, utm_medium, utm_campaign, utm_content },
-              commission: { totalPrice: amount, currency: 'MZN' },
-            }),
-          }).catch(() => {})
-          clearTimeout(t)
+        // UTMify - only send if approved, active integration, and valid token
+        if (status === 'approved' && utmifyResult.data?.config) {
+          const config = utmifyResult.data.config as any
+          const apiToken = config.api_token || config.token
+          if (apiToken) {
+            console.log('Enviando evento UTMify para venda:', saleData?.id)
+            const ctrl = new AbortController()
+            const t = setTimeout(() => ctrl.abort(), 8000)
+            try {
+              const utmifyResp = await fetch('https://api.utmify.com.br/events', {
+                method: 'POST',
+                signal: ctrl.signal,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${apiToken}`,
+                },
+                body: JSON.stringify({
+                  event: 'purchase',
+                  value: amount,
+                  currency: 'MZN',
+                  utm_source: utm_source || null,
+                  utm_medium: utm_medium || null,
+                  utm_campaign: utm_campaign || null,
+                  utm_content: utm_content || null,
+                  product_id: product_id,
+                  user_id: user_id,
+                }),
+              })
+              console.log('UTMify response status:', utmifyResp.status)
+              const utmifyBody = await utmifyResp.text()
+              console.log('UTMify response body:', utmifyBody)
+            } catch (err) {
+              console.error('Erro UTMify:', err)
+            }
+            clearTimeout(t)
+          }
         }
 
         // Webhook
@@ -138,8 +148,8 @@ Deno.serve(async (req) => {
             method: 'POST',
             signal: ctrl.signal,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event: 'sale.created', sale: saleData, product: { nome: productName }, payment_method: method, status }),
-          }).catch(() => {})
+            body: JSON.stringify({ event: 'sale.created', sale: saleData, payment_method: method, status }),
+          }).catch((err) => console.error('Erro Webhook:', err))
           clearTimeout(t)
         }
       } catch (e) {
