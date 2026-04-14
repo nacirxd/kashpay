@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { formatMZN } from "@/lib/currency";
+import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
 
 const ProductForm = () => {
   const { user } = useAuth();
@@ -21,10 +23,11 @@ const ProductForm = () => {
   const [preco, setPreco] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
+  const [productSales, setProductSales] = useState<any[]>([]);
 
   useEffect(() => {
     if (isEditing && user) {
-      supabase.from("products").select("*").eq("id", id).eq("user_id", user.id).single().then(({ data, error }) => {
+      supabase.from("products").select("*").eq("id", id).eq("user_id", user.id).single().then(({ data }) => {
         if (data) {
           setNome(data.nome);
           setDescricao(data.descricao || "");
@@ -35,8 +38,18 @@ const ProductForm = () => {
         }
         setFetching(false);
       });
+      supabase.from("sales").select("*").eq("product_id", id).eq("user_id", user.id).then(({ data }) => {
+        setProductSales(data || []);
+      });
     }
   }, [id, user]);
+
+  const productStats = useMemo(() => {
+    const approved = productSales.filter((s) => s.status === "approved");
+    const receita = approved.reduce((a, s) => a + Number(s.valor), 0);
+    const conversao = productSales.length > 0 ? (approved.length / productSales.length) * 100 : 0;
+    return { vendas: approved.length, receita, conversao };
+  }, [productSales]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +66,11 @@ const ProductForm = () => {
       else { toast.success("Produto criado!"); navigate("/produtos"); }
     }
     setLoading(false);
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/checkout/${id}`);
+    toast.success("Link copiado!");
   };
 
   if (fetching) {
@@ -74,6 +92,24 @@ const ProductForm = () => {
         <h1 className="text-lg font-semibold">{isEditing ? "Editar produto" : "Novo produto"}</h1>
       </div>
 
+      {isEditing && productSales.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {[
+            { label: "Vendas", value: productStats.vendas.toString(), icon: ShoppingBag },
+            { label: "Receita", value: formatMZN(productStats.receita), icon: DollarSign },
+            { label: "Conversão", value: `${productStats.conversao.toFixed(1)}%`, icon: TrendingUp },
+          ].map((s, i) => (
+            <motion.div key={s.label} className="rounded-xl border border-border/50 bg-card p-5 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">{s.label}</span>
+                <s.icon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="text-xl font-bold">{s.value}</div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
         <div className="space-y-2">
           <Label htmlFor="nome">Nome do produto</Label>
@@ -84,8 +120,8 @@ const ProductForm = () => {
           <Textarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descreva seu produto..." rows={4} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="preco">Preço (R$)</Label>
-          <Input id="preco" type="number" step="0.01" min="0" value={preco} onChange={(e) => setPreco(e.target.value)} required placeholder="97.00" />
+          <Label htmlFor="preco">Preço (MZN)</Label>
+          <Input id="preco" type="number" step="0.01" min="0" value={preco} onChange={(e) => setPreco(e.target.value)} required placeholder="1500.00" />
         </div>
         <Button type="submit" disabled={loading}>
           {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> {isEditing ? "Salvar" : "Criar produto"}</>}
@@ -95,7 +131,10 @@ const ProductForm = () => {
       {isEditing && (
         <div className="mt-8 rounded-xl border border-border/50 bg-card p-6">
           <h3 className="text-sm font-semibold mb-2">Link de checkout</h3>
-          <p className="text-sm text-muted-foreground break-all">{window.location.origin}/checkout/{id}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground break-all flex-1">{window.location.origin}/checkout/{id}</p>
+            <Button variant="outline" size="sm" onClick={copyLink}><Copy className="h-3 w-3" /></Button>
+          </div>
         </div>
       )}
     </DashboardLayout>

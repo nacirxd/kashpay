@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
 import { Facebook, BarChart3, Webhook } from "lucide-react";
@@ -11,6 +14,17 @@ const integrationTypes = [
 
 const Integrations = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [activeMap, setActiveMap] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("integrations").select("tipo, ativo").eq("user_id", user.id).then(({ data }) => {
+      const map: Record<string, boolean> = {};
+      (data || []).forEach((d) => { map[d.tipo] = d.ativo; });
+      setActiveMap(map);
+    });
+  }, [user]);
 
   return (
     <DashboardLayout>
@@ -25,8 +39,13 @@ const Integrations = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-              <item.icon className="h-5 w-5" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                <item.icon className="h-5 w-5" />
+              </div>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${activeMap[item.tipo] ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                {activeMap[item.tipo] ? "Ativo" : "Inativo"}
+              </span>
             </div>
             <h3 className="font-semibold mb-1">{item.label}</h3>
             <p className="text-sm text-muted-foreground">{item.desc}</p>
