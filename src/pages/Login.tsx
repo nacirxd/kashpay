@@ -36,9 +36,9 @@ const Login = () => {
       >
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <span className="text-xl font-bold text-primary-foreground">D</span>
+            <span className="text-xl font-bold text-primary-foreground">A</span>
           </div>
-          <h1 className="text-2xl font-bold">Entrar no DigiFlow</h1>
+          <h1 className="text-2xl font-bold">Entrar no Aureon Pay</h1>
           <p className="mt-2 text-sm text-muted-foreground">Acesse sua conta para gerenciar seus produtos</p>
         </div>
 
