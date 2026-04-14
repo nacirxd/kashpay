@@ -64,21 +64,29 @@ const Checkout = () => {
 
     setPaying(true);
 
-    const { error } = await supabase.from("sales").insert({
-      product_id: product.id,
-      user_id: product.user_id,
-      valor: product.preco,
-      status: "approved",
-      utm_source: utmSource,
-      utm_medium: utmMedium,
-      utm_campaign: utmCampaign,
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke("process-payment", {
+        body: {
+          method,
+          phone,
+          amount: product.preco,
+          reference: "moonpay",
+          product_id: product.id,
+          user_id: product.user_id,
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+        },
+      });
 
-    if (error) {
-      toast.error("Erro ao processar pagamento.");
-    } else {
-      setDone(true);
-      toast.success("Pagamento aprovado!");
+      if (error || !data?.success) {
+        toast.error("Erro ao processar pagamento. Tente novamente.");
+      } else {
+        setDone(true);
+        toast.success("Pagamento aprovado!");
+      }
+    } catch {
+      toast.error("Erro de conexão. Tente novamente.");
     }
     setPaying(false);
   };
