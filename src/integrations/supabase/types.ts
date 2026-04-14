@@ -157,6 +157,36 @@ export type Database = {
           },
         ]
       }
+      withdrawals: {
+        Row: {
+          conta: string
+          created_at: string
+          id: string
+          metodo: string
+          status: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          conta: string
+          created_at?: string
+          id?: string
+          metodo?: string
+          status?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          conta?: string
+          created_at?: string
+          id?: string
+          metodo?: string
+          status?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
