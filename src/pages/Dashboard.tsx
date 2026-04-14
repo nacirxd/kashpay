@@ -138,7 +138,7 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+      <UserProgressHeader userName={userName || user?.email || ""} totalRevenue={totalLifetimeRevenue} />
         <h1 className="text-lg font-semibold">Dashboard</h1>
         <div className="flex items-center gap-2 flex-wrap">
           {presets.map((p) => (
