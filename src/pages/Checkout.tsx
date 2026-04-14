@@ -183,9 +183,17 @@ const Checkout = () => {
 
             {/* Product info */}
             <div className="flex items-center gap-3 px-5 pb-4 border-b border-border/50">
-              <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Smartphone className="h-6 w-6 text-primary" />
-              </div>
+              {product.image_url ? (
+                <img
+                  src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${product.image_url}`}
+                  alt={product.nome}
+                  className="h-14 w-14 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Smartphone className="h-6 w-6 text-primary" />
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="font-bold text-base truncate">{product.nome}</p>
                 {product.descricao && <p className="text-xs text-muted-foreground truncate">{product.descricao}</p>}

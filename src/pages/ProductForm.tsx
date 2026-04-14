@@ -19,6 +19,7 @@ const ProductForm = () => {
   const { id } = useParams();
   const isEditing = !!id;
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
 
   // Step control: editing skips the selector
   const [step, setStep] = useState<"type" | "form">(isEditing ? "form" : "type");
@@ -30,6 +31,9 @@ const ProductForm = () => {
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -51,6 +55,11 @@ const ProductForm = () => {
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
+            if ((data as any).image_url) {
+              setImageUrl((data as any).image_url);
+              const { data: pubUrl } = supabase.storage.from("product-images").getPublicUrl((data as any).image_url);
+              setImagePreview(pubUrl.publicUrl);
+            }
             if ((data as any).file_url) {
               const parts = ((data as any).file_url as string).split("/");
               setFileName(parts[parts.length - 1] || "arquivo");
@@ -115,6 +124,39 @@ const ProductForm = () => {
     setFileName("");
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 5MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(path, file, { upsert: true });
+
+    if (error) {
+      toast.error("Erro ao enviar imagem.");
+    } else {
+      setImageUrl(path);
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      setImagePreview(data.publicUrl);
+      toast.success("Imagem enviada!");
+    }
+    setUploadingImage(false);
+  };
+
+  const removeImage = () => {
+    setImageUrl("");
+    setImagePreview("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -144,6 +186,7 @@ const ProductForm = () => {
       delivery_type: deliveryType,
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
+      image_url: imageUrl || null,
     };
 
     if (isEditing) {
@@ -271,6 +314,46 @@ const ProductForm = () => {
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Descreva seu produto..."
             rows={4}
+          />
+        </div>
+
+        {/* Product image upload */}
+        <div className="space-y-2">
+          <Label>Imagem do produto</Label>
+          {imagePreview ? (
+            <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-border">
+              <img src={imagePreview} alt="Produto" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:opacity-90"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => imageRef.current?.click()}
+              disabled={uploadingImage}
+              className="w-full rounded-lg border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 py-8 flex flex-col items-center gap-2 transition-colors"
+            >
+              {uploadingImage ? (
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : (
+                <>
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Clique para enviar imagem (JPG, PNG — máx 5MB)</span>
+                </>
+              )}
+            </button>
+          )}
+          <input
+            ref={imageRef}
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageUpload}
           />
         </div>
         <div className="space-y-2">
