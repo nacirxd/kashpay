@@ -44,7 +44,10 @@ export type Database = {
       products: {
         Row: {
           created_at: string
+          delivery_type: string
           descricao: string | null
+          external_url: string | null
+          file_url: string | null
           id: string
           nome: string
           preco: number
@@ -53,7 +56,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_type?: string
           descricao?: string | null
+          external_url?: string | null
+          file_url?: string | null
           id?: string
           nome: string
           preco?: number
@@ -62,7 +68,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_type?: string
           descricao?: string | null
+          external_url?: string | null
+          file_url?: string | null
           id?: string
           nome?: string
           preco?: number
