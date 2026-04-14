@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
     const status = payResp.ok ? 'approved' : 'pending'
 
-    await supabase.from('sales').insert({
+    const { data: saleData } = await supabase.from('sales').insert({
       product_id,
       user_id,
       valor: amount,
@@ -76,7 +76,86 @@ Deno.serve(async (req) => {
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
-    })
+    }).select().single()
+
+    // Get product info for UTMify
+    const { data: productData } = await supabase.from('products').select('nome').eq('id', product_id).single()
+
+    // Check if user has active UTMify integration and send sale
+    const { data: utmifyIntegration } = await supabase
+      .from('integrations')
+      .select('config, ativo')
+      .eq('user_id', user_id)
+      .eq('tipo', 'utmify')
+      .eq('ativo', true)
+      .maybeSingle()
+
+    if (utmifyIntegration?.config && (utmifyIntegration.config as any).api_token) {
+      const apiToken = (utmifyIntegration.config as any).api_token
+      try {
+        const utmifyPayload = {
+          orderId: saleData?.id || crypto.randomUUID(),
+          platform: "MoonPay",
+          paymentMethod: method === 'mpesa' ? 'M-Pesa' : 'e-Mola',
+          status: status === 'approved' ? 'paid' : 'waiting_payment',
+          createdAt: new Date().toISOString(),
+          approvedDate: status === 'approved' ? new Date().toISOString() : null,
+          customer: { phone },
+          products: [{
+            name: productData?.nome || 'Produto',
+            quantity: 1,
+            price: amount,
+          }],
+          trackingParameters: {
+            src: utm_source || null,
+            utm_source: utm_source || null,
+            utm_medium: utm_medium || null,
+            utm_campaign: utm_campaign || null,
+          },
+          commission: { totalPrice: amount, currency: 'MZN' },
+        }
+
+        console.log('Sending to UTMify:', JSON.stringify(utmifyPayload))
+
+        await fetch('https://api.utmify.com.br/api-credentials/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-token': apiToken,
+          },
+          body: JSON.stringify(utmifyPayload),
+        })
+      } catch (utmErr) {
+        console.error('UTMify send error:', utmErr)
+      }
+    }
+
+    // Check if user has active webhook integration and send notification
+    const { data: webhookIntegration } = await supabase
+      .from('integrations')
+      .select('config, ativo')
+      .eq('user_id', user_id)
+      .eq('tipo', 'webhook')
+      .eq('ativo', true)
+      .maybeSingle()
+
+    if (webhookIntegration?.config && (webhookIntegration.config as any).url) {
+      try {
+        await fetch((webhookIntegration.config as any).url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'sale.created',
+            sale: saleData,
+            product: productData,
+            payment_method: method,
+            status,
+          }),
+        })
+      } catch (whErr) {
+        console.error('Webhook send error:', whErr)
+      }
+    }
 
     return new Response(JSON.stringify({ success: payResp.ok, data: payData, status }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
