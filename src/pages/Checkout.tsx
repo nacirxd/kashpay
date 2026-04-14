@@ -223,26 +223,28 @@ const Checkout = () => {
                   <button
                     type="button"
                     onClick={() => setMethod("mpesa")}
-                    className={`flex items-center justify-center rounded-lg border-2 px-3 py-3 transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
                       method === "mpesa"
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background hover:border-primary/30"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
                     }`}
                     aria-label="Selecionar M-Pesa"
                   >
-                    <img src={mpesaLogo} alt="M-Pesa" className="h-10 w-auto object-contain" />
+                    <img src={mpesaLogo} alt="M-Pesa" className="h-8 w-8 object-contain" />
+                    <span className="text-sm font-semibold">M-Pesa</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setMethod("emola")}
-                    className={`flex items-center justify-center rounded-lg border-2 px-3 py-3 transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
                       method === "emola"
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background hover:border-primary/30"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
                     }`}
                     aria-label="Selecionar e-Mola"
                   >
-                    <img src={emolaLogo} alt="e-Mola" className="h-10 w-auto object-contain" />
+                    <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
+                    <span className="text-sm font-semibold">e-Mola</span>
                   </button>
                 </div>
               </div>
