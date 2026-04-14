@@ -63,33 +63,47 @@ const Products = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((p, i) => (
-            <motion.div key={p.id} className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              {p.image_url && (
-                <img
-                  src={getProductImageUrl(p.image_url)}
-                  alt={p.nome}
-                  className="h-48 w-full object-cover"
-                  loading="lazy"
-                />
-              )}
-              <div className="p-6">
-                <h3 className="font-semibold mb-1">{p.nome}</h3>
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.descricao || "Sem descrição"}</p>
-                <p className="text-lg font-bold text-primary mb-4">{formatMZN(Number(p.preco))}</p>
-                <div className="flex gap-2 flex-wrap">
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/produtos/${p.id}`)}>
-                    <Pencil className="mr-1 h-3 w-3" /> Editar
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => copyCheckoutLink(p.id)}>
-                    <Copy className="mr-1 h-3 w-3" /> Link
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.open(`/checkout/${p.id}`, "_blank")}>
-                    <ExternalLink className="mr-1 h-3 w-3" /> Checkout
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(p.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+            <motion.div
+              key={p.id}
+              className="rounded-2xl border border-border/50 bg-card p-5 shadow-soft transition-shadow hover:shadow-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="flex items-start gap-4">
+                {p.image_url ? (
+                  <img
+                    src={getProductImageUrl(p.image_url)}
+                    alt={p.nome}
+                    className="h-20 w-20 shrink-0 rounded-2xl border border-border/50 object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-border/50 bg-muted text-muted-foreground">
+                    <Package className="h-5 w-5" />
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-semibold mb-1">{p.nome}</h3>
+                  <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{p.descricao || "Sem descrição"}</p>
+                  <p className="text-xl font-bold text-primary">{formatMZN(Number(p.preco))}</p>
                 </div>
+              </div>
+
+              <div className="mt-5 flex gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => navigate(`/produtos/${p.id}`)}>
+                  <Pencil className="mr-1 h-3 w-3" /> Editar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => copyCheckoutLink(p.id)}>
+                  <Copy className="mr-1 h-3 w-3" /> Link
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => window.open(`/checkout/${p.id}`, "_blank")}>
+                  <ExternalLink className="mr-1 h-3 w-3" /> Checkout
+                </Button>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(p.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
             </motion.div>
           ))}
