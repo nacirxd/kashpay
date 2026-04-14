@@ -12,9 +12,9 @@ const Navbar = () => {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">D</span>
+            <span className="text-primary-foreground font-bold text-sm">A</span>
           </div>
-          <span className="font-bold text-xl tracking-tight">DigiFlow</span>
+          <span className="font-bold text-xl tracking-tight">Aureon Pay</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
