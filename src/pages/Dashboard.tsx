@@ -69,6 +69,10 @@ const Dashboard = () => {
     });
   }, [allSales, dateRange]);
 
+  const totalLifetimeRevenue = useMemo(() => {
+    return allSales.filter((s) => s.status === "approved").reduce((acc, s) => acc + Number(s.valor), 0);
+  }, [allSales]);
+
   const stats = useMemo(() => {
     const approved = filteredSales.filter((s) => s.status === "approved");
     const receita = approved.reduce((acc, s) => acc + Number(s.valor), 0);
