@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import {
-  LayoutDashboard, Package, ShoppingCart, Link2, Settings, LogOut,
+  LayoutDashboard, Package, Link2, Settings, LogOut,
   DollarSign, Menu, X
 } from "lucide-react";
 
@@ -38,27 +38,50 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [userName, setUserName] = useState("");
   const [totalRevenue, setTotalRevenue] = useState(0);
 
+  const metadataName = useMemo(() => {
+    const rawName = user?.user_metadata?.nome;
+    return typeof rawName === "string" ? rawName.trim() : "";
+  }, [user]);
+
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setUserName("");
+      setTotalRevenue(0);
+      return;
+    }
+
+    setUserName(metadataName);
+    let isCancelled = false;
+
     const load = async () => {
       const [{ data: profile }, { data: sales }] = await Promise.all([
         supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
         supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
       ]);
-      if (profile?.nome && profile.nome.trim()) setUserName(profile.nome.trim());
+
+      if (isCancelled) return;
+
+      const profileName = typeof profile?.nome === "string" ? profile.nome.trim() : "";
+      if (profileName) setUserName(profileName);
       setTotalRevenue((sales || []).reduce((a, s) => a + Number(s.valor), 0));
     };
+
     load();
-  }, [user]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, metadataName]);
 
   const { tier, progress } = useMemo(() => {
-    const t = TIERS.find((t) => totalRevenue < t.max) || TIERS[TIERS.length - 1];
+    const t = TIERS.find((item) => totalRevenue < item.max) || TIERS[TIERS.length - 1];
     const range = t.max - t.min;
     const p = Math.min(Math.max(((totalRevenue - t.min) / range) * 100, 0), 100);
     return { tier: t, progress: p };
   }, [totalRevenue]);
 
-  const firstName = userName?.split(" ")[0] || user?.email?.split("@")[0] || "";
+  const displayName = (userName || metadataName).trim();
+  const firstName = displayName.split(/\s+/).filter(Boolean)[0] || "";
 
   const handleSignOut = async () => {
     await signOut();
@@ -69,7 +92,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex h-screen bg-muted/30">
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border transform transition-transform duration-200
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         lg:relative lg:translate-x-0
       `}>
         <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
@@ -88,11 +111,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             return (
               <button
                 key={item.label}
-                onClick={() => { navigate(item.path); setSidebarOpen(false); }}
+                onClick={() => {
+                  navigate(item.path);
+                  setSidebarOpen(false);
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-sidebar-accent text-sidebar-primary'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                    ? "bg-sidebar-accent text-sidebar-primary"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -123,8 +149,17 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
-            <span className="text-sm font-semibold">Olá, <span className="capitalize">{firstName}</span></span>
+            <span className="text-sm font-semibold">
+              {firstName ? (
+                <>
+                  Olá, <span className="capitalize">{firstName}</span>
+                </>
+              ) : (
+                "Olá"
+              )}
+            </span>
           </div>
+
           <div className="flex items-center gap-3">
             <div className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${tier.bg} ${tier.color}`}>
               <span>{tier.icon}</span>
@@ -135,10 +170,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <Progress value={progress} className="h-2" />
             </div>
             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase">
-              {firstName.slice(0, 2)}
+              {firstName.slice(0, 2).toUpperCase() || "U"}
             </div>
           </div>
         </header>
+
         <div className="p-6">{children}</div>
       </main>
     </div>
