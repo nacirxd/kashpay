@@ -49,6 +49,7 @@ export type Database = {
           external_url: string | null
           file_url: string | null
           id: string
+          image_url: string | null
           nome: string
           preco: number
           tipo: string
@@ -61,6 +62,7 @@ export type Database = {
           external_url?: string | null
           file_url?: string | null
           id?: string
+          image_url?: string | null
           nome: string
           preco?: number
           tipo?: string
@@ -73,6 +75,7 @@ export type Database = {
           external_url?: string | null
           file_url?: string | null
           id?: string
+          image_url?: string | null
           nome?: string
           preco?: number
           tipo?: string
