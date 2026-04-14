@@ -11,9 +11,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">A</span>
-          </div>
+          <img src={aureonLogo} alt="Aureon Pay" className="h-8 w-8 rounded-lg" />
           <span className="font-bold text-xl tracking-tight">Aureon Pay</span>
         </div>
 

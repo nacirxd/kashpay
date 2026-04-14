@@ -96,9 +96,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         lg:relative lg:translate-x-0
       `}>
         <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
-          <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <span className="text-sidebar-primary-foreground font-bold text-sm">A</span>
-          </div>
+          <img src={aureonLogo} alt="Aureon Pay" className="h-8 w-8 rounded-lg" />
           <span className="font-bold text-lg text-sidebar-foreground">Aureon Pay</span>
           <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
