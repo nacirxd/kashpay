@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 import {
   LayoutDashboard, Package, ShoppingCart, Link2, Settings, LogOut,
   DollarSign, Menu, X
@@ -14,11 +16,49 @@ const navItems = [
   { icon: Settings, label: "Configurações", path: "/configuracoes" },
 ];
 
+const TIERS = [
+  { label: "Bronze", min: 0, max: 100_000, bg: "bg-amber-100", color: "text-amber-700", icon: "🥉" },
+  { label: "Prata", min: 100_000, max: 500_000, bg: "bg-slate-100", color: "text-slate-500", icon: "🥈" },
+  { label: "Ouro", min: 500_000, max: 1_000_000, bg: "bg-yellow-100", color: "text-yellow-500", icon: "🥇" },
+  { label: "Diamante", min: 1_000_000, max: 5_000_000, bg: "bg-cyan-100", color: "text-cyan-500", icon: "💎" },
+  { label: "Elite", min: 5_000_000, max: 10_000_000, bg: "bg-purple-100", color: "text-purple-500", icon: "👑" },
+];
+
+function formatTierValue(v: number) {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
+  return v.toString();
+}
+
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const [{ data: profile }, { data: sales }] = await Promise.all([
+        supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
+        supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
+      ]);
+      if (profile?.nome) setUserName(profile.nome);
+      setTotalRevenue((sales || []).reduce((a, s) => a + Number(s.valor), 0));
+    };
+    load();
+  }, [user]);
+
+  const { tier, progress } = useMemo(() => {
+    const t = TIERS.find((t) => totalRevenue < t.max) || TIERS[TIERS.length - 1];
+    const range = t.max - t.min;
+    const p = Math.min(Math.max(((totalRevenue - t.min) / range) * 100, 0), 100);
+    return { tier: t, progress: p };
+  }, [totalRevenue]);
+
+  const firstName = userName?.split(" ")[0] || user?.email?.split("@")[0] || "";
 
   const handleSignOut = async () => {
     await signOut();
@@ -78,10 +118,26 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       <main className="flex-1 overflow-auto">
-        <header className="sticky top-0 z-30 flex h-16 items-center border-b border-border bg-background/80 backdrop-blur-xl px-6">
-          <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </button>
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
+          <div className="flex items-center">
+            <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-semibold">Olá, <span className="capitalize">{firstName}</span></span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${tier.bg} ${tier.color}`}>
+              <span>{tier.icon}</span>
+              {tier.label}
+              <span className="font-normal opacity-70">MT {formatTierValue(tier.min)} – {formatTierValue(tier.max)}</span>
+            </div>
+            <div className="w-24">
+              <Progress value={progress} className="h-2" />
+            </div>
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase">
+              {firstName.slice(0, 2)}
+            </div>
+          </div>
         </header>
         <div className="p-6">{children}</div>
       </main>

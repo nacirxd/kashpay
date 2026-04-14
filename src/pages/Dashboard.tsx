@@ -4,7 +4,6 @@ import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import UserProgressHeader from "@/components/dashboard/UserProgressHeader";
 import { formatMZN } from "@/lib/currency";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -25,7 +24,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [allSales, setAllSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("");
   const [preset, setPreset] = useState<FilterPreset>("30d");
   const [customRange, setCustomRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
 
@@ -42,12 +40,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [{ data: salesData }, { data: profile }] = await Promise.all([
-        supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
-      ]);
+      const { data: salesData } = await supabase
+        .from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false });
       setAllSales(salesData || []);
-      if (profile?.nome) setUserName(profile.nome);
       setLoading(false);
     };
     fetchData();
@@ -69,9 +64,6 @@ const Dashboard = () => {
     });
   }, [allSales, dateRange]);
 
-  const totalLifetimeRevenue = useMemo(() => {
-    return allSales.filter((s) => s.status === "approved").reduce((acc, s) => acc + Number(s.valor), 0);
-  }, [allSales]);
 
   const stats = useMemo(() => {
     const approved = filteredSales.filter((s) => s.status === "approved");
@@ -138,7 +130,6 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <UserProgressHeader userName={userName || user?.email || ""} totalRevenue={totalLifetimeRevenue} />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h1 className="text-lg font-semibold">Dashboard</h1>
         <div className="flex items-center gap-2 flex-wrap">
