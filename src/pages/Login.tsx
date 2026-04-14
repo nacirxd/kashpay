@@ -1,3 +1,4 @@
+import aureonLogo from "@/assets/aureon-pay-logo.svg";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -35,9 +36,7 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <span className="text-xl font-bold text-primary-foreground">A</span>
-          </div>
+          <img src={aureonLogo} alt="Aureon Pay" className="mx-auto mb-4 h-12 w-12 rounded-xl" />
           <h1 className="text-2xl font-bold">Entrar no Aureon Pay</h1>
           <p className="mt-2 text-sm text-muted-foreground">Acesse sua conta para gerenciar seus produtos</p>
         </div>
