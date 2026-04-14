@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, amount, reference, product_id, user_id, utm_source, utm_medium, utm_campaign } = await req.json()
+    const { method, phone, amount, reference, product_id, user_id, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
     if (!method || !phone || !amount || !product_id || !user_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
+      utm_content: utm_content || null,
     }).select().single()
 
     // Return response immediately, then fire integrations in background
@@ -122,7 +123,7 @@ Deno.serve(async (req) => {
               approvedDate: status === 'approved' ? new Date().toISOString() : null,
               customer: { phone },
               products: [{ name: productName, quantity: 1, price: amount }],
-              trackingParameters: { src: utm_source, utm_source, utm_medium, utm_campaign },
+              trackingParameters: { src: utm_source, utm_source, utm_medium, utm_campaign, utm_content },
               commission: { totalPrice: amount, currency: 'MZN' },
             }),
           }).catch(() => {})

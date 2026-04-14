@@ -1,17 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
+import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
 
 const Checkout = () => {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -22,9 +22,10 @@ const Checkout = () => {
   const [method, setMethod] = useState<"mpesa" | "emola">("mpesa");
   const [countdown, setCountdown] = useState(10 * 60);
 
-  const utmSource = searchParams.get("utm_source") || null;
-  const utmMedium = searchParams.get("utm_medium") || null;
-  const utmCampaign = searchParams.get("utm_campaign") || null;
+  // Capture UTMs from current URL on mount
+  useEffect(() => { captureUTMs(); }, []);
+
+  const utms = getStoredUTMs();
 
   useEffect(() => {
     if (!id) return;
@@ -73,9 +74,7 @@ const Checkout = () => {
           reference: "moonpay",
           product_id: product.id,
           user_id: product.user_id,
-          utm_source: utmSource,
-          utm_medium: utmMedium,
-          utm_campaign: utmCampaign,
+          ...utms,
         },
       });
 
