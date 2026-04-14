@@ -78,11 +78,15 @@ const Checkout = () => {
         },
       });
 
-      if (error || !data?.success) {
+      if (error) {
         toast.error("Erro ao processar pagamento. Tente novamente.");
-      } else {
+      } else if (data?.status === "approved") {
         setDone(true);
         toast.success("Pagamento aprovado!");
+      } else if (data?.status === "pending") {
+        toast.info("Pedido enviado. Confirme o pagamento no seu telefone.");
+      } else {
+        toast.error("Não foi possível iniciar o pagamento.");
       }
     } catch {
       toast.error("Erro de conexão. Tente novamente.");
