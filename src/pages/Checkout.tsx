@@ -70,6 +70,8 @@ const Checkout = () => {
         body: {
           method,
           phone,
+          name,
+          email,
           amount: product.preco,
           reference: "moonpay",
           product_id: product.id,
