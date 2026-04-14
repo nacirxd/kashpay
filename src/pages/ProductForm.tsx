@@ -55,6 +55,11 @@ const ProductForm = () => {
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
+            if ((data as any).image_url) {
+              setImageUrl((data as any).image_url);
+              const { data: pubUrl } = supabase.storage.from("product-images").getPublicUrl((data as any).image_url);
+              setImagePreview(pubUrl.publicUrl);
+            }
             if ((data as any).file_url) {
               const parts = ((data as any).file_url as string).split("/");
               setFileName(parts[parts.length - 1] || "arquivo");
