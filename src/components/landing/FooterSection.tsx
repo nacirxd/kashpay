@@ -1,3 +1,5 @@
+import aureonLogo from "@/assets/aureon-pay-logo.svg";
+
 const FooterSection = () => {
   return (
     <footer className="border-t border-border/50 py-12">

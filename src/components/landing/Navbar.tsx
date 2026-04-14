@@ -1,3 +1,4 @@
+import aureonLogo from "@/assets/aureon-pay-logo.svg";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";

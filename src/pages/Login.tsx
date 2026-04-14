@@ -1,3 +1,4 @@
+import aureonLogo from "@/assets/aureon-pay-logo.svg";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
