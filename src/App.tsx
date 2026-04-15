@@ -23,6 +23,7 @@ import Finances from "./pages/Finances";
 import Sales from "./pages/Sales";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -49,6 +50,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
               <Route path="/checkout/:id" element={<Checkout />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
