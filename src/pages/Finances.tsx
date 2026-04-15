@@ -5,6 +5,8 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send, Plus, Save, CreditCard } from "lucide-react";
+import mpesaLogo from "@/assets/mpesa-2.svg";
+import emolaLogo from "@/assets/emola-2.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
