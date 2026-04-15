@@ -163,13 +163,13 @@ const Finances = () => {
               Resumo
             </button>
             <button
-              onClick={() => setActiveTab("sacar")}
+              onClick={() => setActiveTab("saque")}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "sacar" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                activeTab === "saque" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Wallet className="inline-block h-4 w-4 mr-1.5 -mt-0.5" />
-              Sacar
+              Saque
             </button>
           </div>
 
