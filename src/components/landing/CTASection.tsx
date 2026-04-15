@@ -35,7 +35,7 @@ const CTASection = () => {
             <Button
               size="lg"
               className="h-14 px-10 rounded-xl text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_8px_30px_hsl(160_84%_39%/0.4)]"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/registro")}
             >
               Criar minha conta grátis
               <ArrowRight className="ml-2 h-5 w-5" />
