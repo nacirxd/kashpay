@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { formatDateTimeMZ } from "@/lib/timezone";
+import { Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -24,9 +25,20 @@ interface Withdrawal {
 
 const statusMap: Record<string, { label: string; classes: string }> = {
   pendente: { label: "Pendente", classes: "bg-yellow-500/10 text-yellow-400" },
-  approved: { label: "Aprovado", classes: "bg-emerald-500/10 text-emerald-400" },
-  rejected: { label: "Rejeitado", classes: "bg-red-500/10 text-red-400" },
+  processando: { label: "Processando", classes: "bg-blue-500/10 text-blue-400" },
+  approved: { label: "Processado", classes: "bg-emerald-500/10 text-emerald-400" },
+  rejected: { label: "Recusado", classes: "bg-red-500/10 text-red-400" },
 };
+
+type StatusFilter = "all" | "pendente" | "processando" | "approved" | "rejected";
+
+const filterButtons: { key: StatusFilter; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "pendente", label: "Pendentes" },
+  { key: "processando", label: "Processando" },
+  { key: "approved", label: "Processados" },
+  { key: "rejected", label: "Recusados" },
+];
 
 const AdminWithdrawals = () => {
   const { adminFetch } = useAdmin();
@@ -34,6 +46,8 @@ const AdminWithdrawals = () => {
   const [loading, setLoading] = useState(true);
   const [confirm, setConfirm] = useState<{ id: string; status: string; valor: number } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const load = () => {
     setLoading(true);
@@ -41,6 +55,31 @@ const AdminWithdrawals = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  const filtered = useMemo(() => {
+    let list = items;
+    if (statusFilter !== "all") {
+      list = list.filter((w) => w.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      list = list.filter(
+        (w) =>
+          w.user_name.toLowerCase().includes(q) ||
+          w.user_email.toLowerCase().includes(q) ||
+          w.conta.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [items, statusFilter, search]);
+
+  const counts = useMemo(() => ({
+    all: items.length,
+    pendente: items.filter((w) => w.status === "pendente").length,
+    processando: items.filter((w) => w.status === "processando").length,
+    approved: items.filter((w) => w.status === "approved").length,
+    rejected: items.filter((w) => w.status === "rejected").length,
+  }), [items]);
 
   const handleUpdate = async () => {
     if (!confirm) return;
@@ -59,6 +98,36 @@ const AdminWithdrawals = () => {
   return (
     <AdminLayout>
       <h1 className="text-2xl font-bold mb-6">Saques</h1>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder="Pesquisar por nome, email ou conta..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-xl border border-gray-700 bg-[#13151d] py-2.5 pl-10 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
+      {/* Status filter */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {filterButtons.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setStatusFilter(f.key)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              statusFilter === f.key
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "bg-gray-800 text-gray-400 border border-gray-700 hover:text-gray-200"
+            }`}
+          >
+            {f.label} <span className="ml-1 opacity-60">({counts[f.key]})</span>
+          </button>
+        ))}
+      </div>
+
       <div className="rounded-xl border border-gray-800 bg-[#13151d] overflow-hidden">
         <Table>
           <TableHeader>
@@ -75,10 +144,10 @@ const AdminWithdrawals = () => {
           <TableBody>
             {loading ? (
               <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
-            ) : items.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Nenhum saque</TableCell></TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum saque"}</TableCell></TableRow>
             ) : (
-              items.map((w) => {
+              filtered.map((w) => {
                 const st = statusMap[w.status] || statusMap.pendente;
                 return (
                   <TableRow key={w.id} className="border-gray-800 hover:bg-gray-800/50">
