@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
-import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send } from "lucide-react";
+import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const Finances = () => {
@@ -15,7 +16,8 @@ const Finances = () => {
   const [sales, setSales] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"resumo" | "sacar">("resumo");
+  const [activeTab, setActiveTab] = useState<"resumo" | "saque">("resumo");
+  const [showWithdrawForm, setShowWithdrawForm] = useState(false);
 
   // Withdraw form
   const [valor, setValor] = useState("");
@@ -90,22 +92,22 @@ const Finances = () => {
     { label: "Total transações", value: summary.total.toString(), icon: TrendingUp, color: "text-foreground" },
   ];
 
-  const handleWithdraw = async (e: React.FormEvent) => {
+  const handleWithdraw = async (e: React.FormEvent): Promise<boolean> => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) return false;
 
     const amount = parseFloat(valor);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Informe um valor válido.");
-      return;
+      return false;
     }
     if (amount > summary.saldo) {
       toast.error("Saldo insuficiente.");
-      return;
+      return false;
     }
     if (!conta.trim()) {
       toast.error("Informe o número da conta.");
-      return;
+      return false;
     }
 
     setSubmitting(true);
@@ -119,11 +121,14 @@ const Finances = () => {
 
     if (error) {
       toast.error("Erro ao solicitar saque.");
+      return false;
     } else {
       toast.success("Pedido de saque enviado!");
       setWithdrawals((prev) => [data, ...prev]);
       setValor("");
       setConta("");
+      setShowWithdrawForm(false);
+      return true;
     }
   };
 
@@ -161,13 +166,13 @@ const Finances = () => {
               Resumo
             </button>
             <button
-              onClick={() => setActiveTab("sacar")}
+              onClick={() => setActiveTab("saque")}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "sacar" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                activeTab === "saque" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Wallet className="inline-block h-4 w-4 mr-1.5 -mt-0.5" />
-              Sacar
+              Saque
             </button>
           </div>
 
@@ -202,87 +207,52 @@ const Finances = () => {
             </motion.div>
           )}
 
-          {activeTab === "sacar" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Formulário de saque */}
-              <motion.div
-                className="rounded-xl border border-border/50 bg-card p-6 shadow-soft"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                  <Send className="h-4 w-4 text-primary" />
-                  Solicitar saque
-                </h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Saldo disponível: <span className="font-semibold text-foreground">{formatMZN(summary.saldo)}</span>
-                </p>
-
-                <form onSubmit={handleWithdraw} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="valor">Valor (MT)</Label>
-                    <Input
-                      id="valor"
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      placeholder="Ex: 5000"
-                      value={valor}
-                      onChange={(e) => setValor(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="metodo">Método</Label>
-                    <select
-                      id="metodo"
-                      value={metodo}
-                      onChange={(e) => setMetodo(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="mpesa">M-Pesa</option>
-                      <option value="emola">e-Mola</option>
-                      <option value="banco">Conta Bancária</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="conta">
-                      {metodo === "banco" ? "Número da conta (IBAN)" : "Número de telefone"}
-                    </Label>
-                    <Input
-                      id="conta"
-                      placeholder={metodo === "banco" ? "Ex: 00001234567890" : "Ex: 84 123 4567"}
-                      value={conta}
-                      onChange={(e) => setConta(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={submitting || summary.saldo <= 0}>
-                    {submitting ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                    ) : (
-                      <>
-                        <Wallet className="mr-2 h-4 w-4" />
+          {activeTab === "saque" && (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Dialog open={showWithdrawForm} onOpenChange={setShowWithdrawForm}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Solicitar saque
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Send className="h-4 w-4 text-primary" />
                         Solicitar saque
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </motion.div>
+                      </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                      Saldo disponível: <span className="font-semibold text-foreground">{formatMZN(summary.saldo)}</span>
+                    </p>
+                    <form onSubmit={handleWithdraw} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="valor">Valor (MT)</Label>
+                        <Input id="valor" type="number" min="1" step="0.01" placeholder="Ex: 5000" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="metodo">Método</Label>
+                        <select id="metodo" value={metodo} onChange={(e) => setMetodo(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                          <option value="mpesa">M-Pesa</option>
+                          <option value="emola">e-Mola</option>
+                          <option value="banco">Conta Bancária</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="conta">{metodo === "banco" ? "Número da conta (IBAN)" : "Número de telefone"}</Label>
+                        <Input id="conta" placeholder={metodo === "banco" ? "Ex: 00001234567890" : "Ex: 84 123 4567"} value={conta} onChange={(e) => setConta(e.target.value)} required />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={submitting || summary.saldo <= 0}>
+                        {submitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Wallet className="mr-2 h-4 w-4" /> Solicitar saque</>}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
-              {/* Histórico de saques */}
-              <motion.div
-                className="rounded-xl border border-border/50 bg-card shadow-soft"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <div className="p-6 border-b border-border/50">
-                  <h2 className="text-base font-semibold">Pedidos de saque</h2>
-                </div>
+              <motion.div className="rounded-xl border border-border/50 bg-card shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -302,9 +272,7 @@ const Finances = () => {
                           <td className="px-6 py-3 font-medium">{formatMZN(Number(w.valor))}</td>
                           <td className="px-6 py-3 capitalize">{w.metodo === "mpesa" ? "M-Pesa" : w.metodo === "emola" ? "e-Mola" : "Banco"}</td>
                           <td className="px-6 py-3 text-muted-foreground">{w.conta}</td>
-                          <td className={`px-6 py-3 font-medium ${withdrawStatusColors[w.status] || ""}`}>
-                            {withdrawStatusLabels[w.status] || w.status}
-                          </td>
+                          <td className={`px-6 py-3 font-medium ${withdrawStatusColors[w.status] || ""}`}>{withdrawStatusLabels[w.status] || w.status}</td>
                           <td className="px-6 py-3 text-muted-foreground">{new Date(w.created_at).toLocaleDateString("pt-BR")}</td>
                         </tr>
                       ))}
