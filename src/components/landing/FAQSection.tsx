@@ -2,11 +2,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { motion } from "framer-motion";
 
 const faqs = [
-  { q: "Quanto custa para começar?", a: "Você pode começar gratuitamente. Cobramos apenas uma pequena taxa por venda realizada, sem mensalidades ou custos ocultos." },
-  { q: "Quais tipos de produto posso vender?", a: "Cursos online, e-books, templates, softwares, mentorias, assinaturas e qualquer produto digital." },
-  { q: "Como recebo meus pagamentos?", a: "Os pagamentos são processados e transferidos automaticamente para sua conta bancária conforme o período configurado." },
-  { q: "Posso ter afiliados vendendo meu produto?", a: "Sim! Nosso sistema de afiliados permite criar links exclusivos, definir comissões e acompanhar vendas de cada afiliado." },
-  { q: "Quais moedas são aceitas?", a: "Atualmente suportamos BRL (Real), USD (Dólar) e MZN (Metical), com mais moedas em breve." },
+  { q: "Quanto custa para começar?", a: "Você pode começar gratuitamente, sem nenhum custo mensal. Cobramos apenas uma pequena taxa por venda realizada. Sem surpresas, sem custos ocultos." },
+  { q: "Quais tipos de produto posso vender?", a: "E-books, cursos online, templates, mentorias, arquivos digitais, softwares e qualquer produto que possa ser entregue digitalmente." },
+  { q: "Como recebo meus pagamentos?", a: "Os valores das vendas ficam disponíveis na sua conta Aureon Pay e podem ser sacados via M-Pesa, e-Mola ou transferência bancária." },
+  { q: "O checkout é seguro?", a: "Sim, 100%. Utilizamos criptografia de ponta a ponta e protocolos de segurança avançados para proteger os dados dos seus clientes." },
+  { q: "Quanto tempo leva para o cliente receber o produto?", a: "A entrega é instantânea. Assim que o pagamento é confirmado, o cliente recebe automaticamente o acesso ao produto." },
+  { q: "Preciso de conhecimento técnico?", a: "Não. A plataforma foi criada para ser simples. Qualquer pessoa pode criar um produto e começar a vender em minutos." },
 ];
 
 const FAQSection = () => {
@@ -19,8 +20,9 @@ const FAQSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
+          <span className="inline-block text-sm font-semibold text-primary mb-3 tracking-wide uppercase">Dúvidas</span>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Perguntas frequentes</h2>
-          <p className="text-muted-foreground text-lg">Tire suas dúvidas sobre a plataforma</p>
+          <p className="text-muted-foreground text-lg">Tudo que você precisa saber antes de começar</p>
         </motion.div>
 
         <motion.div
@@ -31,8 +33,8 @@ const FAQSection = () => {
         >
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`item-${i}`} className="border border-border/50 rounded-xl px-6 bg-card shadow-soft">
-                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+              <AccordionItem key={i} value={`item-${i}`} className="border border-border/50 rounded-xl px-6 bg-card shadow-soft data-[state=open]:shadow-card data-[state=open]:border-primary/20 transition-all">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5 text-[15px]">
                   {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
