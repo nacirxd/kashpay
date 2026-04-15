@@ -170,6 +170,30 @@ Deno.serve(async (req) => {
           } catch (emailErr) {
             console.error('Erro ao enviar email de compra:', emailErr)
           }
+
+          // Send sale notification to seller
+          if (sellerProfile?.email) {
+            try {
+              await supabase.functions.invoke('send-transactional-email', {
+                body: {
+                  templateName: 'sale-notification',
+                  recipientEmail: sellerProfile.email,
+                  idempotencyKey: `sale-notify-${saleData?.id || product_id}-${Date.now()}`,
+                  templateData: {
+                    sellerName: sellerProfile.nome || undefined,
+                    productName: productData?.nome || 'Produto',
+                    amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
+                    buyerName: name || undefined,
+                    buyerEmail: email || undefined,
+                    paymentMethod: method,
+                  },
+                },
+              })
+              console.log('Notificação de venda enviada para vendedor:', sellerProfile.email)
+            } catch (sellerEmailErr) {
+              console.error('Erro ao notificar vendedor:', sellerEmailErr)
+            }
+          }
         }
 
         const [utmifyResult, webhookResult] = await Promise.all([
