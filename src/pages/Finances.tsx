@@ -295,6 +295,10 @@ const Finances = () => {
                         </select>
                       </div>
                       <div className="space-y-2">
+                        <Label htmlFor="nomeConta">Nome do titular</Label>
+                        <Input id="nomeConta" placeholder="Ex: João Silva" value={nomeConta} onChange={(e) => setNomeConta(e.target.value)} required />
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="conta">{metodo === "banco" ? "Número da conta (IBAN)" : "Número de telefone"}</Label>
                         <Input id="conta" placeholder={metodo === "banco" ? "Ex: 00001234567890" : "Ex: 84 123 4567"} value={conta} onChange={(e) => setConta(e.target.value)} required />
                       </div>
