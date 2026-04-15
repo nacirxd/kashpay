@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
-import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send, Plus } from "lucide-react";
+import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send, Plus, Save, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,9 +25,12 @@ const Finances = () => {
   const [conta, setConta] = useState("");
   const [nomeConta, setNomeConta] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   // Saved payment info from profile
   const [paymentInfo, setPaymentInfo] = useState<Record<string, string>>({});
+  // Editable payment info fields
+  const [editPayment, setEditPayment] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -40,14 +43,16 @@ const Finances = () => {
       setWithdrawals(withdrawRes.data || []);
       if (profileRes.data) {
         const p = profileRes.data as any;
-        setPaymentInfo({
+        const info = {
           mpesa_nome: p.mpesa_nome || "",
           mpesa_telefone: p.mpesa_telefone || "",
           emola_nome: p.emola_nome || "",
           emola_telefone: p.emola_telefone || "",
           banco_nome: p.banco_nome || "",
           banco_conta: p.banco_conta || "",
-        });
+        };
+        setPaymentInfo(info);
+        setEditPayment(info);
       }
       setLoading(false);
     });
@@ -186,6 +191,27 @@ const Finances = () => {
     }
   };
 
+  const handleSavePaymentMethods = async () => {
+    if (!user) return;
+    setSavingPayment(true);
+    const update = {
+      mpesa_nome: editPayment.mpesa_nome?.trim() || "",
+      mpesa_telefone: editPayment.mpesa_telefone?.trim() || "",
+      emola_nome: editPayment.emola_nome?.trim() || "",
+      emola_telefone: editPayment.emola_telefone?.trim() || "",
+      banco_nome: editPayment.banco_nome?.trim() || "",
+      banco_conta: editPayment.banco_conta?.trim() || "",
+    };
+    const { error } = await supabase.from("profiles").update(update).eq("user_id", user.id);
+    setSavingPayment(false);
+    if (error) {
+      toast.error("Erro ao guardar dados de pagamento.");
+    } else {
+      toast.success("Dados de pagamento guardados!");
+      setPaymentInfo(update);
+    }
+  };
+
   return (
     <DashboardLayout>
       <h1 className="text-lg font-semibold mb-6">Finanças</h1>
@@ -262,7 +288,47 @@ const Finances = () => {
           )}
 
           {activeTab === "saque" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Métodos de pagamento guardados */}
+              <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-semibold flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-primary" />
+                    Métodos de pagamento
+                  </h2>
+                  <Button size="sm" variant="outline" onClick={handleSavePaymentMethods} disabled={savingPayment}>
+                    {savingPayment ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Guardar</>}
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* M-Pesa */}
+                  <div className="space-y-3 rounded-lg border border-border/50 p-4">
+                    <h3 className="text-sm font-medium">M-Pesa</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="mpesa_nome" className="text-xs">Nome</Label>
+                      <Input id="mpesa_nome" placeholder="Ex: João Silva" value={editPayment.mpesa_nome || ""} onChange={(e) => setEditPayment((p) => ({ ...p, mpesa_nome: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mpesa_telefone" className="text-xs">Número de telefone</Label>
+                      <Input id="mpesa_telefone" placeholder="Ex: 84 123 4567" value={editPayment.mpesa_telefone || ""} onChange={(e) => setEditPayment((p) => ({ ...p, mpesa_telefone: e.target.value }))} />
+                    </div>
+                  </div>
+                  {/* e-Mola */}
+                  <div className="space-y-3 rounded-lg border border-border/50 p-4">
+                    <h3 className="text-sm font-medium">e-Mola</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="emola_nome" className="text-xs">Nome</Label>
+                      <Input id="emola_nome" placeholder="Ex: João Silva" value={editPayment.emola_nome || ""} onChange={(e) => setEditPayment((p) => ({ ...p, emola_nome: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emola_telefone" className="text-xs">Número de telefone</Label>
+                      <Input id="emola_telefone" placeholder="Ex: 86 123 4567" value={editPayment.emola_telefone || ""} onChange={(e) => setEditPayment((p) => ({ ...p, emola_telefone: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Solicitar saque + histórico */}
               <div className="flex justify-end">
                 <Dialog open={showWithdrawForm} onOpenChange={setShowWithdrawForm}>
                   <DialogTrigger asChild>
