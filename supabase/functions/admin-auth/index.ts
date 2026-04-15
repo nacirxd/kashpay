@@ -1,6 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { TOTP, Secret } from "https://esm.sh/otpauth@9.3.6";
 
+const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN';
+
+async function convertMznToBrlCents(amountMzn: number) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const resp = await fetch(EXCHANGE_RATE_URL, { signal: ctrl.signal });
+    const data = await resp.json();
+    const rate = Number(data?.rates?.BRL);
+    if (!resp.ok || !Number.isFinite(rate) || rate <= 0) throw new Error('Falha cotação');
+    return { rate, cents: Math.round(amountMzn * rate * 100) };
+  } finally {
+    clearTimeout(t);
+  }
+}
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
