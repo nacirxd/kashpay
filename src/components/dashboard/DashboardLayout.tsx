@@ -63,13 +63,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single(),
         supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
       ]);
-        supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
-      ]);
 
       if (isCancelled) return;
 
       const profileName = typeof profile?.nome === "string" ? profile.nome.trim() : "";
       if (profileName) setUserName(profileName);
+      const profileAvatar = (profile as any)?.avatar_url || "";
+      if (profileAvatar) setAvatarUrl(profileAvatar);
       setTotalRevenue((sales || []).reduce((a, s) => a + Number(s.valor), 0));
     };
 
