@@ -100,6 +100,44 @@ Deno.serve(async (req) => {
       });
     }
 
+    // USER DETAILS (sales stats)
+    if (action === "user_details") {
+      const uid = body.user_id;
+      const { data: sales } = await supabaseAdmin.from("sales").select("valor, status, product_id").eq("user_id", uid);
+      const approved = (sales || []).filter(s => s.status === "approved");
+      const totalRevenue = approved.reduce((a, s) => a + Number(s.valor), 0);
+      const totalSales = approved.length;
+
+      // Top product
+      const productCount: Record<string, number> = {};
+      for (const s of approved) {
+        productCount[s.product_id] = (productCount[s.product_id] || 0) + 1;
+      }
+      const topProductId = Object.entries(productCount).sort((a, b) => b[1] - a[1])[0];
+      let topProduct = null;
+      if (topProductId) {
+        const { data: prod } = await supabaseAdmin.from("products").select("nome, preco").eq("id", topProductId[0]).single();
+        topProduct = prod ? { nome: prod.nome, preco: prod.preco, sales_count: topProductId[1] } : null;
+      }
+
+      // Ranking
+      const { data: allSales } = await supabaseAdmin.from("sales").select("user_id, valor, status");
+      const sellerTotals: Record<string, number> = {};
+      for (const s of (allSales || []).filter(s => s.status === "approved")) {
+        sellerTotals[s.user_id] = (sellerTotals[s.user_id] || 0) + Number(s.valor);
+      }
+      const sorted = Object.entries(sellerTotals).sort((a, b) => b[1] - a[1]);
+      const rank = sorted.findIndex(([id]) => id === uid) + 1;
+
+      return new Response(JSON.stringify({
+        total_revenue: totalRevenue,
+        total_sales: totalSales,
+        top_product: topProduct,
+        rank: rank || null,
+        total_sellers: sorted.length,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // UPDATE USER STATUS
     if (action === "update_user_status") {
       const { error } = await supabaseAdmin.from("profiles").update({ status: body.status }).eq("user_id", body.user_id);
