@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
       const secret = Secret.fromUTF8(totpSecret);
       const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret, digits: 6, period: 30 });
       const uri = totp.toString();
-      return new Response(JSON.stringify({ secret: totpSecret, uri }), {
+      return new Response(JSON.stringify({ manual_key: secret.base32, uri }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
