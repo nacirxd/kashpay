@@ -96,7 +96,7 @@ export function exportPDF(
     </div>
     <div class="header-right">
       Período: ${dateLabel}<br>
-      Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}
+      Gerado em ${formatDateTimeMZ(new Date().toISOString())}
     </div>
   </div>
 
@@ -118,7 +118,7 @@ export function exportPDF(
         ${sales
           .map(
             (s) => `<tr>
-          <td>${format(new Date(s.created_at), "dd/MM/yyyy")}</td>
+          <td>${formatDateTimeMZ(s.created_at)}</td>
           <td>${(s.products as any)?.nome || "Produto"}</td>
           <td>${s.buyer_name || "-"}</td>
           <td style="font-weight:600">${formatMZN(Number(s.valor))}</td>
