@@ -52,17 +52,43 @@ Deno.serve(async (req) => {
 
     // DASHBOARD STATS
     if (action === "stats") {
+      let salesQuery = supabaseAdmin.from("sales").select("valor, status, user_id, created_at");
+      if (body.date_from) salesQuery = salesQuery.gte("created_at", body.date_from);
+      if (body.date_to) salesQuery = salesQuery.lte("created_at", body.date_to);
+
       const [{ count: userCount }, { data: sales }, { data: pendingWithdrawals }] = await Promise.all([
         supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
-        supabaseAdmin.from("sales").select("valor, status"),
+        salesQuery,
         supabaseAdmin.from("withdrawals").select("*").eq("status", "pendente"),
       ]);
       const approvedSales = (sales || []).filter(s => s.status === "approved");
+
+      // Top sellers
+      const sellerMap: Record<string, number> = {};
+      for (const s of approvedSales) {
+        sellerMap[s.user_id] = (sellerMap[s.user_id] || 0) + Number(s.valor);
+      }
+      const topSellerIds = Object.entries(sellerMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      let topSellers: any[] = [];
+      if (topSellerIds.length > 0) {
+        const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, nome, email, avatar_url").in("user_id", topSellerIds.map(t => t[0]));
+        const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]));
+        topSellers = topSellerIds.map(([uid, total]) => ({
+          user_id: uid,
+          nome: profileMap[uid]?.nome || "—",
+          email: profileMap[uid]?.email || "—",
+          avatar_url: profileMap[uid]?.avatar_url || null,
+          total_revenue: total,
+          total_sales: approvedSales.filter(s => s.user_id === uid).length,
+        }));
+      }
+
       return new Response(JSON.stringify({
         total_users: userCount || 0,
         total_sales: (sales || []).length,
         total_revenue: approvedSales.reduce((a, s) => a + Number(s.valor), 0),
         pending_withdrawals: (pendingWithdrawals || []).length,
+        top_sellers: topSellers,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
