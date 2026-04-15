@@ -30,7 +30,7 @@ const Sales = () => {
       });
   }, [user]);
 
-  const byStatus = filter === "all" ? sales : sales.filter((s) => s.status === filter);
+  const byStatus = filter === "all" ? sales : filter === "approved" ? sales.filter((s) => s.status === "approved") : sales.filter((s) => s.status !== "approved");
 
   const filtered = useMemo(() => {
     if (!search.trim()) return byStatus;
@@ -69,7 +69,7 @@ const Sales = () => {
   const counts = {
     all: sales.length,
     approved: sales.filter((s) => s.status === "approved").length,
-    pending: sales.filter((s) => s.status === "pending").length,
+    pending: sales.filter((s) => s.status !== "approved").length,
   };
 
   const methodLabels: Record<string, string> = {
