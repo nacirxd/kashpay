@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { TOTP } from "https://esm.sh/otpauth@9.3.6";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,19 @@ Deno.serve(async (req) => {
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Verify TOTP 2FA
+      const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
+      if (totpSecret) {
+        const totp = new TOTP({ secret: totpSecret, digits: 6, period: 30 });
+        const valid = totp.validate({ token: body.totp_code || "", window: 1 });
+        if (valid === null) {
+          return new Response(JSON.stringify({ error: "Código 2FA inválido" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       const token = crypto.randomUUID();
       const { error } = await supabaseAdmin.from("admin_sessions").insert({
         session_token: token,
