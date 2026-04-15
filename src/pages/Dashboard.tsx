@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar as CalendarWidget } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, subDays, startOfDay, isAfter, isBefore } from "date-fns";
+import { format, subDays, isAfter, isBefore } from "date-fns";
+import { toMozambiqueDate, formatDateMZ } from "@/lib/timezone";
 
 type DateRange = { from: Date; to: Date };
 type FilterPreset = "today" | "7d" | "30d" | "custom";
@@ -30,7 +31,14 @@ const Dashboard = () => {
   const dateRange: DateRange = useMemo(() => {
     const now = new Date();
     switch (preset) {
-      case "today": return { from: startOfDay(now), to: now };
+      case "today": {
+        const mzNow = toMozambiqueDate(now);
+        const startMZ = new Date(mzNow);
+        startMZ.setHours(0, 0, 0, 0);
+        // Convert back: offset between local start-of-day in MZ and UTC
+        const offsetMs = now.getTime() - mzNow.getTime();
+        return { from: new Date(startMZ.getTime() + offsetMs), to: now };
+      }
       case "7d": return { from: subDays(now, 7), to: now };
       case "30d": return { from: subDays(now, 30), to: now };
       case "custom": return customRange;
@@ -77,7 +85,7 @@ const Dashboard = () => {
   const dailyData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredSales.filter((s) => s.status === "approved").forEach((s) => {
-      const key = format(new Date(s.created_at), "dd/MM");
+      const key = formatDateMZ(s.created_at, { day: "2-digit", month: "2-digit" });
       map[key] = (map[key] || 0) + Number(s.valor);
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
@@ -368,7 +376,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="text-sm font-medium">{(sale.products as any)?.nome || "Produto"}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleDateString("pt-BR")}</p>
+                        <p className="text-xs text-muted-foreground">{formatDateMZ(sale.created_at)}</p>
                       </div>
                     </div>
                     <div className="text-right">
