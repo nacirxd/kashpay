@@ -3,6 +3,7 @@ import { useAdmin } from "@/contexts/AdminContext";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
+import { formatDateTimeMZ } from "@/lib/timezone";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -12,9 +13,14 @@ import {
 interface Product {
   id: string;
   nome: string;
+  descricao: string | null;
   preco: number;
+  tipo: string;
+  delivery_type: string;
   status: string;
   user_id: string;
+  seller_name: string;
+  seller_email: string;
   created_at: string;
 }
 
@@ -30,6 +36,7 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
   const [confirm, setConfirm] = useState<{ id: string; status: string; name: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -60,49 +67,77 @@ const AdminProducts = () => {
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
               <TableHead className="text-gray-400">Produto</TableHead>
+              <TableHead className="text-gray-400">Vendedor</TableHead>
               <TableHead className="text-gray-400">Preço</TableHead>
+              <TableHead className="text-gray-400">Tipo</TableHead>
               <TableHead className="text-gray-400">Status</TableHead>
+              <TableHead className="text-gray-400">Data</TableHead>
               <TableHead className="text-gray-400">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={4} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
             ) : products.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={4} className="text-center text-gray-500 py-8">Nenhum produto</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Nenhum produto</TableCell></TableRow>
             ) : (
               products.map((p) => {
                 const st = statusMap[p.status] || statusMap.pending;
+                const isExpanded = expanded === p.id;
                 return (
-                  <TableRow key={p.id} className="border-gray-800 hover:bg-gray-800/50">
-                    <TableCell className="font-medium">{p.nome}</TableCell>
-                    <TableCell className="text-gray-400">{formatMZN(p.preco)}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${st.classes}`}>
-                        {st.label}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {p.status !== "approved" && (
-                          <button
-                            onClick={() => setConfirm({ id: p.id, status: "approved", name: p.nome })}
-                            className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                          >
-                            Aprovar
-                          </button>
-                        )}
-                        {p.status !== "rejected" && (
-                          <button
-                            onClick={() => setConfirm({ id: p.id, status: "rejected", name: p.nome })}
-                            className="rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
-                          >
-                            Rejeitar
-                          </button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <>
+                    <TableRow key={p.id} className="border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : p.id)}>
+                      <TableCell className="font-medium">{p.nome}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">{p.seller_name}</div>
+                        <div className="text-xs text-gray-500">{p.seller_email}</div>
+                      </TableCell>
+                      <TableCell className="text-gray-400">{formatMZN(p.preco)}</TableCell>
+                      <TableCell className="text-gray-400 capitalize">{p.tipo}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${st.classes}`}>
+                          {st.label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-gray-400 text-xs">{formatDateTimeMZ(p.created_at)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          {p.status !== "approved" && (
+                            <button
+                              onClick={() => setConfirm({ id: p.id, status: "approved", name: p.nome })}
+                              className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                            >
+                              Aprovar
+                            </button>
+                          )}
+                          {p.status !== "rejected" && (
+                            <button
+                              onClick={() => setConfirm({ id: p.id, status: "rejected", name: p.nome })}
+                              className="rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+                            >
+                              Rejeitar
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow key={`${p.id}-detail`} className="border-gray-800 bg-gray-900/50">
+                        <TableCell colSpan={7}>
+                          <div className="grid grid-cols-2 gap-4 py-2 text-sm">
+                            <div>
+                              <span className="text-gray-500">Descrição:</span>
+                              <p className="text-gray-300 mt-1">{p.descricao || "Sem descrição"}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Entrega:</span>
+                              <p className="text-gray-300 mt-1 capitalize">{p.delivery_type}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 );
               })
             )}
