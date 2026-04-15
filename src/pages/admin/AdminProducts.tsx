@@ -4,7 +4,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { formatDateTimeMZ } from "@/lib/timezone";
-import { Search, ImageOff } from "lucide-react";
+import { Search, ImageOff, Eye, X, ExternalLink, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -28,6 +28,8 @@ interface Product {
   delivery_type: string;
   status: string;
   image_url: string | null;
+  file_url: string | null;
+  external_url: string | null;
   user_id: string;
   seller_name: string;
   seller_email: string;
@@ -56,6 +58,7 @@ const AdminProducts = () => {
   const [confirm, setConfirm] = useState<{ id: string; status: string; name: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
@@ -141,6 +144,7 @@ const AdminProducts = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
+              <TableHead className="text-gray-400 w-10"></TableHead>
               <TableHead className="text-gray-400 w-14"></TableHead>
               <TableHead className="text-gray-400">Produto</TableHead>
               <TableHead className="text-gray-400">Vendedor</TableHead>
@@ -152,9 +156,9 @@ const AdminProducts = () => {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={8} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum produto"}</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={8} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum produto"}</TableCell></TableRow>
             ) : (
               filtered.map((p) => {
                 const st = statusMap[p.status] || statusMap.pending;
@@ -162,6 +166,15 @@ const AdminProducts = () => {
                 return (
                   <>
                     <TableRow key={p.id} className="border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : p.id)}>
+                      <TableCell className="pr-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
+                          className="rounded-lg p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-gray-800 transition-colors"
+                          title="Ver material"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </TableCell>
                       <TableCell className="pr-0">
                         <div className="h-10 w-10 rounded-lg bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
                          {getImageUrl(p.image_url) ? (
@@ -209,7 +222,7 @@ const AdminProducts = () => {
                     </TableRow>
                     {isExpanded && (
                       <TableRow key={`${p.id}-detail`} className="border-gray-800 bg-gray-900/50">
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={8}>
                           <div className="flex gap-4 py-2 text-sm">
                             {getImageUrl(p.image_url) && (
                               <img src={getImageUrl(p.image_url)!} alt={p.nome} className="h-24 w-24 rounded-lg object-cover shrink-0" />
@@ -236,7 +249,64 @@ const AdminProducts = () => {
         </Table>
       </div>
 
-      <AlertDialog open={!!confirm} onOpenChange={() => setConfirm(null)}>
+      {/* Product detail modal */}
+      {viewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 overflow-y-auto py-8" onClick={() => setViewProduct(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4 my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">Material do Produto</h2>
+              <button onClick={() => setViewProduct(null)} className="text-gray-500 hover:text-gray-300">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {getImageUrl(viewProduct.image_url) && (
+              <img src={getImageUrl(viewProduct.image_url)!} alt={viewProduct.nome} className="w-full h-48 object-cover rounded-lg mb-4" />
+            )}
+
+            <h3 className="font-semibold text-lg mb-1">{viewProduct.nome}</h3>
+            <p className="text-sm text-gray-400 mb-4">{viewProduct.descricao || "Sem descrição"}</p>
+
+            <div className="space-y-3 text-sm mb-5">
+              <div className="flex justify-between"><span className="text-gray-500">Preço</span><span>{formatMZN(viewProduct.preco)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Tipo</span><span className="capitalize">{viewProduct.tipo}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Entrega</span><span className="capitalize">{viewProduct.delivery_type}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Vendedor</span><span>{viewProduct.seller_name}</span></div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-4 space-y-3">
+              <p className="text-xs text-gray-500 font-medium">Material / Entrega</p>
+              {viewProduct.file_url && (
+                <a
+                  href={viewProduct.file_url.startsWith("http") ? viewProduct.file_url : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-files/${viewProduct.file_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-sm text-emerald-400 hover:bg-gray-800 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  Baixar arquivo do produto
+                </a>
+              )}
+              {viewProduct.external_url && (
+                <a
+                  href={viewProduct.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-sm text-blue-400 hover:bg-gray-800 transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {viewProduct.external_url}
+                </a>
+              )}
+              {!viewProduct.file_url && !viewProduct.external_url && (
+                <p className="text-gray-500 text-sm">Nenhum material configurado.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <AlertDialogContent className="bg-[#13151d] border-gray-800 text-gray-100">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar ação</AlertDialogTitle>
