@@ -5,7 +5,8 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { exportCSV, exportPDF } from "@/lib/exportReports";
 import { motion } from "framer-motion";
-import { ShoppingCart, Download, FileText, Eye, X, Phone, Mail, User, CreditCard, Calendar, Package, Hash } from "lucide-react";
+import { ShoppingCart, Download, FileText, Eye, X, Phone, Mail, User, CreditCard, Calendar, Package, Hash, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const Sales = () => {
@@ -14,6 +15,7 @@ const Sales = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "approved" | "pending">("all");
   const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -28,7 +30,17 @@ const Sales = () => {
       });
   }, [user]);
 
-  const filtered = filter === "all" ? sales : sales.filter((s) => s.status === filter);
+  const byStatus = filter === "all" ? sales : sales.filter((s) => s.status === filter);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return byStatus;
+    const q = search.toLowerCase().trim();
+    return byStatus.filter((s) =>
+      (s.buyer_name || "").toLowerCase().includes(q) ||
+      (s.buyer_email || "").toLowerCase().includes(q) ||
+      (s.buyer_whatsapp || "").toLowerCase().includes(q)
+    );
+  }, [byStatus, search]);
 
   const stats = useMemo(() => {
     const approved = filtered.filter((s) => s.status === "approved");
