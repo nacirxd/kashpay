@@ -191,6 +191,27 @@ const Finances = () => {
     }
   };
 
+  const handleSavePaymentMethods = async () => {
+    if (!user) return;
+    setSavingPayment(true);
+    const update = {
+      mpesa_nome: editPayment.mpesa_nome?.trim() || "",
+      mpesa_telefone: editPayment.mpesa_telefone?.trim() || "",
+      emola_nome: editPayment.emola_nome?.trim() || "",
+      emola_telefone: editPayment.emola_telefone?.trim() || "",
+      banco_nome: editPayment.banco_nome?.trim() || "",
+      banco_conta: editPayment.banco_conta?.trim() || "",
+    };
+    const { error } = await supabase.from("profiles").update(update).eq("user_id", user.id);
+    setSavingPayment(false);
+    if (error) {
+      toast.error("Erro ao guardar dados de pagamento.");
+    } else {
+      toast.success("Dados de pagamento guardados!");
+      setPaymentInfo(update);
+    }
+  };
+
   return (
     <DashboardLayout>
       <h1 className="text-lg font-semibold mb-6">Finanças</h1>
