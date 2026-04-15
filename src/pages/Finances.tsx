@@ -92,22 +92,22 @@ const Finances = () => {
     { label: "Total transações", value: summary.total.toString(), icon: TrendingUp, color: "text-foreground" },
   ];
 
-  const handleWithdraw = async (e: React.FormEvent) => {
+  const handleWithdraw = async (e: React.FormEvent): Promise<boolean> => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) return false;
 
     const amount = parseFloat(valor);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Informe um valor válido.");
-      return;
+      return false;
     }
     if (amount > summary.saldo) {
       toast.error("Saldo insuficiente.");
-      return;
+      return false;
     }
     if (!conta.trim()) {
       toast.error("Informe o número da conta.");
-      return;
+      return false;
     }
 
     setSubmitting(true);
@@ -121,11 +121,14 @@ const Finances = () => {
 
     if (error) {
       toast.error("Erro ao solicitar saque.");
+      return false;
     } else {
       toast.success("Pedido de saque enviado!");
       setWithdrawals((prev) => [data, ...prev]);
       setValor("");
       setConta("");
+      setShowWithdrawForm(false);
+      return true;
     }
   };
 
