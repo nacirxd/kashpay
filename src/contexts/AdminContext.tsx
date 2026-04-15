@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface AdminContextType {
   sessionToken: string | null;
   loading: boolean;
-  login: (key: string) => Promise<{ error?: string }>;
+  login: (key: string, totpCode: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   adminFetch: (action: string, body?: Record<string, unknown>) => Promise<any>;
 }
@@ -41,10 +41,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     return data;
   };
 
-  const login = async (key: string) => {
+  const login = async (key: string, totpCode: string) => {
     try {
       const { data, error } = await supabase.functions.invoke("admin-auth", {
-        body: { action: "login", access_key: key },
+        body: { action: "login", access_key: key, totp_code: totpCode },
       });
       if (error) return { error: error.message };
       if (data?.error) return { error: data.error };
