@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
-import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send } from "lucide-react";
+import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const Finances = () => {
