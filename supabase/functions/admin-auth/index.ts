@@ -263,6 +263,107 @@ Deno.serve(async (req) => {
     if (action === "update_order_status") {
       const { error } = await supabaseAdmin.from("sales").update({ status: body.status }).eq("id", body.order_id);
       if (error) throw error;
+
+      // When marking as approved, fire UTMify + purchase confirmation email
+      if (body.status === "approved") {
+        // Fetch sale + product details
+        const { data: sale } = await supabaseAdmin.from("sales").select("*").eq("id", body.order_id).single();
+        if (sale) {
+          const { data: product } = await supabaseAdmin.from("products").select("*").eq("id", sale.product_id).single();
+
+          // 1. Send purchase confirmation email
+          if (sale.buyer_email) {
+            try {
+              await supabaseAdmin.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "purchase-confirmation",
+                  recipientEmail: sale.buyer_email,
+                  idempotencyKey: `purchase-confirm-admin-${sale.id}`,
+                  templateData: {
+                    buyerName: sale.buyer_name || undefined,
+                    productName: product?.nome || "Produto",
+                    amount: `${Number(sale.valor).toLocaleString("pt-MZ")} MT`,
+                    paymentMethod: sale.payment_method || undefined,
+                    accessUrl: product?.delivery_type === "link" ? product.external_url : undefined,
+                    accessType: product?.delivery_type || "link",
+                  },
+                },
+              });
+              console.log("Email de compra enviado para:", sale.buyer_email);
+            } catch (emailErr) {
+              console.error("Erro ao enviar email de compra:", emailErr);
+            }
+          }
+
+          // 2. Fire UTMify event
+          try {
+            const { data: utmifyIntegration } = await supabaseAdmin
+              .from("integrations")
+              .select("config, ativo")
+              .eq("user_id", sale.user_id)
+              .eq("tipo", "utmify")
+              .eq("ativo", true)
+              .maybeSingle();
+
+            if (utmifyIntegration?.config) {
+              const config = utmifyIntegration.config as any;
+              const apiToken = config.api_token || config.token;
+              if (apiToken && sale.buyer_name && sale.buyer_email) {
+                const { rate, cents } = await convertMznToBrlCents(Number(sale.valor));
+                console.log("UTMify admin: cotação MZN→BRL:", rate);
+                const utmCtrl = new AbortController();
+                const utmT = setTimeout(() => utmCtrl.abort(), 8000);
+                const utmifyResp = await fetch("https://api.utmify.com.br/api-credentials/orders", {
+                  method: "POST",
+                  signal: utmCtrl.signal,
+                  headers: { "Content-Type": "application/json", "x-api-token": apiToken },
+                  body: JSON.stringify({
+                    orderId: sale.id,
+                    platform: "MoonPay",
+                    paymentMethod: "unknown",
+                    status: "paid",
+                    createdAt: new Date().toISOString(),
+                    approvedDate: new Date().toISOString(),
+                    customer: {
+                      name: sale.buyer_name,
+                      email: sale.buyer_email,
+                      phone: sale.payment_phone || sale.buyer_whatsapp || null,
+                      document: null,
+                    },
+                    products: [{
+                      id: product?.id || sale.product_id,
+                      name: product?.nome || "Produto",
+                      planId: product?.id || sale.product_id,
+                      planName: product?.nome || "Produto digital",
+                      quantity: 1,
+                      priceInCents: cents,
+                    }],
+                    trackingParameters: {
+                      src: sale.utm_source || null,
+                      utm_source: sale.utm_source || null,
+                      utm_medium: sale.utm_medium || null,
+                      utm_campaign: sale.utm_campaign || null,
+                      utm_content: sale.utm_content || null,
+                      utm_term: null,
+                    },
+                    commission: {
+                      totalPriceInCents: cents,
+                      gatewayFeeInCents: 0,
+                      userCommissionInCents: cents,
+                      currency: "BRL",
+                    },
+                  }),
+                });
+                clearTimeout(utmT);
+                console.log("UTMify admin response:", utmifyResp.status, await utmifyResp.text());
+              }
+            }
+          } catch (utmErr) {
+            console.error("Erro UTMify admin:", utmErr);
+          }
+        }
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
