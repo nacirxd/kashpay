@@ -51,6 +51,8 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/redefinirsenha" element={<ResetPassword />} />
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
 
