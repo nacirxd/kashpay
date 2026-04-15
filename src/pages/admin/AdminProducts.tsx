@@ -306,7 +306,7 @@ const AdminProducts = () => {
         </div>
       )}
 
-
+      <AlertDialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
         <AlertDialogContent className="bg-[#13151d] border-gray-800 text-gray-100">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar ação</AlertDialogTitle>
