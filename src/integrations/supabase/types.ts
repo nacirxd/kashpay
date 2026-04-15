@@ -85,6 +85,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           banco_conta: string | null
           banco_nome: string | null
           created_at: string
@@ -99,6 +100,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           banco_conta?: string | null
           banco_nome?: string | null
           created_at?: string
@@ -113,6 +115,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           banco_conta?: string | null
           banco_nome?: string | null
           created_at?: string
