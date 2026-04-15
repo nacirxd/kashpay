@@ -249,7 +249,64 @@ const AdminProducts = () => {
         </Table>
       </div>
 
-      <AlertDialog open={!!confirm} onOpenChange={() => setConfirm(null)}>
+      {/* Product detail modal */}
+      {viewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 overflow-y-auto py-8" onClick={() => setViewProduct(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4 my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">Material do Produto</h2>
+              <button onClick={() => setViewProduct(null)} className="text-gray-500 hover:text-gray-300">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {getImageUrl(viewProduct.image_url) && (
+              <img src={getImageUrl(viewProduct.image_url)!} alt={viewProduct.nome} className="w-full h-48 object-cover rounded-lg mb-4" />
+            )}
+
+            <h3 className="font-semibold text-lg mb-1">{viewProduct.nome}</h3>
+            <p className="text-sm text-gray-400 mb-4">{viewProduct.descricao || "Sem descrição"}</p>
+
+            <div className="space-y-3 text-sm mb-5">
+              <div className="flex justify-between"><span className="text-gray-500">Preço</span><span>{formatMZN(viewProduct.preco)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Tipo</span><span className="capitalize">{viewProduct.tipo}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Entrega</span><span className="capitalize">{viewProduct.delivery_type}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Vendedor</span><span>{viewProduct.seller_name}</span></div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-4 space-y-3">
+              <p className="text-xs text-gray-500 font-medium">Material / Entrega</p>
+              {viewProduct.file_url && (
+                <a
+                  href={viewProduct.file_url.startsWith("http") ? viewProduct.file_url : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-files/${viewProduct.file_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-sm text-emerald-400 hover:bg-gray-800 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  Baixar arquivo do produto
+                </a>
+              )}
+              {viewProduct.external_url && (
+                <a
+                  href={viewProduct.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-sm text-blue-400 hover:bg-gray-800 transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {viewProduct.external_url}
+                </a>
+              )}
+              {!viewProduct.file_url && !viewProduct.external_url && (
+                <p className="text-gray-500 text-sm">Nenhum material configurado.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <AlertDialogContent className="bg-[#13151d] border-gray-800 text-gray-100">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar ação</AlertDialogTitle>
