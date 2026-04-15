@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { TOTP } from "https://esm.sh/otpauth@9.3.6";
+import { TOTP, Secret } from "https://esm.sh/otpauth@9.3.6";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       // Verify TOTP 2FA
       const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
       if (totpSecret) {
-        const totp = new TOTP({ secret: totpSecret, digits: 6, period: 30 });
+        const totp = new TOTP({ secret: Secret.fromUTF8(totpSecret), digits: 6, period: 30 });
         const valid = totp.validate({ token: body.totp_code || "", window: 1 });
         if (valid === null) {
           return new Response(JSON.stringify({ error: "Código 2FA inválido" }), {
@@ -244,7 +244,8 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret: totpSecret, digits: 6, period: 30 });
+      const secret = Secret.fromUTF8(totpSecret);
+      const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret, digits: 6, period: 30 });
       const uri = totp.toString();
       return new Response(JSON.stringify({ secret: totpSecret, uri }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
