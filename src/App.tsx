@@ -18,6 +18,7 @@ import Integrations from "./pages/Integrations";
 import IntegrationDetail from "./pages/IntegrationDetail";
 import Settings from "./pages/Settings";
 import Finances from "./pages/Finances";
+import Sales from "./pages/Sales";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
