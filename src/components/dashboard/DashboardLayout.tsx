@@ -7,12 +7,13 @@ import { Progress } from "@/components/ui/progress";
 import { useTheme } from "@/hooks/use-theme";
 import {
   LayoutDashboard, Package, Link2, Settings, LogOut,
-  DollarSign, Menu, X, Moon, Sun
+  DollarSign, Menu, X, Moon, Sun, ShoppingCart
 } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Package, label: "Produtos", path: "/produtos" },
+  { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
   { icon: Link2, label: "Integrações", path: "/integracoes" },
   { icon: DollarSign, label: "Finanças", path: "/financas" },
   { icon: Settings, label: "Configurações", path: "/configuracoes" },

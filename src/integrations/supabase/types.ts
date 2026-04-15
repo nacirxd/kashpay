@@ -112,6 +112,8 @@ export type Database = {
       }
       sales: {
         Row: {
+          buyer_email: string | null
+          buyer_name: string | null
           created_at: string
           id: string
           product_id: string
@@ -124,6 +126,8 @@ export type Database = {
           valor: number
         }
         Insert: {
+          buyer_email?: string | null
+          buyer_name?: string | null
           created_at?: string
           id?: string
           product_id: string
@@ -136,6 +140,8 @@ export type Database = {
           valor: number
         }
         Update: {
+          buyer_email?: string | null
+          buyer_name?: string | null
           created_at?: string
           id?: string
           product_id?: string
