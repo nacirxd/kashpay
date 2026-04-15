@@ -144,6 +144,7 @@ const AdminProducts = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
+              <TableHead className="text-gray-400 w-10"></TableHead>
               <TableHead className="text-gray-400 w-14"></TableHead>
               <TableHead className="text-gray-400">Produto</TableHead>
               <TableHead className="text-gray-400">Vendedor</TableHead>
