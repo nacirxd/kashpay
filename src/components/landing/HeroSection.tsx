@@ -1,19 +1,19 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ShieldCheck, Lock, TrendingUp } from "lucide-react";
+import { ArrowRight, ShieldCheck, Lock, TrendingUp, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden bg-background">
       {/* Ambient gradient blobs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/8 blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-primary/5 blur-[100px]" />
+      <div className="absolute top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full bg-primary/10 blur-[100px]" />
+      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-primary/6 blur-[80px]" />
 
       {/* Subtle grid */}
-      <div className="absolute inset-0 opacity-[0.025]" style={{
+      <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)',
         backgroundSize: '32px 32px',
       }} />
@@ -25,14 +25,14 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2 text-sm font-semibold text-primary mb-8">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-semibold text-primary mb-8">
               <ShieldCheck className="h-4 w-4" />
               Plataforma segura de pagamentos digitais
             </span>
           </motion.div>
 
           <motion.h1
-            className="text-4xl sm:text-5xl md:text-[4.2rem] font-extrabold tracking-tight leading-[1.08] mb-7"
+            className="text-4xl sm:text-5xl md:text-[4.2rem] font-extrabold tracking-tight leading-[1.08] mb-7 text-foreground"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.08 }}
@@ -59,34 +59,63 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.24 }}
           >
-            <Button variant="hero" size="lg" className="h-14 px-10 rounded-xl text-base font-semibold shadow-elevated" onClick={() => navigate("/register")}>
+            <Button
+              size="lg"
+              className="h-14 px-10 rounded-xl text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_8px_30px_hsl(160_84%_39%/0.3)]"
+              onClick={() => navigate("/register")}
+            >
               Criar conta grátis
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="heroOutline" size="lg" className="h-14 px-8 rounded-xl text-base" onClick={() => navigate("/login")}>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-14 px-8 rounded-xl text-base font-medium border-border hover:bg-muted"
+              onClick={() => navigate("/login")}
+            >
               Já tenho conta
             </Button>
           </motion.div>
 
           {/* Trust indicators */}
           <motion.div
-            className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto"
+            className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-6"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className="flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-4 py-3 shadow-soft">
-              <Lock className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-sm font-medium text-muted-foreground">Dados criptografados</span>
-            </div>
-            <div className="flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-4 py-3 shadow-soft">
-              <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-sm font-medium text-muted-foreground">Checkout seguro</span>
-            </div>
-            <div className="flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-4 py-3 shadow-soft">
-              <TrendingUp className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-sm font-medium text-muted-foreground">Alta conversão</span>
-            </div>
+            {[
+              { icon: Lock, label: "Dados criptografados" },
+              { icon: ShieldCheck, label: "Checkout seguro" },
+              { icon: TrendingUp, label: "Alta conversão" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <item.icon className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground/70">{item.label}</span>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Social proof bar */}
+          <motion.div
+            className="mt-12 pt-8 border-t border-border/40 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.55 }}
+          >
+            {[
+              "Sem mensalidade",
+              "Pagamentos M-Pesa & e-Mola",
+              "Entrega automática",
+              "Dashboard completo",
+            ].map((text) => (
+              <div key={text} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <span>{text}</span>
+              </div>
+            ))}
           </motion.div>
         </div>
       </div>
