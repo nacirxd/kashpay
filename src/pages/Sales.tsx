@@ -5,13 +5,15 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { exportCSV, exportPDF } from "@/lib/exportReports";
 import { motion } from "framer-motion";
-import { ShoppingCart, Download, FileText } from "lucide-react";
+import { ShoppingCart, Download, FileText, Eye, X, Phone, Mail, User, CreditCard, Calendar, Package, Hash } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const Sales = () => {
   const { user } = useAuth();
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "approved" | "pending">("all");
+  const [selectedSale, setSelectedSale] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -46,16 +48,21 @@ const Sales = () => {
   };
 
   const statusColors: Record<string, string> = {
-    approved: "text-primary",
-    pending: "text-yellow-600",
-    refunded: "text-orange-500",
-    chargeback: "text-destructive",
+    approved: "bg-primary/10 text-primary",
+    pending: "bg-yellow-500/10 text-yellow-600",
+    refunded: "bg-orange-500/10 text-orange-500",
+    chargeback: "bg-destructive/10 text-destructive",
   };
 
   const counts = {
     all: sales.length,
     approved: sales.filter((s) => s.status === "approved").length,
     pending: sales.filter((s) => s.status === "pending").length,
+  };
+
+  const methodLabels: Record<string, string> = {
+    mpesa: "M-Pesa",
+    emola: "e-Mola",
   };
 
   return (
@@ -120,17 +127,18 @@ const Sales = () => {
                 <thead>
                   <tr className="border-b border-border/50">
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Cliente</th>
-                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Email</th>
+                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">WhatsApp</th>
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Produto</th>
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Valor</th>
                     <th className="px-6 py-3 text-left font-medium text-muted-foreground">Status</th>
-                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Data / Hora</th>
+                    <th className="px-6 py-3 text-left font-medium text-muted-foreground">Data</th>
+                    <th className="px-6 py-3 text-center font-medium text-muted-foreground">Detalhes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
                         <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
                         <p className="text-muted-foreground">Nenhuma venda encontrada.</p>
                       </td>
@@ -139,15 +147,25 @@ const Sales = () => {
                     filtered.map((s) => (
                       <tr key={s.id} className="hover:bg-muted/30 transition-colors">
                         <td className="px-6 py-3 font-medium">{s.buyer_name || "-"}</td>
-                        <td className="px-6 py-3 text-muted-foreground">{s.buyer_email || "-"}</td>
+                        <td className="px-6 py-3 text-muted-foreground">{s.buyer_whatsapp || "-"}</td>
                         <td className="px-6 py-3">{(s.products as any)?.nome || "-"}</td>
                         <td className="px-6 py-3 font-medium">{formatMZN(Number(s.valor))}</td>
-                        <td className={`px-6 py-3 font-medium ${statusColors[s.status] || ""}`}>
-                          {statusLabels[s.status] || s.status}
+                        <td className="px-6 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[s.status] || ""}`}>
+                            {statusLabels[s.status] || s.status}
+                          </span>
                         </td>
                         <td className="px-6 py-3 text-muted-foreground">
-                          {new Date(s.created_at).toLocaleDateString("pt-BR")}{" "}
-                          {new Date(s.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <button
+                            onClick={() => setSelectedSale(s)}
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                            title="Ver detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -158,8 +176,79 @@ const Sales = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Detail Sheet */}
+      <Sheet open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Detalhes da venda</SheetTitle>
+          </SheetHeader>
+
+          {selectedSale && (
+            <div className="mt-6 space-y-5">
+              {/* Status badge */}
+              <div className="flex justify-center">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${statusColors[selectedSale.status] || ""}`}>
+                  {statusLabels[selectedSale.status] || selectedSale.status}
+                </span>
+              </div>
+
+              {/* Client info */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cliente</h3>
+                <DetailRow icon={User} label="Nome" value={selectedSale.buyer_name} />
+                <DetailRow icon={Mail} label="Email" value={selectedSale.buyer_email} />
+                <DetailRow icon={Phone} label="WhatsApp" value={selectedSale.buyer_whatsapp} />
+              </div>
+
+              {/* Product info */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produto</h3>
+                <DetailRow icon={Package} label="Produto" value={(selectedSale.products as any)?.nome} />
+                <DetailRow icon={Hash} label="Valor" value={formatMZN(Number(selectedSale.valor))} highlight />
+              </div>
+
+              {/* Payment info */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pagamento</h3>
+                <DetailRow icon={CreditCard} label="Método" value={methodLabels[selectedSale.payment_method] || selectedSale.payment_method} />
+                <DetailRow icon={Phone} label="Nº pagamento" value={selectedSale.payment_phone} />
+              </div>
+
+              {/* Date & UTMs */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rastreamento</h3>
+                <DetailRow icon={Calendar} label="Data / Hora" value={
+                  `${new Date(selectedSale.created_at).toLocaleDateString("pt-BR")} ${new Date(selectedSale.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                } />
+                {selectedSale.utm_source && <DetailRow label="UTM Source" value={selectedSale.utm_source} />}
+                {selectedSale.utm_medium && <DetailRow label="UTM Medium" value={selectedSale.utm_medium} />}
+                {selectedSale.utm_campaign && <DetailRow label="UTM Campaign" value={selectedSale.utm_campaign} />}
+                {selectedSale.utm_content && <DetailRow label="UTM Content" value={selectedSale.utm_content} />}
+              </div>
+
+              {/* Sale ID */}
+              <p className="text-xs text-muted-foreground/50 text-center font-mono break-all">
+                ID: {selectedSale.id}
+              </p>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </DashboardLayout>
   );
 };
+
+const DetailRow = ({ icon: Icon, label, value, highlight }: { icon?: any; label: string; value?: string | null; highlight?: boolean }) => (
+  <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center gap-2 text-muted-foreground">
+      {Icon && <Icon className="h-3.5 w-3.5" />}
+      <span className="text-xs">{label}</span>
+    </div>
+    <span className={`text-sm font-medium truncate max-w-[180px] ${highlight ? "text-primary" : ""}`}>
+      {value || "-"}
+    </span>
+  </div>
+);
 
 export default Sales;

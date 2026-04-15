@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, amount, reference, product_id, user_id, name, email, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
+    const { method, phone, amount, reference, product_id, user_id, name, email, whatsapp, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
     if (!method || !phone || !amount || !product_id || !user_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -110,6 +110,9 @@ Deno.serve(async (req) => {
       status,
       buyer_name: name || null,
       buyer_email: email || null,
+      buyer_whatsapp: whatsapp || null,
+      payment_method: method || null,
+      payment_phone: phone || null,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
