@@ -20,7 +20,7 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { nome }, emailRedirectTo: window.location.origin },
@@ -28,6 +28,8 @@ const Register = () => {
     setLoading(false);
     if (error) {
       toast.error(error.message);
+    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      toast.error("Este email já está em uso. Tente fazer login.");
     } else {
       toast.success("Conta criada! Verifique seu email para confirmar.");
       navigate("/login");
