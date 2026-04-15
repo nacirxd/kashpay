@@ -155,19 +155,16 @@ const Finances = () => {
     setSubmitting(true);
 
     // Save payment info to profile
-    const profileUpdate: Record<string, string> = {};
+    let profileUpdate: { mpesa_nome?: string; mpesa_telefone?: string; emola_nome?: string; emola_telefone?: string; banco_nome?: string; banco_conta?: string } = {};
     if (metodo === "mpesa") {
-      profileUpdate.mpesa_nome = nomeConta.trim();
-      profileUpdate.mpesa_telefone = conta.trim();
+      profileUpdate = { mpesa_nome: nomeConta.trim(), mpesa_telefone: conta.trim() };
     } else if (metodo === "emola") {
-      profileUpdate.emola_nome = nomeConta.trim();
-      profileUpdate.emola_telefone = conta.trim();
+      profileUpdate = { emola_nome: nomeConta.trim(), emola_telefone: conta.trim() };
     } else {
-      profileUpdate.banco_nome = nomeConta.trim();
-      profileUpdate.banco_conta = conta.trim();
+      profileUpdate = { banco_nome: nomeConta.trim(), banco_conta: conta.trim() };
     }
     await supabase.from("profiles").update(profileUpdate).eq("user_id", user.id);
-    setPaymentInfo((prev) => ({ ...prev, ...profileUpdate }));
+    setPaymentInfo((prev) => ({ ...prev, ...profileUpdate as Record<string, string> }));
 
     const { error, data } = await supabase.from("withdrawals").insert({
       user_id: user.id,
