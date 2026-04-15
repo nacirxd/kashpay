@@ -236,6 +236,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // GET 2FA SETUP
+    if (action === "get_2fa_setup") {
+      const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
+      if (!totpSecret) {
+        return new Response(JSON.stringify({ error: "TOTP secret não configurado" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret: totpSecret, digits: 6, period: 30 });
+      const uri = totp.toString();
+      return new Response(JSON.stringify({ secret: totpSecret, uri }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // LOGOUT
     if (action === "logout") {
       await supabaseAdmin.from("admin_sessions").delete().eq("session_token", session_token);
