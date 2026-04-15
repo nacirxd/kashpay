@@ -138,6 +138,30 @@ Deno.serve(async (req) => {
     // Fire-and-forget: send to UTMify and webhook (don't block response)
     const bgWork = async () => {
       try {
+        // Send purchase confirmation email
+        if (status === 'approved' && email) {
+          try {
+            await supabase.functions.invoke('send-transactional-email', {
+              body: {
+                templateName: 'purchase-confirmation',
+                recipientEmail: email,
+                idempotencyKey: `purchase-confirm-${saleData?.id || product_id}-${Date.now()}`,
+                templateData: {
+                  buyerName: name,
+                  productName: productData?.nome || 'Produto',
+                  amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
+                  paymentMethod: method,
+                  accessUrl: productData?.delivery_type === 'link' ? productData?.external_url : undefined,
+                  accessType: productData?.delivery_type,
+                },
+              },
+            })
+            console.log('Email de compra enviado para:', email)
+          } catch (emailErr) {
+            console.error('Erro ao enviar email de compra:', emailErr)
+          }
+        }
+
         const [utmifyResult, webhookResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
