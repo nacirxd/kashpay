@@ -108,6 +108,8 @@ Deno.serve(async (req) => {
       user_id,
       valor: amountNumber,
       status,
+      buyer_name: name || null,
+      buyer_email: email || null,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
