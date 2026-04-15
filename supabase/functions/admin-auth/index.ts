@@ -294,8 +294,9 @@ Deno.serve(async (req) => {
       const { error } = await supabaseAdmin.from("sales").update({ status: body.status }).eq("id", body.order_id);
       if (error) throw error;
 
-      // When marking as approved, fire UTMify + purchase confirmation email
+      // When marking as approved, fire emails + UTMify (wrapped so errors don't break the response)
       if (body.status === "approved") {
+        try {
         // Fetch sale + product details
         const { data: sale } = await supabaseAdmin.from("sales").select("*").eq("id", body.order_id).single();
         if (sale) {
@@ -359,6 +360,7 @@ Deno.serve(async (req) => {
             }
           }
 
+          // 3. Fire UTMify event
           try {
             const { data: utmifyIntegration } = await supabaseAdmin
               .from("integrations")
@@ -424,6 +426,9 @@ Deno.serve(async (req) => {
           } catch (utmErr) {
             console.error("Erro UTMify admin:", utmErr);
           }
+        }
+        } catch (bgErr) {
+          console.error("Erro no processamento pós-aprovação:", bgErr);
         }
       }
 
