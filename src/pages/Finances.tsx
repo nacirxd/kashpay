@@ -38,10 +38,18 @@ const Finances = () => {
   }, [user]);
 
   const summary = useMemo(() => {
+    const now = Date.now();
+    const H24 = 24 * 60 * 60 * 1000;
     const approved = sales.filter((s) => s.status === "approved");
     const pending = sales.filter((s) => s.status === "pending");
     const refunded = sales.filter((s) => s.status === "refunded" || s.status === "chargeback");
-    const totalApproved = approved.reduce((a, s) => a + Number(s.valor), 0);
+
+    // Approved sales older than 24h are available; within 24h are held
+    const availableApproved = approved.filter((s) => now - new Date(s.created_at).getTime() >= H24);
+    const heldApproved = approved.filter((s) => now - new Date(s.created_at).getTime() < H24);
+
+    const totalAvailable = availableApproved.reduce((a, s) => a + Number(s.valor), 0);
+    const totalHeld = heldApproved.reduce((a, s) => a + Number(s.valor), 0);
     const totalWithdrawn = withdrawals
       .filter((w) => w.status === "aprovado" || w.status === "pago")
       .reduce((a, w) => a + Number(w.valor), 0);
@@ -49,8 +57,8 @@ const Finances = () => {
       .filter((w) => w.status === "pendente")
       .reduce((a, w) => a + Number(w.valor), 0);
     return {
-      saldo: totalApproved - totalWithdrawn - pendingWithdraw,
-      pendente: pending.reduce((a, s) => a + Number(s.valor), 0),
+      saldo: totalAvailable - totalWithdrawn - pendingWithdraw,
+      pendente: pending.reduce((a, s) => a + Number(s.valor), 0) + totalHeld,
       reembolsado: refunded.reduce((a, s) => a + Number(s.valor), 0),
       total: sales.length,
       pendingWithdraw,
