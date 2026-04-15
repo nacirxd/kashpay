@@ -9,9 +9,12 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/aureon-pay-logo.svg'
 
 interface RecoveryEmailProps {
   siteName: string
@@ -27,6 +30,7 @@ export const RecoveryEmail = ({
     <Preview>Redefinir sua senha no {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} alt="Aureon Pay" width="48" height="48" style={{ margin: '0 0 20px' }} />
         <Heading style={h1}>Redefinir sua senha</Heading>
         <Text style={text}>
           Recebemos um pedido para redefinir sua senha no {siteName}. Clique no
