@@ -25,9 +25,12 @@ const Finances = () => {
   const [conta, setConta] = useState("");
   const [nomeConta, setNomeConta] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   // Saved payment info from profile
   const [paymentInfo, setPaymentInfo] = useState<Record<string, string>>({});
+  // Editable payment info fields
+  const [editPayment, setEditPayment] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
