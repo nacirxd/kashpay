@@ -190,13 +190,17 @@ const ProductForm = () => {
     };
 
     if (isEditing) {
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("products")
         .update(payload as any)
         .eq("id", id)
-        .eq("user_id", user.id);
-      if (error) toast.error(error.message);
-      else {
+        .eq("user_id", user.id)
+        .select();
+      if (error) {
+        toast.error(error.message);
+      } else if (!updated || updated.length === 0) {
+        toast.error("Não foi possível atualizar o produto. Faça login novamente.");
+      } else {
         toast.success("Produto atualizado!");
         navigate("/produtos");
       }
