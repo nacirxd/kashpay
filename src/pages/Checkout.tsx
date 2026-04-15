@@ -20,8 +20,9 @@ const Checkout = () => {
   const [done, setDone] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [method, setMethod] = useState<"mpesa" | "emola">("mpesa");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [payPhone, setPayPhone] = useState("");
+  const [method, setMethod] = useState<"mpesa" | "emola" | null>(null);
   const [countdown, setCountdown] = useState(10 * 60);
 
   useEffect(() => {
