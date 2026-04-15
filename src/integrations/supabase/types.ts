@@ -85,25 +85,43 @@ export type Database = {
       }
       profiles: {
         Row: {
+          banco_conta: string | null
+          banco_nome: string | null
           created_at: string
           email: string
+          emola_nome: string | null
+          emola_telefone: string | null
           id: string
+          mpesa_nome: string | null
+          mpesa_telefone: string | null
           nome: string
           telefone: string | null
           user_id: string
         }
         Insert: {
+          banco_conta?: string | null
+          banco_nome?: string | null
           created_at?: string
           email?: string
+          emola_nome?: string | null
+          emola_telefone?: string | null
           id?: string
+          mpesa_nome?: string | null
+          mpesa_telefone?: string | null
           nome?: string
           telefone?: string | null
           user_id: string
         }
         Update: {
+          banco_conta?: string | null
+          banco_nome?: string | null
           created_at?: string
           email?: string
+          emola_nome?: string | null
+          emola_telefone?: string | null
           id?: string
+          mpesa_nome?: string | null
+          mpesa_telefone?: string | null
           nome?: string
           telefone?: string | null
           user_id?: string

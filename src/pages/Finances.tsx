@@ -23,19 +23,49 @@ const Finances = () => {
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState("mpesa");
   const [conta, setConta] = useState("");
+  const [nomeConta, setNomeConta] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Saved payment info from profile
+  const [paymentInfo, setPaymentInfo] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
     Promise.all([
       supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("withdrawals").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-    ]).then(([salesRes, withdrawRes]) => {
+      supabase.from("profiles").select("mpesa_nome, mpesa_telefone, emola_nome, emola_telefone, banco_nome, banco_conta").eq("user_id", user.id).single(),
+    ]).then(([salesRes, withdrawRes, profileRes]) => {
       setSales(salesRes.data || []);
       setWithdrawals(withdrawRes.data || []);
+      if (profileRes.data) {
+        const p = profileRes.data as any;
+        setPaymentInfo({
+          mpesa_nome: p.mpesa_nome || "",
+          mpesa_telefone: p.mpesa_telefone || "",
+          emola_nome: p.emola_nome || "",
+          emola_telefone: p.emola_telefone || "",
+          banco_nome: p.banco_nome || "",
+          banco_conta: p.banco_conta || "",
+        });
+      }
       setLoading(false);
     });
   }, [user]);
+
+  // Pre-fill form when method changes or payment info loads
+  useEffect(() => {
+    if (metodo === "mpesa") {
+      setNomeConta(paymentInfo.mpesa_nome || "");
+      setConta(paymentInfo.mpesa_telefone || "");
+    } else if (metodo === "emola") {
+      setNomeConta(paymentInfo.emola_nome || "");
+      setConta(paymentInfo.emola_telefone || "");
+    } else {
+      setNomeConta(paymentInfo.banco_nome || "");
+      setConta(paymentInfo.banco_conta || "");
+    }
+  }, [metodo, paymentInfo]);
 
   const summary = useMemo(() => {
     const now = Date.now();
@@ -117,8 +147,25 @@ const Finances = () => {
       toast.error("Informe o número da conta.");
       return false;
     }
+    if (!nomeConta.trim()) {
+      toast.error("Informe o nome do titular.");
+      return false;
+    }
 
     setSubmitting(true);
+
+    // Save payment info to profile
+    let profileUpdate: { mpesa_nome?: string; mpesa_telefone?: string; emola_nome?: string; emola_telefone?: string; banco_nome?: string; banco_conta?: string } = {};
+    if (metodo === "mpesa") {
+      profileUpdate = { mpesa_nome: nomeConta.trim(), mpesa_telefone: conta.trim() };
+    } else if (metodo === "emola") {
+      profileUpdate = { emola_nome: nomeConta.trim(), emola_telefone: conta.trim() };
+    } else {
+      profileUpdate = { banco_nome: nomeConta.trim(), banco_conta: conta.trim() };
+    }
+    await supabase.from("profiles").update(profileUpdate).eq("user_id", user.id);
+    setPaymentInfo((prev) => ({ ...prev, ...profileUpdate as Record<string, string> }));
+
     const { error, data } = await supabase.from("withdrawals").insert({
       user_id: user.id,
       valor: amount,
@@ -134,7 +181,6 @@ const Finances = () => {
       toast.success("Pedido de saque enviado!");
       setWithdrawals((prev) => [data, ...prev]);
       setValor("");
-      setConta("");
       setShowWithdrawForm(false);
       return true;
     }
@@ -247,6 +293,10 @@ const Finances = () => {
                           <option value="emola">e-Mola</option>
                           <option value="banco">Conta Bancária</option>
                         </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nomeConta">Nome do titular</Label>
+                        <Input id="nomeConta" placeholder="Ex: João Silva" value={nomeConta} onChange={(e) => setNomeConta(e.target.value)} required />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="conta">{metodo === "banco" ? "Número da conta (IBAN)" : "Número de telefone"}</Label>
