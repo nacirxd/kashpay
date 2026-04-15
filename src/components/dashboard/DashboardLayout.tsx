@@ -181,8 +181,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="w-24">
               <Progress value={progress} className="h-2" />
             </div>
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase">
-              {firstName.slice(0, 2).toUpperCase() || "U"}
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                firstName.slice(0, 2).toUpperCase() || "U"
+              )}
             </div>
           </div>
         </header>
