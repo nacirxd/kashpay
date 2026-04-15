@@ -274,6 +274,13 @@ Deno.serve(async (req) => {
           // 1. Send purchase confirmation email
           if (sale.buyer_email) {
             try {
+              // Fetch seller profile for contact info
+              const { data: sellerProfile } = await supabaseAdmin
+                .from("profiles")
+                .select("nome, email, telefone, mpesa_telefone")
+                .eq("user_id", sale.user_id)
+                .maybeSingle();
+
               await supabaseAdmin.functions.invoke("send-transactional-email", {
                 body: {
                   templateName: "purchase-confirmation",
@@ -286,6 +293,9 @@ Deno.serve(async (req) => {
                     paymentMethod: sale.payment_method || undefined,
                     accessUrl: product?.delivery_type === "link" ? product.external_url : undefined,
                     accessType: product?.delivery_type || "link",
+                    sellerName: sellerProfile?.nome || undefined,
+                    sellerEmail: sellerProfile?.email || undefined,
+                    sellerWhatsapp: sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
                   },
                 },
               });

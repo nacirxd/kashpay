@@ -141,6 +141,13 @@ Deno.serve(async (req) => {
         // Send purchase confirmation email
         if (status === 'approved' && email) {
           try {
+            // Fetch seller profile for contact info
+            const { data: sellerProfile } = await supabase
+              .from('profiles')
+              .select('nome, email, telefone, mpesa_telefone')
+              .eq('user_id', user_id)
+              .maybeSingle()
+
             await supabase.functions.invoke('send-transactional-email', {
               body: {
                 templateName: 'purchase-confirmation',
@@ -153,6 +160,9 @@ Deno.serve(async (req) => {
                   paymentMethod: method,
                   accessUrl: productData?.delivery_type === 'link' ? productData?.external_url : undefined,
                   accessType: productData?.delivery_type,
+                  sellerName: sellerProfile?.nome || undefined,
+                  sellerEmail: sellerProfile?.email || undefined,
+                  sellerWhatsapp: sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
                 },
               },
             })
