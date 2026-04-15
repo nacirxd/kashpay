@@ -244,7 +244,8 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret: totpSecret, digits: 6, period: 30 });
+      const secret = Secret.fromUTF8(totpSecret);
+      const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret, digits: 6, period: 30 });
       const uri = totp.toString();
       return new Response(JSON.stringify({ secret: totpSecret, uri }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
