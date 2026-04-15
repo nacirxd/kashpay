@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight, Download, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
