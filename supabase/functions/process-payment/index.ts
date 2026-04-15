@@ -69,6 +69,35 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Record sale in database FIRST as pending
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const amountNumber = Number(amount)
+
+    const { data: saleData } = await supabase.from('sales').insert({
+      product_id,
+      user_id,
+      valor: amountNumber,
+      status: 'pending',
+      buyer_name: name || null,
+      buyer_email: email || null,
+      buyer_whatsapp: whatsapp || null,
+      payment_method: method || null,
+      payment_phone: phone || null,
+      utm_source: utm_source || null,
+      utm_medium: utm_medium || null,
+      utm_campaign: utm_campaign || null,
+      utm_content: utm_content || null,
+    }).select().single()
+
+    const { data: productData } = await supabase
+      .from('products')
+      .select('id, nome')
+      .eq('id', product_id)
+      .maybeSingle()
+
     // Call payment endpoint with timeout
     const payController = new AbortController()
     const payTimeout = setTimeout(() => payController.abort(), 20000)
@@ -95,35 +124,11 @@ Deno.serve(async (req) => {
 
     const payData = await payResp.json()
 
-    // Record sale in database
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
+    // Update sale status based on payment result
     const status = payResp.ok ? 'approved' : 'pending'
-    const amountNumber = Number(amount)
-
-    const { data: saleData } = await supabase.from('sales').insert({
-      product_id,
-      user_id,
-      valor: amountNumber,
-      status,
-      buyer_name: name || null,
-      buyer_email: email || null,
-      buyer_whatsapp: whatsapp || null,
-      payment_method: method || null,
-      payment_phone: phone || null,
-      utm_source: utm_source || null,
-      utm_medium: utm_medium || null,
-      utm_campaign: utm_campaign || null,
-      utm_content: utm_content || null,
-    }).select().single()
-
-    const { data: productData } = await supabase
-      .from('products')
-      .select('id, nome')
-      .eq('id', product_id)
-      .maybeSingle()
+    if (payResp.ok && saleData?.id) {
+      await supabase.from('sales').update({ status: 'approved' }).eq('id', saleData.id)
+    }
 
     // Return response immediately, then fire integrations in background
     const response = new Response(JSON.stringify({ success: payResp.ok, data: payData, status }), {
