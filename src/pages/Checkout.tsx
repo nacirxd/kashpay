@@ -100,22 +100,6 @@ const Checkout = () => {
       } else if (data?.status === "approved") {
         setDone(true);
         toast.success("Pagamento aprovado!");
-        // Send purchase confirmation email
-        supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "purchase-confirmation",
-            recipientEmail: email,
-            idempotencyKey: `purchase-confirm-${product.id}-${email}-${Date.now()}`,
-            templateData: {
-              buyerName: name,
-              productName: product.nome,
-              amount: `${Number(product.preco).toLocaleString("pt-MZ")} MT`,
-              paymentMethod: method,
-              accessUrl: product.delivery_type === "link" ? product.external_url : undefined,
-              accessType: product.delivery_type,
-            },
-          },
-        });
       } else if (data?.status === "pending") {
         toast.info("Pedido enviado. Confirme o pagamento no seu telefone.");
       } else {
