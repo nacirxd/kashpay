@@ -9,9 +9,12 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/aureon-pay-logo.svg'
 
 interface MagicLinkEmailProps {
   siteName: string
@@ -27,6 +30,7 @@ export const MagicLinkEmail = ({
     <Preview>Seu link de login para o {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} alt="Aureon Pay" width="48" height="48" style={{ margin: '0 0 20px' }} />
         <Heading style={h1}>Seu link de login</Heading>
         <Text style={text}>
           Clique no botão abaixo para entrar no {siteName}. Este link expira em
