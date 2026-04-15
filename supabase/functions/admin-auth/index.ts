@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       // Verify TOTP 2FA
       const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
       if (totpSecret) {
-        const totp = new TOTP({ secret: totpSecret, digits: 6, period: 30 });
+        const totp = new TOTP({ secret: Secret.fromUTF8(totpSecret), digits: 6, period: 30 });
         const valid = totp.validate({ token: body.totp_code || "", window: 1 });
         if (valid === null) {
           return new Response(JSON.stringify({ error: "Código 2FA inválido" }), {
