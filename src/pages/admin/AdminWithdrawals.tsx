@@ -13,6 +13,8 @@ import {
 interface Withdrawal {
   id: string;
   user_id: string;
+  user_name: string;
+  user_email: string;
   valor: number;
   status: string;
   metodo: string;
@@ -61,6 +63,7 @@ const AdminWithdrawals = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
+              <TableHead className="text-gray-400">Usuário</TableHead>
               <TableHead className="text-gray-400">Valor</TableHead>
               <TableHead className="text-gray-400">Método</TableHead>
               <TableHead className="text-gray-400">Conta</TableHead>
@@ -71,18 +74,22 @@ const AdminWithdrawals = () => {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={6} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
             ) : items.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={6} className="text-center text-gray-500 py-8">Nenhum saque</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Nenhum saque</TableCell></TableRow>
             ) : (
               items.map((w) => {
                 const st = statusMap[w.status] || statusMap.pendente;
                 return (
                   <TableRow key={w.id} className="border-gray-800 hover:bg-gray-800/50">
+                    <TableCell>
+                      <div className="text-sm font-medium">{w.user_name}</div>
+                      <div className="text-xs text-gray-500">{w.user_email}</div>
+                    </TableCell>
                     <TableCell className="font-medium">{formatMZN(w.valor)}</TableCell>
                     <TableCell className="text-gray-400 uppercase">{w.metodo}</TableCell>
                     <TableCell className="text-gray-400">{w.conta}</TableCell>
-                    <TableCell className="text-gray-400">{formatDateTimeMZ(w.created_at)}</TableCell>
+                    <TableCell className="text-gray-400 text-xs">{formatDateTimeMZ(w.created_at)}</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${st.classes}`}>
                         {st.label}

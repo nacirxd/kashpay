@@ -85,15 +85,13 @@ Deno.serve(async (req) => {
 
     // LIST PRODUCTS
     if (action === "list_products") {
-      const { data } = await supabaseAdmin.from("products").select("*, profiles!products_user_id_fkey(nome, email)").order("created_at", { ascending: false });
-      // fallback: if join fails, just get products
-      if (!data) {
-        const { data: prods } = await supabaseAdmin.from("products").select("*").order("created_at", { ascending: false });
-        return new Response(JSON.stringify(prods || []), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify(data), {
+      const { data: prods } = await supabaseAdmin.from("products").select("*").order("created_at", { ascending: false });
+      // Enrich with seller info
+      const userIds = [...new Set((prods || []).map(p => p.user_id))];
+      const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, nome, email").in("user_id", userIds);
+      const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]));
+      const enriched = (prods || []).map(p => ({ ...p, seller_name: profileMap[p.user_id]?.nome || "—", seller_email: profileMap[p.user_id]?.email || "—" }));
+      return new Response(JSON.stringify(enriched), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -109,8 +107,12 @@ Deno.serve(async (req) => {
 
     // LIST WITHDRAWALS
     if (action === "list_withdrawals") {
-      const { data } = await supabaseAdmin.from("withdrawals").select("*").order("created_at", { ascending: false });
-      return new Response(JSON.stringify(data || []), {
+      const { data: withdrawals } = await supabaseAdmin.from("withdrawals").select("*").order("created_at", { ascending: false });
+      const userIds = [...new Set((withdrawals || []).map(w => w.user_id))];
+      const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, nome, email").in("user_id", userIds);
+      const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]));
+      const enriched = (withdrawals || []).map(w => ({ ...w, user_name: profileMap[w.user_id]?.nome || "—", user_email: profileMap[w.user_id]?.email || "—" }));
+      return new Response(JSON.stringify(enriched), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
