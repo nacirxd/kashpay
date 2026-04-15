@@ -305,26 +305,32 @@ const Finances = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* M-Pesa */}
                   <div className="space-y-3 rounded-lg border border-border/50 p-4">
-                    <h3 className="text-sm font-medium">M-Pesa</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="mpesa_nome" className="text-xs">Nome</Label>
-                      <Input id="mpesa_nome" placeholder="Ex: João Silva" value={editPayment.mpesa_nome || ""} onChange={(e) => setEditPayment((p) => ({ ...p, mpesa_nome: e.target.value }))} />
-                    </div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <img src={mpesaLogo} alt="M-Pesa" className="h-6 w-6 rounded" />
+                      M-Pesa
+                    </h3>
                     <div className="space-y-2">
                       <Label htmlFor="mpesa_telefone" className="text-xs">Número de telefone</Label>
                       <Input id="mpesa_telefone" placeholder="Ex: 84 123 4567" value={editPayment.mpesa_telefone || ""} onChange={(e) => setEditPayment((p) => ({ ...p, mpesa_telefone: e.target.value }))} />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mpesa_nome" className="text-xs">Nome</Label>
+                      <Input id="mpesa_nome" placeholder="Ex: João Silva" value={editPayment.mpesa_nome || ""} onChange={(e) => setEditPayment((p) => ({ ...p, mpesa_nome: e.target.value }))} />
+                    </div>
                   </div>
                   {/* e-Mola */}
                   <div className="space-y-3 rounded-lg border border-border/50 p-4">
-                    <h3 className="text-sm font-medium">e-Mola</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="emola_nome" className="text-xs">Nome</Label>
-                      <Input id="emola_nome" placeholder="Ex: João Silva" value={editPayment.emola_nome || ""} onChange={(e) => setEditPayment((p) => ({ ...p, emola_nome: e.target.value }))} />
-                    </div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <img src={emolaLogo} alt="e-Mola" className="h-6 w-6 rounded" />
+                      e-Mola
+                    </h3>
                     <div className="space-y-2">
                       <Label htmlFor="emola_telefone" className="text-xs">Número de telefone</Label>
                       <Input id="emola_telefone" placeholder="Ex: 86 123 4567" value={editPayment.emola_telefone || ""} onChange={(e) => setEditPayment((p) => ({ ...p, emola_telefone: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emola_nome" className="text-xs">Nome</Label>
+                      <Input id="emola_nome" placeholder="Ex: João Silva" value={editPayment.emola_nome || ""} onChange={(e) => setEditPayment((p) => ({ ...p, emola_nome: e.target.value }))} />
                     </div>
                   </div>
                 </div>
