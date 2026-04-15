@@ -19,13 +19,22 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       toast.error(error.message);
-    } else {
-      navigate("/dashboard");
+      return;
     }
+    // Check if user is banned
+    const { data: profile } = await supabase.from("profiles").select("status").eq("user_id", data.user.id).single();
+    if (profile?.status === "banned") {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error("Sua conta foi suspensa. Entre em contato com o suporte.");
+      return;
+    }
+    setLoading(false);
+    navigate("/dashboard");
   };
 
   return (

@@ -5,7 +5,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminProvider } from "@/contexts/AdminContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
 import { captureUTMs } from "@/lib/utm";
 
 import Index from "./pages/Index";
@@ -22,6 +24,12 @@ import Sales from "./pages/Sales";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -33,24 +41,33 @@ const App = () => {
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Register />} />
-            <Route path="/checkout/:id" element={<Checkout />} />
+          <AdminProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Register />} />
+              <Route path="/checkout/:id" element={<Checkout />} />
 
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-            <Route path="/vendas" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
-            <Route path="/produtos/novo" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
-            <Route path="/produtos/:id" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
-            <Route path="/integracoes" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
-            <Route path="/integracoes/:tipo" element={<ProtectedRoute><IntegrationDetail /></ProtectedRoute>} />
-            <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/financas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+              <Route path="/vendas" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
+              <Route path="/produtos/novo" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+              <Route path="/produtos/:id" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+              <Route path="/integracoes" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
+              <Route path="/integracoes/:tipo" element={<ProtectedRoute><IntegrationDetail /></ProtectedRoute>} />
+              <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/financas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Admin routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+              <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
+              <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
+              <Route path="/admin/withdrawals" element={<AdminProtectedRoute><AdminWithdrawals /></AdminProtectedRoute>} />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AdminProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
