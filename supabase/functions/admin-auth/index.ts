@@ -231,6 +231,36 @@ Deno.serve(async (req) => {
     if (action === "update_withdrawal_status") {
       const { error } = await supabaseAdmin.from("withdrawals").update({ status: body.status }).eq("id", body.withdrawal_id);
       if (error) throw error;
+
+      // Send withdrawal notification email to seller
+      if (body.status === "aprovado" || body.status === "rejeitado") {
+        try {
+          const { data: withdrawal } = await supabaseAdmin.from("withdrawals").select("*").eq("id", body.withdrawal_id).single();
+          if (withdrawal) {
+            const { data: profile } = await supabaseAdmin.from("profiles").select("nome, email").eq("user_id", withdrawal.user_id).maybeSingle();
+            if (profile?.email) {
+              await supabaseAdmin.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "withdrawal-notification",
+                  recipientEmail: profile.email,
+                  idempotencyKey: `withdrawal-notify-${body.withdrawal_id}-${body.status}`,
+                  templateData: {
+                    sellerName: profile.nome || undefined,
+                    amount: `${Number(withdrawal.valor).toLocaleString("pt-MZ")} MT`,
+                    method: withdrawal.metodo,
+                    account: withdrawal.conta,
+                    status: body.status,
+                  },
+                },
+              });
+              console.log("Notificação de saque enviada para:", profile.email);
+            }
+          }
+        } catch (wErr) {
+          console.error("Erro ao notificar saque:", wErr);
+        }
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -305,7 +335,30 @@ Deno.serve(async (req) => {
             }
           }
 
-          // 2. Fire UTMify event
+          // Send sale notification to seller
+          if (sellerProfile?.email) {
+            try {
+              await supabaseAdmin.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "sale-notification",
+                  recipientEmail: sellerProfile.email,
+                  idempotencyKey: `sale-notify-admin-${sale.id}`,
+                  templateData: {
+                    sellerName: sellerProfile.nome || undefined,
+                    productName: product?.nome || "Produto",
+                    amount: `${Number(sale.valor).toLocaleString("pt-MZ")} MT`,
+                    buyerName: sale.buyer_name || undefined,
+                    buyerEmail: sale.buyer_email || undefined,
+                    paymentMethod: sale.payment_method || undefined,
+                  },
+                },
+              });
+              console.log("Notificação de venda enviada para vendedor:", sellerProfile.email);
+            } catch (sellerErr) {
+              console.error("Erro ao notificar vendedor:", sellerErr);
+            }
+          }
+
           try {
             const { data: utmifyIntegration } = await supabaseAdmin
               .from("integrations")
