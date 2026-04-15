@@ -1,5 +1,5 @@
-import { format } from "date-fns";
 import { formatMZN } from "@/lib/currency";
+import { formatDateTimeMZ } from "@/lib/timezone";
 
 interface Sale {
   id: string;
@@ -24,7 +24,7 @@ export function exportCSV(sales: Sale[], dateLabel: string) {
   const header = "Data,Produto,Comprador,Email,Valor,Status,UTM Source,UTM Campaign";
   const rows = sales.map((s) =>
     [
-      format(new Date(s.created_at), "dd/MM/yyyy HH:mm"),
+      formatDateTimeMZ(s.created_at),
       `"${(s.products as any)?.nome || "Produto"}"`,
       `"${s.buyer_name || "-"}"`,
       `"${s.buyer_email || "-"}"`,
@@ -96,7 +96,7 @@ export function exportPDF(
     </div>
     <div class="header-right">
       Período: ${dateLabel}<br>
-      Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}
+      Gerado em ${formatDateTimeMZ(new Date().toISOString())}
     </div>
   </div>
 
@@ -118,7 +118,7 @@ export function exportPDF(
         ${sales
           .map(
             (s) => `<tr>
-          <td>${format(new Date(s.created_at), "dd/MM/yyyy")}</td>
+          <td>${formatDateTimeMZ(s.created_at)}</td>
           <td>${(s.products as any)?.nome || "Produto"}</td>
           <td>${s.buyer_name || "-"}</td>
           <td style="font-weight:600">${formatMZN(Number(s.valor))}</td>

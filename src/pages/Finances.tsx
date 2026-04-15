@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
 import { motion } from "framer-motion";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, Send, Plus, Save, CreditCard } from "lucide-react";
+import { formatDateMZ } from "@/lib/timezone";
 import mpesaLogo from "@/assets/mpesa-2.svg";
 import emolaLogo from "@/assets/emola-2.svg";
 import { Button } from "@/components/ui/button";
@@ -280,7 +281,7 @@ const Finances = () => {
                         <td className="px-6 py-3">{formatMZN(Number(s.valor))}</td>
                         <td className={`px-6 py-3 font-medium ${statusColors[s.status] || ""}`}>{statusLabels[s.status] || s.status}</td>
                         <td className="px-6 py-3 text-muted-foreground">{s.utm_source || "-"}</td>
-                        <td className="px-6 py-3 text-muted-foreground">{new Date(s.created_at).toLocaleDateString("pt-BR")}</td>
+                        <td className="px-6 py-3 text-muted-foreground">{formatDateMZ(s.created_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -405,7 +406,7 @@ const Finances = () => {
                           <td className="px-6 py-3 capitalize">{w.metodo === "mpesa" ? "M-Pesa" : w.metodo === "emola" ? "e-Mola" : "Banco"}</td>
                           <td className="px-6 py-3 text-muted-foreground">{w.conta}</td>
                           <td className={`px-6 py-3 font-medium ${withdrawStatusColors[w.status] || ""}`}>{withdrawStatusLabels[w.status] || w.status}</td>
-                          <td className="px-6 py-3 text-muted-foreground">{new Date(w.created_at).toLocaleDateString("pt-BR")}</td>
+                          <td className="px-6 py-3 text-muted-foreground">{formatDateMZ(w.created_at)}</td>
                         </tr>
                       ))}
                     </tbody>

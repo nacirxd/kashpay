@@ -67,7 +67,7 @@ const IntegrationDetail = () => {
         setTestResult("⏳ Enviando teste...");
         // Simulated webhook test
         await new Promise((r) => setTimeout(r, 1000));
-        const logEntry = `[${new Date().toLocaleTimeString("pt-BR")}] POST ${config.url} → 200 OK (teste)`;
+        const logEntry = `[${new Date().toLocaleTimeString("pt-MZ", { timeZone: "Africa/Maputo" })}] POST ${config.url} → 200 OK (teste)`;
         setWebhookLogs((prev) => [logEntry, ...prev].slice(0, 10));
         setTestResult("✅ Webhook testado com sucesso!");
       } catch {

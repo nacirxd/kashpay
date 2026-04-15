@@ -6,6 +6,7 @@ import { formatMZN } from "@/lib/currency";
 import { exportCSV, exportPDF } from "@/lib/exportReports";
 import { motion } from "framer-motion";
 import { ShoppingCart, Download, FileText, Eye, X, Phone, Mail, User, CreditCard, Calendar, Package, Hash, Search } from "lucide-react";
+import { formatDateMZ, formatDateTimeMZ } from "@/lib/timezone";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
@@ -180,7 +181,7 @@ const Sales = () => {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-muted-foreground">
-                          {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                          {formatDateMZ(s.created_at)}
                         </td>
                         <td className="px-6 py-3 text-center">
                           <button
@@ -242,9 +243,7 @@ const Sales = () => {
               {/* Date & UTMs */}
               <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rastreamento</h3>
-                <DetailRow icon={Calendar} label="Data / Hora" value={
-                  `${new Date(selectedSale.created_at).toLocaleDateString("pt-BR")} ${new Date(selectedSale.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
-                } />
+                <DetailRow icon={Calendar} label="Data / Hora" value={formatDateTimeMZ(selectedSale.created_at)} />
                 {selectedSale.utm_source && <DetailRow label="UTM Source" value={selectedSale.utm_source} />}
                 {selectedSale.utm_medium && <DetailRow label="UTM Medium" value={selectedSale.utm_medium} />}
                 {selectedSale.utm_campaign && <DetailRow label="UTM Campaign" value={selectedSale.utm_campaign} />}
