@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Webhook, BarChart3, MessageSquare, Zap, Target, Link2 } from "lucide-react";
+import { Webhook, BarChart3, MessageSquare, Zap, Target, Link2, Tag } from "lucide-react";
 
 const integrations = [
   { icon: Target, name: "Meta Ads", desc: "Facebook Pixel + Conversion API" },
