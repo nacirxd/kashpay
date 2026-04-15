@@ -15,7 +15,7 @@ import {
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
-const LOGO_URL = 'https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/aureon-pay-logo.svg'
+const LOGO_URL = 'https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/aureon-pay-logo.png'
 
 interface InviteEmailProps {
   siteName: string
