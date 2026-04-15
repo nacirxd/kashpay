@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar } from "lucide-react";
+import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -64,7 +64,6 @@ const Dashboard = () => {
     });
   }, [allSales, dateRange]);
 
-
   const stats = useMemo(() => {
     const approved = filteredSales.filter((s) => s.status === "approved");
     const receita = approved.reduce((acc, s) => acc + Number(s.valor), 0);
@@ -112,11 +111,11 @@ const Dashboard = () => {
   }, [filteredSales]);
 
   const statCards = [
-    { label: "Receita total", value: formatMZN(stats.receita), icon: DollarSign },
-    { label: "Vendas", value: stats.vendas.toString(), icon: ShoppingBag },
-    { label: "Ticket médio", value: formatMZN(stats.ticket), icon: TrendingUp },
-    { label: "Taxa de conversão", value: `${stats.conversao.toFixed(1)}%`, icon: Eye },
-    { label: "Taxa de abandono", value: `${stats.abandono.toFixed(1)}%`, icon: XCircle },
+    { label: "Receita total", value: formatMZN(stats.receita), icon: DollarSign, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
+    { label: "Vendas", value: stats.vendas.toString(), icon: ShoppingBag, accent: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-500" },
+    { label: "Ticket médio", value: formatMZN(stats.ticket), icon: TrendingUp, accent: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-500" },
+    { label: "Conversão", value: `${stats.conversao.toFixed(1)}%`, icon: Eye, accent: "from-violet-500/20 to-violet-500/5", iconColor: "text-violet-500", good: stats.conversao > 50 },
+    { label: "Abandono", value: `${stats.abandono.toFixed(1)}%`, icon: XCircle, accent: "from-destructive/20 to-destructive/5", iconColor: "text-destructive", good: stats.abandono < 50 },
   ];
 
   const presets: { label: string; value: FilterPreset }[] = [
@@ -128,28 +127,48 @@ const Dashboard = () => {
 
   const tooltipFormatter = (value: number) => formatMZN(value);
 
+  const CustomTooltipStyle = {
+    backgroundColor: "hsl(var(--card))",
+    border: "1px solid hsl(var(--border))",
+    borderRadius: "0.75rem",
+    padding: "8px 12px",
+    fontSize: "12px",
+    color: "hsl(var(--foreground))",
+    boxShadow: "var(--shadow-elevated)",
+  };
+
   return (
     <DashboardLayout>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <h1 className="text-lg font-semibold">Dashboard</h1>
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Header with filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Visão geral do seu negócio
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1">
           {presets.map((p) => (
-            <Button
+            <button
               key={p.value}
-              variant={preset === p.value ? "default" : "outline"}
-              size="sm"
               onClick={() => setPreset(p.value)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                preset === p.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
               {p.label}
-            </Button>
+            </button>
           ))}
           {preset === "custom" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Calendar className="mr-2 h-3 w-3" />
-                  {format(customRange.from, "dd/MM")} - {format(customRange.to, "dd/MM")}
-                </Button>
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-background shadow-sm text-foreground">
+                  <Calendar className="h-3 w-3" />
+                  {format(customRange.from, "dd/MM")} – {format(customRange.to, "dd/MM")}
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
                 <CalendarWidget
@@ -172,117 +191,194 @@ const Dashboard = () => {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {statCards.map((stat, i) => (
-              <motion.div key={stat.label} className="rounded-xl border border-border/50 bg-card p-5 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">{stat.label}</span>
-                  <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <stat.icon className="h-3.5 w-3.5" />
+              <motion.div
+                key={stat.label}
+                className="relative overflow-hidden rounded-2xl border border-border/40 bg-card p-5 shadow-soft group hover:shadow-card transition-shadow"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.4 }}
+              >
+                {/* Gradient accent bg */}
+                <div className={cn("absolute inset-0 bg-gradient-to-br opacity-60", stat.accent)} />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+                    <div className={cn("h-8 w-8 rounded-xl flex items-center justify-center", stat.iconColor, "bg-background/80 shadow-sm")}>
+                      <stat.icon className="h-4 w-4" />
+                    </div>
                   </div>
+                  <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
                 </div>
-                <div className="text-xl font-bold">{stat.value}</div>
               </motion.div>
             ))}
           </div>
 
           {/* Charts row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <h3 className="text-sm font-semibold mb-4">Vendas por dia</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <motion.div
+              className="lg:col-span-2 rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-sm font-semibold">Receita por dia</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Evolução das vendas aprovadas</p>
+                </div>
+              </div>
               {dailyData.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">Sem dados no período.</p>
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <DollarSign className="h-10 w-10 mb-2 opacity-30" />
+                  <p className="text-sm">Sem dados no período</p>
+                </div>
               ) : (
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={260}>
                   <AreaChart data={dailyData}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(160,84%,39%)" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="hsl(160,84%,39%)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(160,84%,39%)" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="hsl(160,84%,39%)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={tooltipFormatter} />
-                    <Area type="monotone" dataKey="value" stroke="hsl(160,84%,39%)" fill="url(#colorRev)" strokeWidth={2} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={tooltipFormatter} contentStyle={CustomTooltipStyle} />
+                    <Area type="monotone" dataKey="value" stroke="hsl(160,84%,39%)" fill="url(#colorRev)" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: "hsl(160,84%,39%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
             </motion.div>
 
-            <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <h3 className="text-sm font-semibold mb-4">Origem (UTM Source)</h3>
+            <motion.div
+              className="rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold">Origem do tráfego</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">UTM Source</p>
+              </div>
               {utmSourceData.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">Sem dados no período.</p>
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Eye className="h-10 w-10 mb-2 opacity-30" />
+                  <p className="text-sm">Sem dados no período</p>
+                </div>
               ) : (
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
-                    <Pie data={utmSourceData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    <Pie data={utmSourceData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={45} paddingAngle={3} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} style={{ fontSize: 10 }}>
                       {utmSourceData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
                     </Pie>
-                    <Legend />
-                    <Tooltip />
+                    <Tooltip contentStyle={CustomTooltipStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
             </motion.div>
           </div>
 
-          {/* Campaign performance */}
-          {utmCampaignData.length > 0 && (
-            <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.37 }}>
-              <h3 className="text-sm font-semibold mb-4">Vendas por Campanha (UTM Campaign)</h3>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={utmCampaignData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(200,80%,50%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
-          )}
+          {/* Campaign + Product row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {utmCampaignData.length > 0 && (
+              <motion.div
+                className="rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.37 }}
+              >
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold">Campanhas</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Vendas por campanha UTM</p>
+                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={utmCampaignData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={CustomTooltipStyle} />
+                    <Bar dataKey="value" fill="hsl(200,80%,50%)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </motion.div>
+            )}
 
-          {/* Product performance */}
-          {productData.length > 0 && (
-            <motion.div className="rounded-xl border border-border/50 bg-card p-6 shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <h3 className="text-sm font-semibold mb-4">Performance por produto</h3>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={productData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={tooltipFormatter} />
-                  <Bar dataKey="value" fill="hsl(160,84%,39%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
-          )}
+            {productData.length > 0 && (
+              <motion.div
+                className="rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold">Top produtos</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Receita por produto</p>
+                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={productData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={100} />
+                    <Tooltip formatter={tooltipFormatter} contentStyle={CustomTooltipStyle} />
+                    <Bar dataKey="value" fill="hsl(160,84%,39%)" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </motion.div>
+            )}
+          </div>
 
           {/* Recent sales */}
-          <motion.div className="rounded-xl border border-border/50 bg-card shadow-soft" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-            <div className="p-6 border-b border-border/50">
+          <motion.div
+            className="rounded-2xl border border-border/40 bg-card shadow-soft overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+          >
+            <div className="p-6 pb-4">
               <h3 className="text-sm font-semibold">Vendas recentes</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Últimas transações registadas</p>
             </div>
             {filteredSales.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground">Nenhuma venda no período.</p>
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <ShoppingBag className="h-10 w-10 mb-2 opacity-30" />
+                <p className="text-sm">Nenhuma venda no período</p>
+              </div>
             ) : (
-              <div className="divide-y divide-border/50">
-                {filteredSales.slice(0, 8).map((sale) => (
-                  <div key={sale.id} className="flex items-center justify-between px-6 py-4">
-                    <div>
-                      <p className="text-sm font-medium">{(sale.products as any)?.nome || "Produto"}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleDateString("pt-BR")}</p>
+              <div className="divide-y divide-border/40">
+                {filteredSales.slice(0, 8).map((sale, i) => (
+                  <motion.div
+                    key={sale.id}
+                    className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + i * 0.03 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-9 w-9 rounded-xl flex items-center justify-center text-xs font-bold",
+                        sale.status === "approved" ? "bg-primary/10 text-primary" : sale.status === "pending" ? "bg-amber-500/10 text-amber-500" : "bg-destructive/10 text-destructive"
+                      )}>
+                        {sale.status === "approved" ? <ArrowUpRight className="h-4 w-4" /> : sale.status === "pending" ? <DollarSign className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{(sale.products as any)?.nome || "Produto"}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleDateString("pt-BR")}</p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">{formatMZN(Number(sale.valor))}</p>
-                      <span className={`text-xs font-medium ${sale.status === "approved" ? "text-primary" : sale.status === "pending" ? "text-yellow-600" : "text-destructive"}`}>
+                      <span className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                        sale.status === "approved" ? "bg-primary/10 text-primary" : sale.status === "pending" ? "bg-amber-500/10 text-amber-500" : "bg-destructive/10 text-destructive"
+                      )}>
                         {sale.status === "approved" ? "Aprovado" : sale.status === "pending" ? "Pendente" : sale.status === "refunded" ? "Reembolsado" : sale.status}
                       </span>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
