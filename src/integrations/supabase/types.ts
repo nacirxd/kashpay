@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          session_token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_token?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           ativo: boolean
@@ -52,6 +73,7 @@ export type Database = {
           image_url: string | null
           nome: string
           preco: number
+          status: string
           tipo: string
           user_id: string
         }
@@ -65,6 +87,7 @@ export type Database = {
           image_url?: string | null
           nome: string
           preco?: number
+          status?: string
           tipo?: string
           user_id: string
         }
@@ -78,6 +101,7 @@ export type Database = {
           image_url?: string | null
           nome?: string
           preco?: number
+          status?: string
           tipo?: string
           user_id?: string
         }
@@ -96,6 +120,7 @@ export type Database = {
           mpesa_nome: string | null
           mpesa_telefone: string | null
           nome: string
+          status: string
           telefone: string | null
           user_id: string
         }
@@ -111,6 +136,7 @@ export type Database = {
           mpesa_nome?: string | null
           mpesa_telefone?: string | null
           nome?: string
+          status?: string
           telefone?: string | null
           user_id: string
         }
@@ -126,6 +152,7 @@ export type Database = {
           mpesa_nome?: string | null
           mpesa_telefone?: string | null
           nome?: string
+          status?: string
           telefone?: string | null
           user_id?: string
         }
