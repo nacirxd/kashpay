@@ -135,8 +135,11 @@ export type Database = {
         Row: {
           buyer_email: string | null
           buyer_name: string | null
+          buyer_whatsapp: string | null
           created_at: string
           id: string
+          payment_method: string | null
+          payment_phone: string | null
           product_id: string
           status: string
           user_id: string
@@ -149,8 +152,11 @@ export type Database = {
         Insert: {
           buyer_email?: string | null
           buyer_name?: string | null
+          buyer_whatsapp?: string | null
           created_at?: string
           id?: string
+          payment_method?: string | null
+          payment_phone?: string | null
           product_id: string
           status?: string
           user_id: string
@@ -163,8 +169,11 @@ export type Database = {
         Update: {
           buyer_email?: string | null
           buyer_name?: string | null
+          buyer_whatsapp?: string | null
           created_at?: string
           id?: string
+          payment_method?: string | null
+          payment_phone?: string | null
           product_id?: string
           status?: string
           user_id?: string
