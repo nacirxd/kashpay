@@ -14,6 +14,7 @@ import {
   Section,
   Text,
   Hr,
+  Link,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
@@ -28,6 +29,9 @@ interface PurchaseConfirmationProps {
   paymentMethod?: string
   accessUrl?: string
   accessType?: string
+  sellerEmail?: string
+  sellerWhatsapp?: string
+  sellerName?: string
 }
 
 const PurchaseConfirmationEmail = ({
@@ -37,6 +41,9 @@ const PurchaseConfirmationEmail = ({
   paymentMethod,
   accessUrl,
   accessType,
+  sellerEmail,
+  sellerWhatsapp,
+  sellerName,
 }: PurchaseConfirmationProps) => (
   <Html lang="pt" dir="ltr">
     <Head />
@@ -78,8 +85,26 @@ const PurchaseConfirmationEmail = ({
           </>
         )}
 
+        {(sellerEmail || sellerWhatsapp) && (
+          <>
+            <Hr style={hr} />
+            <Text style={contactTitle}>Contacto do vendedor</Text>
+            {sellerName && <Text style={contactText}><strong>{sellerName}</strong></Text>}
+            {sellerEmail && (
+              <Text style={contactText}>
+                📧 <Link href={`mailto:${sellerEmail}`} style={contactLink}>{sellerEmail}</Link>
+              </Text>
+            )}
+            {sellerWhatsapp && (
+              <Text style={contactText}>
+                📱 <Link href={`https://wa.me/${sellerWhatsapp.replace(/\D/g, '')}`} style={contactLink}>{sellerWhatsapp}</Link>
+              </Text>
+            )}
+          </>
+        )}
+
         <Text style={footer}>
-          Se tiver alguma dúvida, responda a este email. Obrigado por comprar com {SITE_NAME}.
+          Se tiver alguma dúvida, entre em contacto com o vendedor acima. Obrigado por comprar com {SITE_NAME}.
         </Text>
       </Container>
     </Body>
@@ -98,6 +123,9 @@ export const template = {
     paymentMethod: 'mpesa',
     accessUrl: 'https://exemplo.com/conteudo',
     accessType: 'link',
+    sellerName: 'João Silva',
+    sellerEmail: 'joao@exemplo.com',
+    sellerWhatsapp: '+258841234567',
   },
 } satisfies TemplateEntry
 
@@ -141,6 +169,24 @@ const button = {
   fontSize: '14px',
   borderRadius: '12px',
   padding: '12px 20px',
+  textDecoration: 'none',
+}
+const contactTitle = {
+  fontSize: '13px',
+  fontWeight: '600' as const,
+  color: 'hsl(220, 20%, 10%)',
+  margin: '0 0 8px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+}
+const contactText = {
+  fontSize: '14px',
+  color: 'hsl(220, 10%, 46%)',
+  lineHeight: '1.5',
+  margin: '0 0 4px',
+}
+const contactLink = {
+  color: 'hsl(160, 84%, 39%)',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
