@@ -222,7 +222,7 @@ const AdminProducts = () => {
                     </TableRow>
                     {isExpanded && (
                       <TableRow key={`${p.id}-detail`} className="border-gray-800 bg-gray-900/50">
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={8}>
                           <div className="flex gap-4 py-2 text-sm">
                             {getImageUrl(p.image_url) && (
                               <img src={getImageUrl(p.image_url)!} alt={p.nome} className="h-24 w-24 rounded-lg object-cover shrink-0" />
