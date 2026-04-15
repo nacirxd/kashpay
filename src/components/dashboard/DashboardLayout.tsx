@@ -60,7 +60,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
     const load = async () => {
       const [{ data: profile }, { data: sales }] = await Promise.all([
-        supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
+        supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single(),
+        supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
+      ]);
         supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
       ]);
 
