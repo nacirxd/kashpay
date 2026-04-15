@@ -34,12 +34,38 @@ const Finances = () => {
     Promise.all([
       supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("withdrawals").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-    ]).then(([salesRes, withdrawRes]) => {
+      supabase.from("profiles").select("mpesa_nome, mpesa_telefone, emola_nome, emola_telefone, banco_nome, banco_conta").eq("user_id", user.id).single(),
+    ]).then(([salesRes, withdrawRes, profileRes]) => {
       setSales(salesRes.data || []);
       setWithdrawals(withdrawRes.data || []);
+      if (profileRes.data) {
+        const p = profileRes.data as any;
+        setPaymentInfo({
+          mpesa_nome: p.mpesa_nome || "",
+          mpesa_telefone: p.mpesa_telefone || "",
+          emola_nome: p.emola_nome || "",
+          emola_telefone: p.emola_telefone || "",
+          banco_nome: p.banco_nome || "",
+          banco_conta: p.banco_conta || "",
+        });
+      }
       setLoading(false);
     });
   }, [user]);
+
+  // Pre-fill form when method changes or payment info loads
+  useEffect(() => {
+    if (metodo === "mpesa") {
+      setNomeConta(paymentInfo.mpesa_nome || "");
+      setConta(paymentInfo.mpesa_telefone || "");
+    } else if (metodo === "emola") {
+      setNomeConta(paymentInfo.emola_nome || "");
+      setConta(paymentInfo.emola_telefone || "");
+    } else {
+      setNomeConta(paymentInfo.banco_nome || "");
+      setConta(paymentInfo.banco_conta || "");
+    }
+  }, [metodo, paymentInfo]);
 
   const summary = useMemo(() => {
     const now = Date.now();
