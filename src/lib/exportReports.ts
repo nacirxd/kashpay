@@ -55,60 +55,83 @@ export function exportPDF(
   <meta charset="utf-8">
   <title>Relatório de Vendas</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a2e; padding: 40px; font-size: 12px; }
-    h1 { font-size: 22px; margin-bottom: 4px; color: #0d9668; }
-    .subtitle { color: #666; margin-bottom: 24px; font-size: 13px; }
-    .stats { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
-    .stat { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; min-width: 140px; }
-    .stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 20px; font-weight: 700; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th { background: #f1f5f9; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 2px solid #e2e8f0; }
-    td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
-    tr:nth-child(even) { background: #fafafa; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; }
+    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #1a1a2e; padding: 0; font-size: 12px; }
+    .header { background: linear-gradient(135deg, #0d9668, #0fb880); padding: 32px 40px; color: white; display: flex; align-items: center; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-circle { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: white; letter-spacing: -1px; }
+    .brand-name { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+    .header-right { text-align: right; font-size: 11px; opacity: 0.85; line-height: 1.6; }
+    .content { padding: 32px 40px; }
+    .report-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .subtitle { color: #64748b; margin-bottom: 24px; font-size: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 28px; }
+    .stat { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; background: #fafbfc; }
+    .stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+    .stat-value { font-size: 20px; font-weight: 700; margin-top: 6px; color: #0f172a; }
+    .section-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #334155; }
+    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    th { background: #f1f5f9; text-align: left; padding: 10px 12px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 11px; color: #334155; }
+    tr:nth-child(even) { background: #fafbfc; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; }
     .badge-approved { background: #d1fae5; color: #065f46; }
     .badge-pending { background: #fef3c7; color: #92400e; }
     .badge-refunded { background: #fee2e2; color: #991b1b; }
-    .footer { margin-top: 32px; text-align: center; color: #94a3b8; font-size: 10px; }
-    @media print { body { padding: 20px; } }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 10px; }
+    .footer span { color: #0d9668; font-weight: 600; }
+    @media print { body { padding: 0; } .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .stat { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style>
 </head>
 <body>
-  <h1>Relatório de Vendas</h1>
-  <p class="subtitle">Período: ${dateLabel} · Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
-
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Receita</div><div class="stat-value">${formatMZN(stats.receita)}</div></div>
-    <div class="stat"><div class="stat-label">Vendas</div><div class="stat-value">${stats.vendas}</div></div>
-    <div class="stat"><div class="stat-label">Ticket médio</div><div class="stat-value">${formatMZN(stats.ticket)}</div></div>
-    <div class="stat"><div class="stat-label">Conversão</div><div class="stat-value">${stats.conversao.toFixed(1)}%</div></div>
-    <div class="stat"><div class="stat-label">Abandono</div><div class="stat-value">${stats.abandono.toFixed(1)}%</div></div>
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-circle">AP</div>
+      <div>
+        <div class="brand-name">Aureon Pay</div>
+        <div class="brand-sub">Relatório de Vendas</div>
+      </div>
+    </div>
+    <div class="header-right">
+      Período: ${dateLabel}<br>
+      Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}
+    </div>
   </div>
 
-  <h2 style="font-size:14px; margin-bottom:8px;">Detalhes das vendas (${sales.length} registos)</h2>
-  <table>
-    <thead>
-      <tr><th>Data</th><th>Produto</th><th>Comprador</th><th>Valor</th><th>Status</th><th>Origem</th></tr>
-    </thead>
-    <tbody>
-      ${sales
-        .map(
-          (s) => `<tr>
-        <td>${format(new Date(s.created_at), "dd/MM/yyyy")}</td>
-        <td>${(s.products as any)?.nome || "Produto"}</td>
-        <td>${s.buyer_name || "-"}</td>
-        <td style="font-weight:600">${formatMZN(Number(s.valor))}</td>
-        <td><span class="badge badge-${s.status}">${statusLabel(s.status)}</span></td>
-        <td>${s.utm_source || "Direto"}</td>
-      </tr>`
-        )
-        .join("")}
-    </tbody>
-  </table>
+  <div class="content">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Receita</div><div class="stat-value">${formatMZN(stats.receita)}</div></div>
+      <div class="stat"><div class="stat-label">Vendas</div><div class="stat-value">${stats.vendas}</div></div>
+      <div class="stat"><div class="stat-label">Ticket médio</div><div class="stat-value">${formatMZN(stats.ticket)}</div></div>
+      <div class="stat"><div class="stat-label">Conversão</div><div class="stat-value">${stats.conversao.toFixed(1)}%</div></div>
+      <div class="stat"><div class="stat-label">Abandono</div><div class="stat-value">${stats.abandono.toFixed(1)}%</div></div>
+    </div>
 
-  <div class="footer">Aureon Pay · Relatório gerado automaticamente</div>
+    <div class="section-title">Detalhes das vendas (${sales.length} registos)</div>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Produto</th><th>Comprador</th><th>Valor</th><th>Status</th><th>Origem</th></tr>
+      </thead>
+      <tbody>
+        ${sales
+          .map(
+            (s) => `<tr>
+          <td>${format(new Date(s.created_at), "dd/MM/yyyy")}</td>
+          <td>${(s.products as any)?.nome || "Produto"}</td>
+          <td>${s.buyer_name || "-"}</td>
+          <td style="font-weight:600">${formatMZN(Number(s.valor))}</td>
+          <td><span class="badge badge-${s.status}">${statusLabel(s.status)}</span></td>
+          <td>${s.utm_source || "Direto"}</td>
+        </tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>
+
+    <div class="footer">Powered by <span>Aureon Pay</span> · Relatório gerado automaticamente</div>
+  </div>
 </body>
 </html>`;
 
