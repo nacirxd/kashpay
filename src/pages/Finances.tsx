@@ -147,8 +147,28 @@ const Finances = () => {
       toast.error("Informe o número da conta.");
       return false;
     }
+    if (!nomeConta.trim()) {
+      toast.error("Informe o nome do titular.");
+      return false;
+    }
 
     setSubmitting(true);
+
+    // Save payment info to profile
+    const profileUpdate: Record<string, string> = {};
+    if (metodo === "mpesa") {
+      profileUpdate.mpesa_nome = nomeConta.trim();
+      profileUpdate.mpesa_telefone = conta.trim();
+    } else if (metodo === "emola") {
+      profileUpdate.emola_nome = nomeConta.trim();
+      profileUpdate.emola_telefone = conta.trim();
+    } else {
+      profileUpdate.banco_nome = nomeConta.trim();
+      profileUpdate.banco_conta = conta.trim();
+    }
+    await supabase.from("profiles").update(profileUpdate).eq("user_id", user.id);
+    setPaymentInfo((prev) => ({ ...prev, ...profileUpdate }));
+
     const { error, data } = await supabase.from("withdrawals").insert({
       user_id: user.id,
       valor: amount,
@@ -164,7 +184,6 @@ const Finances = () => {
       toast.success("Pedido de saque enviado!");
       setWithdrawals((prev) => [data, ...prev]);
       setValor("");
-      setConta("");
       setShowWithdrawForm(false);
       return true;
     }
