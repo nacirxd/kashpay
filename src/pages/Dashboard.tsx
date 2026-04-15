@@ -148,25 +148,8 @@ const Dashboard = () => {
             Visão geral do seu negócio
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => exportCSV(filteredSales, format(dateRange.from, "dd-MM") + "_" + format(dateRange.to, "dd-MM-yyyy"))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-            title="Exportar CSV"
-          >
-            <Download className="h-3.5 w-3.5" />
-            CSV
-          </button>
-          <button
-            onClick={() => exportPDF(filteredSales, stats, format(dateRange.from, "dd/MM") + " – " + format(dateRange.to, "dd/MM/yyyy"))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-            title="Imprimir/PDF"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            PDF
-          </button>
-        </div>
-        <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1">
           {presets.map((p) => (
             <button
               key={p.value}
