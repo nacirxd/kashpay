@@ -16,7 +16,8 @@ const Finances = () => {
   const [sales, setSales] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"resumo" | "sacar">("resumo");
+  const [activeTab, setActiveTab] = useState<"resumo" | "saque">("resumo");
+  const [showWithdrawForm, setShowWithdrawForm] = useState(false);
 
   // Withdraw form
   const [valor, setValor] = useState("");
