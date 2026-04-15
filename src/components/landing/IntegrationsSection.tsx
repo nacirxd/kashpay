@@ -3,6 +3,7 @@ import { Webhook, BarChart3, MessageSquare, Zap, Target, Link2, Tag } from "luci
 
 const integrations = [
   { icon: Target, name: "Meta Ads", desc: "Facebook Pixel + Conversion API" },
+  { icon: Tag, name: "Google Tag Manager", desc: "Tags e eventos centralizados" },
   { icon: Link2, name: "UTMify", desc: "Rastreamento de UTMs" },
   { icon: Webhook, name: "Webhook", desc: "Eventos personalizados" },
   { icon: MessageSquare, name: "WhatsApp", desc: "Entrega automática" },
