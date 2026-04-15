@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight, Download, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
+import { exportCSV, exportPDF } from "@/lib/exportReports";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
@@ -147,7 +148,8 @@ const Dashboard = () => {
             Visão geral do seu negócio
           </p>
         </div>
-        <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1">
           {presets.map((p) => (
             <button
               key={p.value}
@@ -182,6 +184,25 @@ const Dashboard = () => {
               </PopoverContent>
             </Popover>
           )}
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => exportCSV(filteredSales, format(dateRange.from, "dd-MM") + "_" + format(dateRange.to, "dd-MM-yyyy"))}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              title="Exportar CSV"
+            >
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </button>
+            <button
+              onClick={() => exportPDF(filteredSales, stats, format(dateRange.from, "dd/MM") + " – " + format(dateRange.to, "dd/MM/yyyy"))}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              title="Imprimir/PDF"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              PDF
+            </button>
+          </div>
         </div>
       </div>
 
