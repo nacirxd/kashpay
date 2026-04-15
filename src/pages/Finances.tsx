@@ -43,14 +43,16 @@ const Finances = () => {
       setWithdrawals(withdrawRes.data || []);
       if (profileRes.data) {
         const p = profileRes.data as any;
-        setPaymentInfo({
+        const info = {
           mpesa_nome: p.mpesa_nome || "",
           mpesa_telefone: p.mpesa_telefone || "",
           emola_nome: p.emola_nome || "",
           emola_telefone: p.emola_telefone || "",
           banco_nome: p.banco_nome || "",
           banco_conta: p.banco_conta || "",
-        });
+        };
+        setPaymentInfo(info);
+        setEditPayment(info);
       }
       setLoading(false);
     });
