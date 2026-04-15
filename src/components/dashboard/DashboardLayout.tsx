@@ -41,6 +41,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [userName, setUserName] = useState("");
   const { dark, toggle: toggleTheme } = useTheme();
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const metadataName = useMemo(() => {
     const rawName = user?.user_metadata?.nome;
