@@ -164,8 +164,8 @@ const AdminProducts = () => {
                     <TableRow key={p.id} className="border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : p.id)}>
                       <TableCell className="pr-0">
                         <div className="h-10 w-10 rounded-lg bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
-                          {p.image_url ? (
-                            <img src={p.image_url} alt={p.nome} className="h-full w-full object-cover" />
+                         {getImageUrl(p.image_url) ? (
+                            <img src={getImageUrl(p.image_url)!} alt={p.nome} className="h-full w-full object-cover" />
                           ) : (
                             <ImageOff className="h-4 w-4 text-gray-600" />
                           )}
@@ -211,8 +211,8 @@ const AdminProducts = () => {
                       <TableRow key={`${p.id}-detail`} className="border-gray-800 bg-gray-900/50">
                         <TableCell colSpan={7}>
                           <div className="flex gap-4 py-2 text-sm">
-                            {p.image_url && (
-                              <img src={p.image_url} alt={p.nome} className="h-24 w-24 rounded-lg object-cover shrink-0" />
+                            {getImageUrl(p.image_url) && (
+                              <img src={getImageUrl(p.image_url)!} alt={p.nome} className="h-24 w-24 rounded-lg object-cover shrink-0" />
                             )}
                             <div className="grid grid-cols-2 gap-4 flex-1">
                               <div>
