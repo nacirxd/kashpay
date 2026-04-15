@@ -55,13 +55,23 @@ const Checkout = () => {
     e.preventDefault();
     if (!product) return;
 
-    if (!name || !email || !phone) {
-      toast.error("Por favor preencha todos os campos.");
+    if (!name || !email) {
+      toast.error("Por favor preencha nome e email.");
       return;
     }
 
-    const validMpesa = /^8[45]/.test(phone);
-    const validEmola = /^8[67]/.test(phone);
+    if (!method) {
+      toast.error("Selecione um método de pagamento.");
+      return;
+    }
+
+    if (!payPhone) {
+      toast.error("Informe o número de pagamento.");
+      return;
+    }
+
+    const validMpesa = /^8[45]/.test(payPhone);
+    const validEmola = /^8[67]/.test(payPhone);
     if ((method === "mpesa" && !validMpesa) || (method === "emola" && !validEmola)) {
       toast.error("Use número correto para o método selecionado.");
       return;
@@ -73,9 +83,10 @@ const Checkout = () => {
       const { data, error } = await supabase.functions.invoke("process-payment", {
         body: {
           method,
-          phone,
+          phone: payPhone,
           name,
           email,
+          whatsapp: whatsapp || undefined,
           amount: product.preco,
           reference: "moonpay",
           product_id: product.id,
