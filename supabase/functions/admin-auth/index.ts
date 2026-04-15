@@ -30,11 +30,28 @@ Deno.serve(async (req) => {
       // Verify TOTP 2FA
       const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
       if (totpSecret) {
-        const totp = new TOTP({ secret: Secret.fromUTF8(totpSecret), digits: 6, period: 30 });
-        const valid = totp.validate({ token: body.totp_code || "", window: 1 });
-        if (valid === null) {
-          return new Response(JSON.stringify({ error: "Código 2FA inválido" }), {
-            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        try {
+          const secret = Secret.fromUTF8(totpSecret);
+          const totp = new TOTP({ secret, digits: 6, period: 30 });
+          const generated = totp.generate();
+          const userCode = (body.totp_code || "").toString().trim();
+          console.log("TOTP generated length:", generated.length, "user code length:", userCode.length);
+          if (userCode !== generated) {
+            // Also check previous and next window
+            const now = Math.floor(Date.now() / 1000);
+            const totp_prev = new TOTP({ secret, digits: 6, period: 30 });
+            const prev = totp_prev.generate({ timestamp: (now - 30) * 1000 });
+            const next = totp_prev.generate({ timestamp: (now + 30) * 1000 });
+            if (userCode !== prev && userCode !== next) {
+              return new Response(JSON.stringify({ error: "Código 2FA inválido" }), {
+                status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+          }
+        } catch (e) {
+          console.error("TOTP error:", e.message);
+          return new Response(JSON.stringify({ error: "Erro na validação 2FA: " + e.message }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
