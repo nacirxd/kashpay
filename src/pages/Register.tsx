@@ -28,11 +28,22 @@ const Register = () => {
     setLoading(false);
     if (error) {
       toast.error(error.message);
-    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+    } else if (
+      data.user &&
+      (!data.user.identities || data.user.identities.length === 0)
+    ) {
       toast.error("Este email já está em uso. Tente fazer login.");
-    } else {
-      toast.success("Conta criada! Verifique seu email para confirmar.");
-      navigate("/login");
+    } else if (data.user) {
+      // Supabase returns the existing user on repeated signup when email confirmation is on.
+      // Detect by checking if user was created more than 5 seconds ago.
+      const createdAt = new Date(data.user.created_at).getTime();
+      const now = Date.now();
+      if (now - createdAt > 5000) {
+        toast.error("Este email já está em uso. Tente fazer login.");
+      } else {
+        toast.success("Conta criada! Verifique seu email para confirmar.");
+        navigate("/login");
+      }
     }
   };
 
