@@ -227,7 +227,7 @@ const Finances = () => {
                     <p className="text-sm text-muted-foreground">
                       Saldo disponível: <span className="font-semibold text-foreground">{formatMZN(summary.saldo)}</span>
                     </p>
-                    <form onSubmit={(e) => { handleWithdraw(e).then(() => setShowWithdrawForm(false)); }} className="space-y-4">
+                    <form onSubmit={handleWithdraw} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="valor">Valor (MT)</Label>
                         <Input id="valor" type="number" min="1" step="0.01" placeholder="Ex: 5000" value={valor} onChange={(e) => setValor(e.target.value)} required />
