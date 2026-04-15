@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { formatMZN } from "@/lib/currency";
+import { exportCSV, exportPDF } from "@/lib/exportReports";
 import { motion } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Download, FileText } from "lucide-react";
 
 const Sales = () => {
   const { user } = useAuth();
@@ -26,6 +27,16 @@ const Sales = () => {
   }, [user]);
 
   const filtered = filter === "all" ? sales : sales.filter((s) => s.status === filter);
+
+  const stats = useMemo(() => {
+    const approved = filtered.filter((s) => s.status === "approved");
+    const receita = approved.reduce((acc, s) => acc + Number(s.valor), 0);
+    const vendas = approved.length;
+    const ticket = vendas > 0 ? receita / vendas : 0;
+    const conversao = filtered.length > 0 ? (vendas / filtered.length) * 100 : 0;
+    const abandono = filtered.length > 0 ? ((filtered.length - vendas) / filtered.length) * 100 : 0;
+    return { receita, vendas, ticket, conversao, abandono };
+  }, [filtered]);
 
   const statusLabels: Record<string, string> = {
     approved: "Aprovado",
@@ -49,7 +60,27 @@ const Sales = () => {
 
   return (
     <DashboardLayout>
-      <h1 className="text-lg font-semibold mb-6">Vendas</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <h1 className="text-lg font-semibold">Vendas</h1>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => exportCSV(filtered, "vendas")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            title="Exportar CSV"
+          >
+            <Download className="h-3.5 w-3.5" />
+            CSV
+          </button>
+          <button
+            onClick={() => exportPDF(filtered, stats, "Todas as vendas")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            title="Imprimir/PDF"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            PDF
+          </button>
+        </div>
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
