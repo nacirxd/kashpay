@@ -190,6 +190,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    // LIST ORDERS (sales)
+    if (action === "list_orders") {
+      const { data: sales } = await supabaseAdmin.from("sales").select("*").order("created_at", { ascending: false });
+      const userIds = [...new Set((sales || []).map(s => s.user_id))];
+      const productIds = [...new Set((sales || []).map(s => s.product_id))];
+      const [{ data: profiles }, { data: products }] = await Promise.all([
+        supabaseAdmin.from("profiles").select("user_id, nome, email").in("user_id", userIds),
+        supabaseAdmin.from("products").select("id, nome, image_url").in("id", productIds),
+      ]);
+      const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]));
+      const productMap = Object.fromEntries((products || []).map(p => [p.id, p]));
+      const enriched = (sales || []).map(s => ({
+        ...s,
+        seller_name: profileMap[s.user_id]?.nome || "—",
+        seller_email: profileMap[s.user_id]?.email || "—",
+        product_name: productMap[s.product_id]?.nome || "—",
+        product_image: productMap[s.product_id]?.image_url || null,
+      }));
+      return new Response(JSON.stringify(enriched), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // UPDATE ORDER STATUS
+    if (action === "update_order_status") {
+      const { error } = await supabaseAdmin.from("sales").update({ status: body.status }).eq("id", body.order_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // LOGOUT
     if (action === "logout") {
       await supabaseAdmin.from("admin_sessions").delete().eq("session_token", session_token);
