@@ -8,7 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 const AdminSettings = () => {
   const { adminFetch } = useAdmin();
   const [loading, setLoading] = useState(false);
-  const [setup, setSetup] = useState<{ secret: string; uri: string } | null>(null);
+  const [setup, setSetup] = useState<{ manual_key: string; uri: string } | null>(null);
   const [showSecret, setShowSecret] = useState(false);
 
   const handleGet2FA = async () => {
@@ -23,8 +23,8 @@ const AdminSettings = () => {
   };
 
   const copySecret = () => {
-    if (setup?.secret) {
-      navigator.clipboard.writeText(setup.secret);
+    if (setup?.manual_key) {
+      navigator.clipboard.writeText(setup.manual_key);
       toast.success("Chave copiada!");
     }
   };
@@ -69,7 +69,7 @@ const AdminSettings = () => {
               <p className="text-xs text-gray-500 mb-2">Ou insira a chave manualmente:</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-sm text-emerald-400 font-mono break-all">
-                  {showSecret ? setup.secret : "••••••••••••••••"}
+                  {showSecret ? setup.manual_key : "••••••••••••••••"}
                 </code>
                 <button
                   onClick={() => setShowSecret(!showSecret)}
