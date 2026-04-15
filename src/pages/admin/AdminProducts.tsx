@@ -4,7 +4,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { formatDateTimeMZ } from "@/lib/timezone";
-import { Search, ImageOff } from "lucide-react";
+import { Search, ImageOff, Eye, X, ExternalLink, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -28,6 +28,8 @@ interface Product {
   delivery_type: string;
   status: string;
   image_url: string | null;
+  file_url: string | null;
+  external_url: string | null;
   user_id: string;
   seller_name: string;
   seller_email: string;
@@ -56,6 +58,7 @@ const AdminProducts = () => {
   const [confirm, setConfirm] = useState<{ id: string; status: string; name: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
