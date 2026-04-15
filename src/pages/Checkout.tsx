@@ -180,7 +180,7 @@ const Checkout = () => {
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <span className="flex items-center gap-1.5 text-sm font-bold text-foreground">
                 <ShieldCheck className="h-4 w-4 text-primary" />
-                Aureon Pay
+                Compra segura
               </span>
               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <img src="https://flagcdn.com/w40/mz.png" alt="MZ" className="h-3.5 w-5 rounded-sm object-cover" />
