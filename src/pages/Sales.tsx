@@ -106,27 +106,39 @@ const Sales = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Filter tabs */}
-          <div className="flex gap-1 rounded-lg bg-muted/50 p-1 w-fit">
-            {([
-              { key: "all", label: "Todas" },
-              { key: "approved", label: "Aprovadas" },
-              { key: "pending", label: "Pendentes" },
-            ] as const).map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setFilter(tab.key)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  filter === tab.key
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-                <span className="ml-1.5 text-xs opacity-60">({counts[tab.key]})</span>
-              </button>
-            ))}
+        <div className="space-y-4">
+          {/* Filter tabs + Search */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex gap-1 rounded-lg bg-muted/50 p-1 w-fit">
+              {([
+                { key: "all", label: "Todas" },
+                { key: "approved", label: "Aprovadas" },
+                { key: "pending", label: "Pendentes" },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilter(tab.key)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    filter === tab.key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                  <span className="ml-1.5 text-xs opacity-60">({counts[tab.key]})</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar nome, email, WhatsApp..."
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
           </div>
 
           <motion.div
