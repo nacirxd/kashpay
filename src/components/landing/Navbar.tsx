@@ -32,7 +32,7 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-3">
           <Button variant="ghost" size="sm" className="font-medium" onClick={() => navigate("/login")}>Entrar</Button>
-          <Button size="sm" className="rounded-xl font-semibold px-5" onClick={() => navigate("/register")}>Criar conta grátis</Button>
+          <Button size="sm" className="rounded-xl font-semibold px-5" onClick={() => navigate("/registro")}>Criar conta grátis</Button>
         </div>
 
         <button className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(!open)}>
@@ -48,7 +48,7 @@ const Navbar = () => {
           <a href="#faq" className="block text-sm py-3 px-3 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(false)}>FAQ</a>
           <div className="pt-3 space-y-2">
             <Button variant="outline" className="w-full rounded-xl" onClick={() => { setOpen(false); navigate("/login"); }}>Entrar</Button>
-            <Button className="w-full rounded-xl" onClick={() => { setOpen(false); navigate("/register"); }}>Criar conta grátis</Button>
+            <Button className="w-full rounded-xl" onClick={() => { setOpen(false); navigate("/registro"); }}>Criar conta grátis</Button>
           </div>
         </div>
       )}
