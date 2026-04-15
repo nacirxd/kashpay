@@ -230,11 +230,16 @@ const Checkout = () => {
               </div>
 
               <div className="space-y-1.5">
+                <Label className="text-sm">WhatsApp <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="84xxxxxxx" />
+              </div>
+
+              <div className="space-y-1.5">
                 <Label className="text-sm">Método de pagamento</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setMethod("mpesa")}
+                    onClick={() => { setMethod("mpesa"); setPayPhone(""); }}
                     className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
                       method === "mpesa"
                         ? "border-primary bg-primary/5 text-foreground"
@@ -247,7 +252,7 @@ const Checkout = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMethod("emola")}
+                    onClick={() => { setMethod("emola"); setPayPhone(""); }}
                     className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
                       method === "emola"
                         ? "border-primary bg-primary/5 text-foreground"
@@ -261,15 +266,17 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-sm">Número de pagamento</Label>
-                <Input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  placeholder={method === "mpesa" ? "84/85xxxxxxx" : "86/87xxxxxxx"}
-                />
-              </div>
+              {method && (
+                <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
+                  <Label className="text-sm">Número de pagamento</Label>
+                  <Input
+                    value={payPhone}
+                    onChange={(e) => setPayPhone(e.target.value)}
+                    required
+                    placeholder={method === "mpesa" ? "84/85xxxxxxx" : "86/87xxxxxxx"}
+                  />
+                </motion.div>
+              )}
 
               <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
                 <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
