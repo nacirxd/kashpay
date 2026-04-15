@@ -17,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: 'Confirme seu email para o Aureon Pay',
+  invite: 'Você foi convidado para o Aureon Pay',
+  magiclink: 'Seu link de login no Aureon Pay',
+  recovery: 'Redefinir sua senha no Aureon Pay',
+  email_change: 'Confirme seu novo email no Aureon Pay',
+  reauthentication: 'Seu código de verificação',
 }
 
 // Template mapping
