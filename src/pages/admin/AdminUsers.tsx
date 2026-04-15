@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatDateTimeMZ } from "@/lib/timezone";
 import { formatMZN } from "@/lib/currency";
-import { Eye, X } from "lucide-react";
+import { Eye, X, Search, Trophy, ShoppingCart, DollarSign, Package } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -27,6 +27,14 @@ interface Profile {
   banco_conta: string | null;
 }
 
+interface UserDetails {
+  total_revenue: number;
+  total_sales: number;
+  top_product: { nome: string; preco: number; sales_count: number } | null;
+  rank: number | null;
+  total_sellers: number;
+}
+
 const AdminUsers = () => {
   const { adminFetch } = useAdmin();
   const [users, setUsers] = useState<Profile[]>([]);
@@ -34,6 +42,9 @@ const AdminUsers = () => {
   const [confirm, setConfirm] = useState<{ user_id: string; status: string; name: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [viewUser, setViewUser] = useState<Profile | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -41,6 +52,30 @@ const AdminUsers = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  const filteredUsers = useMemo(() => {
+    if (!search.trim()) return users;
+    const q = search.toLowerCase().trim();
+    return users.filter(
+      (u) =>
+        (u.nome || "").toLowerCase().includes(q) ||
+        (u.email || "").toLowerCase().includes(q) ||
+        (u.telefone || "").toLowerCase().includes(q)
+    );
+  }, [users, search]);
+
+  const handleViewUser = async (u: Profile) => {
+    setViewUser(u);
+    setUserDetails(null);
+    setDetailsLoading(true);
+    try {
+      const details = await adminFetch("user_details", { user_id: u.user_id });
+      setUserDetails(details);
+    } catch {
+      // ignore
+    }
+    setDetailsLoading(false);
+  };
 
   const handleStatusChange = async () => {
     if (!confirm) return;
@@ -64,6 +99,19 @@ const AdminUsers = () => {
   return (
     <AdminLayout>
       <h1 className="text-2xl font-bold mb-6">Usuários</h1>
+
+      {/* Search bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder="Pesquisar por nome, email ou telefone..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-xl border border-gray-700 bg-[#13151d] py-2.5 pl-10 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
       <div className="rounded-xl border border-gray-800 bg-[#13151d] overflow-hidden">
         <Table>
           <TableHeader>
@@ -78,14 +126,14 @@ const AdminUsers = () => {
           <TableBody>
             {loading ? (
               <TableRow className="border-gray-800"><TableCell colSpan={5} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
-            ) : users.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={5} className="text-center text-gray-500 py-8">Nenhum usuário</TableCell></TableRow>
+            ) : filteredUsers.length === 0 ? (
+              <TableRow className="border-gray-800"><TableCell colSpan={5} className="text-center text-gray-500 py-8">{search ? "Nenhum resultado encontrado" : "Nenhum usuário"}</TableCell></TableRow>
             ) : (
-              users.map((u) => (
+              filteredUsers.map((u) => (
                 <TableRow key={u.user_id} className="border-gray-800 hover:bg-gray-800/50">
                   <TableCell className="pr-0">
                     <button
-                      onClick={() => setViewUser(u)}
+                      onClick={() => handleViewUser(u)}
                       className="rounded-lg p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-gray-800 transition-colors"
                       title="Ver detalhes"
                     >
@@ -138,8 +186,8 @@ const AdminUsers = () => {
 
       {/* User detail modal */}
       {viewUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setViewUser(null)}>
-          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 overflow-y-auto py-8" onClick={() => setViewUser(null)}>
+          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4 my-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold">Detalhes do Usuário</h2>
               <button onClick={() => setViewUser(null)} className="text-gray-500 hover:text-gray-300">
@@ -161,6 +209,45 @@ const AdminUsers = () => {
                 <p className="text-sm text-gray-400">{viewUser.email}</p>
               </div>
             </div>
+
+            {/* Sales stats */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-3 text-center">
+                <DollarSign className="h-4 w-4 text-emerald-400 mx-auto mb-1" />
+                <p className="text-xs text-gray-500">Receita</p>
+                <p className="font-semibold text-sm text-emerald-400">
+                  {detailsLoading ? "..." : formatMZN(userDetails?.total_revenue || 0)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-3 text-center">
+                <ShoppingCart className="h-4 w-4 text-blue-400 mx-auto mb-1" />
+                <p className="text-xs text-gray-500">Vendas</p>
+                <p className="font-semibold text-sm">
+                  {detailsLoading ? "..." : userDetails?.total_sales || 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-3 text-center">
+                <Trophy className="h-4 w-4 text-yellow-400 mx-auto mb-1" />
+                <p className="text-xs text-gray-500">Ranking</p>
+                <p className="font-semibold text-sm">
+                  {detailsLoading ? "..." : userDetails?.rank ? `#${userDetails.rank}/${userDetails.total_sellers}` : "—"}
+                </p>
+              </div>
+            </div>
+
+            {/* Top product */}
+            {!detailsLoading && userDetails?.top_product && (
+              <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-3 mb-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <Package className="h-4 w-4 text-yellow-400" />
+                  <span className="text-xs text-gray-500 font-medium">Produto mais vendido</span>
+                </div>
+                <p className="font-medium text-sm">{userDetails.top_product.nome}</p>
+                <p className="text-xs text-gray-400">
+                  {formatMZN(userDetails.top_product.preco)} · {userDetails.top_product.sales_count} venda{userDetails.top_product.sales_count !== 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
 
             <div className="space-y-3 text-sm">
               <InfoRow label="Status" value={
