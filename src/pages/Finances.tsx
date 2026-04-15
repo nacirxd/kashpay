@@ -23,7 +23,11 @@ const Finances = () => {
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState("mpesa");
   const [conta, setConta] = useState("");
+  const [nomeConta, setNomeConta] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Saved payment info from profile
+  const [paymentInfo, setPaymentInfo] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
