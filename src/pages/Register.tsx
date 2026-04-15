@@ -28,7 +28,18 @@ const Register = () => {
     setLoading(false);
     if (error) {
       toast.error(error.message);
-    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+    } else if (
+      data.user &&
+      (!data.user.identities || data.user.identities.length === 0)
+    ) {
+      toast.error("Este email já está em uso. Tente fazer login.");
+    } else if (
+      data.user &&
+      data.user.identities &&
+      data.user.identities.length > 0 &&
+      !data.user.confirmed_at &&
+      data.user.created_at !== data.user.updated_at
+    ) {
       toast.error("Este email já está em uso. Tente fazer login.");
     } else {
       toast.success("Conta criada! Verifique seu email para confirmar.");
