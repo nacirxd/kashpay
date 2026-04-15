@@ -156,9 +156,9 @@ const AdminProducts = () => {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={8} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={7} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum produto"}</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={8} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum produto"}</TableCell></TableRow>
             ) : (
               filtered.map((p) => {
                 const st = statusMap[p.status] || statusMap.pending;
@@ -166,6 +166,15 @@ const AdminProducts = () => {
                 return (
                   <>
                     <TableRow key={p.id} className="border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : p.id)}>
+                      <TableCell className="pr-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
+                          className="rounded-lg p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-gray-800 transition-colors"
+                          title="Ver material"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </TableCell>
                       <TableCell className="pr-0">
                         <div className="h-10 w-10 rounded-lg bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
                          {getImageUrl(p.image_url) ? (
