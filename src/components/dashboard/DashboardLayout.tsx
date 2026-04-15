@@ -41,6 +41,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [userName, setUserName] = useState("");
   const { dark, toggle: toggleTheme } = useTheme();
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const metadataName = useMemo(() => {
     const rawName = user?.user_metadata?.nome;
@@ -59,7 +60,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
     const load = async () => {
       const [{ data: profile }, { data: sales }] = await Promise.all([
-        supabase.from("profiles").select("nome").eq("user_id", user.id).single(),
+        supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single(),
         supabase.from("sales").select("valor, status").eq("user_id", user.id).eq("status", "approved"),
       ]);
 
@@ -67,6 +68,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
       const profileName = typeof profile?.nome === "string" ? profile.nome.trim() : "";
       if (profileName) setUserName(profileName);
+      const profileAvatar = (profile as any)?.avatar_url || "";
+      if (profileAvatar) setAvatarUrl(profileAvatar);
       setTotalRevenue((sales || []).reduce((a, s) => a + Number(s.valor), 0));
     };
 
@@ -178,8 +181,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="w-24">
               <Progress value={progress} className="h-2" />
             </div>
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase">
-              {firstName.slice(0, 2).toUpperCase() || "U"}
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                firstName.slice(0, 2).toUpperCase() || "U"
+              )}
             </div>
           </div>
         </header>
