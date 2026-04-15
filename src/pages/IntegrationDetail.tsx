@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-const titles: Record<string, string> = { meta: "Meta Ads", utmify: "UTMify", webhook: "Webhook" };
-const tipoMap: Record<string, string> = { meta: "meta_ads", utmify: "utmify", webhook: "webhook" };
+const titles: Record<string, string> = { meta: "Meta Ads", gtm: "Google Tag Manager", utmify: "UTMify", webhook: "Webhook" };
+const tipoMap: Record<string, string> = { meta: "meta_ads", gtm: "gtm", utmify: "utmify", webhook: "webhook" };
 
 const IntegrationDetail = () => {
   const { tipo } = useParams();
@@ -106,6 +106,16 @@ const IntegrationDetail = () => {
             </div>
             <p className="text-xs text-muted-foreground">Eventos enviados: PageView, AddToCart, InitiateCheckout, Purchase</p>
             <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar evento</Button>
+          </div>
+        )}
+
+        {tipo === "gtm" && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Container ID</Label>
+              <Input value={config.container_id || ""} onChange={(e) => setConfig({ ...config, container_id: e.target.value })} placeholder="Ex: GTM-XXXXXXX" />
+            </div>
+            <p className="text-xs text-muted-foreground">O código do GTM será injetado automaticamente nas suas páginas de checkout.</p>
           </div>
         )}
 
