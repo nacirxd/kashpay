@@ -301,16 +301,16 @@ Deno.serve(async (req) => {
         if (sale) {
           const { data: product } = await supabaseAdmin.from("products").select("*").eq("id", sale.product_id).single();
 
+          // Fetch seller profile for contact info and notifications
+          const { data: sellerProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("nome, email, telefone, mpesa_telefone")
+            .eq("user_id", sale.user_id)
+            .maybeSingle();
+
           // 1. Send purchase confirmation email
           if (sale.buyer_email) {
             try {
-              // Fetch seller profile for contact info
-              const { data: sellerProfile } = await supabaseAdmin
-                .from("profiles")
-                .select("nome, email, telefone, mpesa_telefone")
-                .eq("user_id", sale.user_id)
-                .maybeSingle();
-
               await supabaseAdmin.functions.invoke("send-transactional-email", {
                 body: {
                   templateName: "purchase-confirmation",
@@ -335,7 +335,7 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Send sale notification to seller
+          // 2. Send sale notification to seller
           if (sellerProfile?.email) {
             try {
               await supabaseAdmin.functions.invoke("send-transactional-email", {
