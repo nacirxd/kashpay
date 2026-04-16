@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { TOTP, Secret } from "https://esm.sh/otpauth@9.3.6";
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN';
+const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send';
 
 async function convertMznToBrlCents(amountMzn: number) {
   const ctrl = new AbortController();
@@ -12,6 +13,38 @@ async function convertMznToBrlCents(amountMzn: number) {
     const rate = Number(data?.rates?.BRL);
     if (!resp.ok || !Number.isFinite(rate) || rate <= 0) throw new Error('Falha cotação');
     return { rate, cents: Math.round(amountMzn * rate * 100) };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function normalizePhoneMZ(raw: string): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('258') && digits.length === 12) return `+${digits}`;
+  if (digits.length === 9 && digits.startsWith('8')) return `+258${digits}`;
+  if (digits.startsWith('+')) return digits;
+  return null;
+}
+
+async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string, message: string) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const body: Record<string, string> = { to, message };
+    if (senderId) body.sender_id = senderId;
+    const resp = await fetch(TSEMBA_SMS_URL, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify(body),
+    });
+    const text = await resp.text();
+    console.log('Tsemba SMS (admin) response:', resp.status, text);
+    return resp.ok;
+  } catch (err) {
+    console.error('Erro Tsemba SMS (admin):', err);
+    return false;
   } finally {
     clearTimeout(t);
   }
