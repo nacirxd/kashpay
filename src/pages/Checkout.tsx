@@ -35,7 +35,29 @@ const Checkout = () => {
   useEffect(() => {
     if (!id) return;
     supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
-      if (data) setProduct(data);
+      if (data) {
+        setProduct(data);
+        // Load Meta Pixel if seller has it configured
+        supabase.from("integrations")
+          .select("config")
+          .eq("user_id", data.user_id)
+          .eq("tipo", "meta_ads")
+          .eq("ativo", true)
+          .maybeSingle()
+          .then(({ data: integration }) => {
+            const pixelId = (integration?.config as any)?.pixel_id;
+            if (pixelId) {
+              loadMetaPixel(pixelId);
+              trackEvent('ViewContent', {
+                content_name: data.nome,
+                content_ids: [data.id],
+                content_type: 'product',
+                value: Number(data.preco),
+                currency: 'MZN',
+              });
+            }
+          });
+      }
       setLoading(false);
     });
   }, [id]);
