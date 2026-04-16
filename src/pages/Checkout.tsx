@@ -128,6 +128,12 @@ const Checkout = () => {
       if (error) {
         toast.error("Erro ao processar pagamento. Tente novamente.");
       } else if (data?.status === "approved") {
+        trackEvent('Purchase', {
+          content_name: product.nome,
+          content_ids: [product.id],
+          value: Number(product.preco),
+          currency: 'MZN',
+        });
         setDone(true);
         toast.success("Pagamento aprovado!");
       } else if (data?.status === "pending") {
