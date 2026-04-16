@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
+import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
 import mpesaLogo from "@/assets/mpesa.svg";
@@ -34,7 +35,29 @@ const Checkout = () => {
   useEffect(() => {
     if (!id) return;
     supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
-      if (data) setProduct(data);
+      if (data) {
+        setProduct(data);
+        // Load Meta Pixel if seller has it configured
+        supabase.from("integrations")
+          .select("config")
+          .eq("user_id", data.user_id)
+          .eq("tipo", "meta_ads")
+          .eq("ativo", true)
+          .maybeSingle()
+          .then(({ data: integration }) => {
+            const pixelId = (integration?.config as any)?.pixel_id;
+            if (pixelId) {
+              loadMetaPixel(pixelId);
+              trackEvent('ViewContent', {
+                content_name: data.nome,
+                content_ids: [data.id],
+                content_type: 'product',
+                value: Number(data.preco),
+                currency: 'MZN',
+              });
+            }
+          });
+      }
       setLoading(false);
     });
   }, [id]);
@@ -79,6 +102,13 @@ const Checkout = () => {
 
     setPaying(true);
 
+    // Fire InitiateCheckout event
+    trackEvent('InitiateCheckout', {
+      content_name: product.nome,
+      content_ids: [product.id],
+      value: Number(product.preco),
+      currency: 'MZN',
+    });
     try {
       const { data, error } = await supabase.functions.invoke("process-payment", {
         body: {
@@ -98,6 +128,12 @@ const Checkout = () => {
       if (error) {
         toast.error("Erro ao processar pagamento. Tente novamente.");
       } else if (data?.status === "approved") {
+        trackEvent('Purchase', {
+          content_name: product.nome,
+          content_ids: [product.id],
+          value: Number(product.preco),
+          currency: 'MZN',
+        });
         setDone(true);
         toast.success("Pagamento aprovado!");
       } else if (data?.status === "pending") {
