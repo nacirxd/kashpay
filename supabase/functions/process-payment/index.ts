@@ -196,10 +196,51 @@ Deno.serve(async (req) => {
           }
         }
 
-        const [utmifyResult, webhookResult] = await Promise.all([
+        const [utmifyResult, webhookResult, metaResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'meta_ads').eq('ativo', true).maybeSingle(),
         ])
+
+        // Meta Conversion API (CAPI) - server-side Purchase event
+        if (status === 'approved' && metaResult.data?.config) {
+          const metaCfg = metaResult.data.config as any
+          const pixelId = metaCfg.pixel_id
+          const accessToken = metaCfg.access_token
+          if (pixelId && accessToken) {
+            try {
+              const eventTime = Math.floor(Date.now() / 1000)
+              const capiResp = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  data: [{
+                    event_name: 'Purchase',
+                    event_time: eventTime,
+                    action_source: 'website',
+                    user_data: {
+                      em: email ? [await hashSHA256(email.toLowerCase().trim())] : [],
+                      ph: phone ? [await hashSHA256(phone.replace(/\D/g, ''))] : [],
+                      fn: name ? [await hashSHA256(name.toLowerCase().trim().split(' ')[0])] : [],
+                    },
+                    custom_data: {
+                      currency: 'MZN',
+                      value: amountNumber,
+                      content_name: productData?.nome || 'Produto',
+                      content_ids: [product_id],
+                      content_type: 'product',
+                    },
+                  }],
+                  access_token: accessToken,
+                }),
+              })
+              const capiBody = await capiResp.text()
+              console.log('Meta CAPI response:', capiResp.status, capiBody)
+            } catch (capiErr) {
+              console.error('Erro Meta CAPI:', capiErr)
+            }
+          }
+        }
 
         // UTMify - only send if approved, active integration, and valid token
         if (status === 'approved' && utmifyResult.data?.config) {
