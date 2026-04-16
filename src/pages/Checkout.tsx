@@ -152,6 +152,13 @@ const Checkout = () => {
           value: Number(product.preco),
           currency: 'MZN',
         });
+        pushDataLayer('purchase', {
+          item_name: product.nome,
+          item_id: product.id,
+          price: Number(product.preco),
+          currency: 'MZN',
+          transaction_id: data?.data?.id || product.id,
+        });
         setDone(true);
         toast.success("Pagamento aprovado!");
       } else if (data?.status === "pending") {
