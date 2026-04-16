@@ -236,11 +236,28 @@ Deno.serve(async (req) => {
           }
         }
 
-        const [utmifyResult, webhookResult, metaResult] = await Promise.all([
+        const [utmifyResult, webhookResult, metaResult, tsembaResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'meta_ads').eq('ativo', true).maybeSingle(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'tsemba_sms').eq('ativo', true).maybeSingle(),
         ])
+
+        // Tsemba SMS - notify buyer when sale is approved
+        if (status === 'approved' && tsembaResult.data?.config) {
+          const tsembaCfg = tsembaResult.data.config as any
+          const apiKey = tsembaCfg.api_key
+          const senderId = tsembaCfg.sender_id || null
+          const buyerPhone = whatsapp || phone
+          const normalized = normalizePhoneMZ(buyerPhone || '')
+          if (apiKey && normalized && name) {
+            const productName = productData?.nome || 'Produto'
+            const message = `Ola ${name.split(' ')[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`
+            await sendTsembaSMS(apiKey, senderId, normalized, message)
+          } else {
+            console.log('Tsemba SMS ignorado: faltam api_key, telefone valido ou nome')
+          }
+        }
 
         // Meta Conversion API (CAPI) - server-side Purchase event
         if (status === 'approved' && metaResult.data?.config) {
