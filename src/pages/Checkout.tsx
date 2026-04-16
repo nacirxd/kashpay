@@ -102,6 +102,13 @@ const Checkout = () => {
 
     setPaying(true);
 
+    // Fire InitiateCheckout event
+    trackEvent('InitiateCheckout', {
+      content_name: product.nome,
+      content_ids: [product.id],
+      value: Number(product.preco),
+      currency: 'MZN',
+    });
     try {
       const { data, error } = await supabase.functions.invoke("process-payment", {
         body: {
