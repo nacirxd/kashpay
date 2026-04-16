@@ -344,13 +344,15 @@ const Checkout = () => {
                 <span className="text-sm font-bold">{formatMZN(Number(product.preco))}</span>
               </div>
 
-              <Button type="submit" className="w-full h-12 text-base font-bold" disabled={paying}>
-                {paying ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                ) : (
-                  "Comprar agora"
-                )}
-              </Button>
+              {method && (
+                <Button type="submit" className="w-full h-12 text-base font-bold" disabled={paying}>
+                  {paying ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  ) : (
+                    "Comprar agora"
+                  )}
+                </Button>
+              )}
 
               <p className="text-center text-xs text-muted-foreground pt-1">
                 🔒 Pagamento seguro e criptografado
