@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
+import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
 import mpesaLogo from "@/assets/mpesa.svg";
