@@ -250,12 +250,35 @@ Deno.serve(async (req) => {
           const senderId = tsembaCfg.sender_id || null
           const buyerPhone = whatsapp || phone
           const normalized = normalizePhoneMZ(buyerPhone || '')
+          const productName = productData?.nome || 'Produto'
+          const message = `Ola ${String(name || '').split(' ')[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`
+
           if (apiKey && normalized && name) {
-            const productName = productData?.nome || 'Produto'
-            const message = `Ola ${name.split(' ')[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`
-            await sendTsembaSMS(apiKey, senderId, normalized, message)
+            const sent = await sendTsembaSMS(apiKey, senderId, normalized, message)
+            await supabase.from('sms_logs').insert({
+              user_id,
+              sale_id: saleData?.id || null,
+              provider: 'tsemba',
+              recipient_phone: normalized,
+              sender_id: senderId,
+              message,
+              status: sent ? 'sent' : 'failed',
+              provider_response: sent ? 'Pedido aceite pela Tsemba' : null,
+              error_message: sent ? null : 'Falha ao enviar SMS pela Tsemba',
+            })
           } else {
             console.log('Tsemba SMS ignorado: faltam api_key, telefone valido ou nome')
+            await supabase.from('sms_logs').insert({
+              user_id,
+              sale_id: saleData?.id || null,
+              provider: 'tsemba',
+              recipient_phone: normalized || buyerPhone || 'indisponivel',
+              sender_id: senderId,
+              message,
+              status: 'failed',
+              provider_response: null,
+              error_message: 'Faltam api_key, telefone valido ou nome do comprador',
+            })
           }
         }
 

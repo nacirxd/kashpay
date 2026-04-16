@@ -11,6 +11,16 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
+type SmsLog = {
+  id: string;
+  recipient_phone: string;
+  message: string;
+  status: string;
+  provider_response: string | null;
+  error_message: string | null;
+  created_at: string;
+};
+
 const titles: Record<string, string> = { meta: "Meta Ads", gtm: "Google Tag Manager", utmify: "UTMify", webhook: "Webhook", tsemba: "Tsemba SMS" };
 const tipoMap: Record<string, string> = { meta: "meta_ads", gtm: "gtm", utmify: "utmify", webhook: "webhook", tsemba: "tsemba_sms" };
 
@@ -27,6 +37,7 @@ const IntegrationDetail = () => {
   const [testResult, setTestResult] = useState<string | null>(null);
   const [utmSales, setUtmSales] = useState<any[]>([]);
   const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
+  const [smsLogs, setSmsLogs] = useState<SmsLog[]>([]);
 
   useEffect(() => {
     if (!user || !dbTipo) return;
@@ -41,6 +52,12 @@ const IntegrationDetail = () => {
     if (tipo === "utmify") {
       supabase.from("sales").select("utm_source, utm_medium, utm_campaign, valor, status").eq("user_id", user.id).not("utm_source", "is", null).order("created_at", { ascending: false }).limit(20).then(({ data }) => {
         setUtmSales(data || []);
+      });
+    }
+
+    if (tipo === "tsemba") {
+      supabase.from("sms_logs").select("id, recipient_phone, message, status, provider_response, error_message, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10).then(({ data }) => {
+        setSmsLogs((data as SmsLog[]) || []);
       });
     }
   }, [user, dbTipo, tipo]);
@@ -65,7 +82,6 @@ const IntegrationDetail = () => {
     } else if (tipo === "webhook" && config.url) {
       try {
         setTestResult("⏳ Enviando teste...");
-        // Simulated webhook test
         await new Promise((r) => setTimeout(r, 1000));
         const logEntry = `[${new Date().toLocaleTimeString("pt-MZ", { timeZone: "Africa/Maputo" })}] POST ${config.url} → 200 OK (teste)`;
         setWebhookLogs((prev) => [logEntry, ...prev].slice(0, 10));
@@ -209,6 +225,40 @@ const IntegrationDetail = () => {
               <p className="font-semibold text-foreground">SMS enviado ao comprador quando a venda for aprovada:</p>
               <p className="font-mono italic">"Olá {`{nome}`}! Sua compra de {`{produto}`} foi confirmada. Obrigado!"</p>
             </div>
+
+            <motion.div className="rounded-xl border border-border/50 bg-card p-4 shadow-soft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold">Histórico de SMS</h3>
+                <p className="text-xs text-muted-foreground">Últimos 10 disparos feitos para compradores.</p>
+              </div>
+
+              {smsLogs.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Ainda não há SMS registados.</p>
+              ) : (
+                <div className="space-y-3">
+                  {smsLogs.map((log) => (
+                    <div key={log.id} className="rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium">{log.recipient_phone}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" })}</p>
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${log.status === "sent" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {log.status === "sent" ? "Enviado" : "Falhou"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-foreground">{log.message}</p>
+                      {log.provider_response && (
+                        <p className="text-xs text-muted-foreground">Resposta: {log.provider_response}</p>
+                      )}
+                      {log.error_message && (
+                        <p className="text-xs text-muted-foreground">Erro: {log.error_message}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
           </div>
         )}
 
