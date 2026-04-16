@@ -2,7 +2,7 @@ import aureonLogo from "@/assets/aureon-pay-logo.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAdmin } from "@/contexts/AdminContext";
 import {
-  LayoutDashboard, Users, Package, ShoppingCart, Wallet, LogOut, Shield, Settings,
+  LayoutDashboard, Users, Package, ShoppingCart, Wallet, LogOut, Shield, Settings, MessageSquare,
 } from "lucide-react";
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { icon: Package, label: "Produtos", path: "/admin/products" },
   { icon: ShoppingCart, label: "Pedidos", path: "/admin/orders" },
   { icon: Wallet, label: "Saques", path: "/admin/withdrawals" },
+  { icon: MessageSquare, label: "SMS", path: "/admin/sms" },
   { icon: Settings, label: "Configurações", path: "/admin/settings" },
 ];
 
