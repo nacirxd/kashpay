@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
         if (status === 'approved') {
           const apiKey = Deno.env.get('TSEMBA_API_KEY') || ''
           const senderId = Deno.env.get('TSEMBA_SENDER_ID') || null
-          const buyerPhone = whatsapp || phone
+          const buyerPhone = phone
           const normalized = normalizePhoneMZ(buyerPhone || '')
           const firstName = String(name || '').split(' ')[0]
           const valorFormatado = `${Number(amount).toLocaleString('pt-MZ')} MT`
