@@ -476,12 +476,35 @@ Deno.serve(async (req) => {
               const senderId = tCfg.sender_id || null;
               const buyerPhone = sale.buyer_whatsapp || sale.payment_phone || "";
               const normalized = normalizePhoneMZ(buyerPhone);
+              const productName = product?.nome || "Produto";
+              const message = `Ola ${String(sale.buyer_name || "").split(" ")[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`;
+
               if (apiKey && normalized && sale.buyer_name) {
-                const productName = product?.nome || "Produto";
-                const message = `Ola ${String(sale.buyer_name).split(" ")[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`;
-                await sendTsembaSMS(apiKey, senderId, normalized, message);
+                const sent = await sendTsembaSMS(apiKey, senderId, normalized, message);
+                await supabaseAdmin.from("sms_logs").insert({
+                  user_id: sale.user_id,
+                  sale_id: sale.id,
+                  provider: "tsemba",
+                  recipient_phone: normalized,
+                  sender_id: senderId,
+                  message,
+                  status: sent ? "sent" : "failed",
+                  provider_response: sent ? "Pedido aceite pela Tsemba" : null,
+                  error_message: sent ? null : "Falha ao enviar SMS pela Tsemba",
+                });
               } else {
                 console.log("Tsemba SMS (admin) ignorado: faltam api_key, telefone valido ou nome");
+                await supabaseAdmin.from("sms_logs").insert({
+                  user_id: sale.user_id,
+                  sale_id: sale.id,
+                  provider: "tsemba",
+                  recipient_phone: normalized || buyerPhone || "indisponivel",
+                  sender_id: senderId,
+                  message,
+                  status: "failed",
+                  provider_response: null,
+                  error_message: "Faltam api_key, telefone valido ou nome do comprador",
+                });
               }
             }
           } catch (smsErr) {
