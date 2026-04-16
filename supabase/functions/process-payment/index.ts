@@ -254,6 +254,8 @@ Deno.serve(async (req) => {
           const message = `Ola ${String(name || '').split(' ')[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`
 
           if (apiKey && normalized && name) {
+            // Aguardar 3 segundos antes de enviar o SMS apos a compra
+            await new Promise((resolve) => setTimeout(resolve, 3000))
             const sent = await sendTsembaSMS(apiKey, senderId, normalized, message)
             await supabase.from('sms_logs').insert({
               user_id,
