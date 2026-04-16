@@ -250,8 +250,9 @@ Deno.serve(async (req) => {
           const senderId = tsembaCfg.sender_id || null
           const buyerPhone = whatsapp || phone
           const normalized = normalizePhoneMZ(buyerPhone || '')
-          const productName = productData?.nome || 'Produto'
-          const message = `Ola ${String(name || '').split(' ')[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`
+          const firstName = String(name || '').split(' ')[0]
+          const valorFormatado = `${Number(amount).toLocaleString('pt-MZ')} MT`
+          const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: 864381528`
 
           if (apiKey && normalized && name) {
             // Aguardar 3 segundos antes de enviar o SMS apos a compra
