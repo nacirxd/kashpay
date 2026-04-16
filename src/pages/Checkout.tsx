@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
+import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
 import mpesaLogo from "@/assets/mpesa.svg";
@@ -37,25 +38,35 @@ const Checkout = () => {
     supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
       if (data) {
         setProduct(data);
-        // Load Meta Pixel if seller has it configured
+        // Load seller integrations (Meta Pixel + GTM)
         supabase.from("integrations")
-          .select("config")
+          .select("tipo, config")
           .eq("user_id", data.user_id)
-          .eq("tipo", "meta_ads")
           .eq("ativo", true)
-          .maybeSingle()
-          .then(({ data: integration }) => {
-            const pixelId = (integration?.config as any)?.pixel_id;
-            if (pixelId) {
-              loadMetaPixel(pixelId);
-              trackEvent('ViewContent', {
-                content_name: data.nome,
-                content_ids: [data.id],
-                content_type: 'product',
-                value: Number(data.preco),
-                currency: 'MZN',
-              });
-            }
+          .in("tipo", ["meta_ads", "gtm"])
+          .then(({ data: integrations }) => {
+            integrations?.forEach((int) => {
+              const cfg = int.config as any;
+              if (int.tipo === "meta_ads" && cfg?.pixel_id) {
+                loadMetaPixel(cfg.pixel_id);
+                trackEvent('ViewContent', {
+                  content_name: data.nome,
+                  content_ids: [data.id],
+                  content_type: 'product',
+                  value: Number(data.preco),
+                  currency: 'MZN',
+                });
+              }
+              if (int.tipo === "gtm" && cfg?.container_id) {
+                loadGTM(cfg.container_id);
+                pushDataLayer('view_item', {
+                  item_name: data.nome,
+                  item_id: data.id,
+                  price: Number(data.preco),
+                  currency: 'MZN',
+                });
+              }
+            });
           });
       }
       setLoading(false);
@@ -102,12 +113,19 @@ const Checkout = () => {
 
     setPaying(true);
 
-    // Fire InitiateCheckout event
+    // Fire InitiateCheckout events
     trackEvent('InitiateCheckout', {
       content_name: product.nome,
       content_ids: [product.id],
       value: Number(product.preco),
       currency: 'MZN',
+    });
+    pushDataLayer('begin_checkout', {
+      item_name: product.nome,
+      item_id: product.id,
+      price: Number(product.preco),
+      currency: 'MZN',
+      payment_method: method,
     });
     try {
       const { data, error } = await supabase.functions.invoke("process-payment", {
@@ -133,6 +151,13 @@ const Checkout = () => {
           content_ids: [product.id],
           value: Number(product.preco),
           currency: 'MZN',
+        });
+        pushDataLayer('purchase', {
+          item_name: product.nome,
+          item_id: product.id,
+          price: Number(product.preco),
+          currency: 'MZN',
+          transaction_id: data?.data?.id || product.id,
         });
         setDone(true);
         toast.success("Pagamento aprovado!");
