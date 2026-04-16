@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-const titles: Record<string, string> = { meta: "Meta Ads", gtm: "Google Tag Manager", utmify: "UTMify", webhook: "Webhook" };
-const tipoMap: Record<string, string> = { meta: "meta_ads", gtm: "gtm", utmify: "utmify", webhook: "webhook" };
+const titles: Record<string, string> = { meta: "Meta Ads", gtm: "Google Tag Manager", utmify: "UTMify", webhook: "Webhook", tsemba: "Tsemba SMS" };
+const tipoMap: Record<string, string> = { meta: "meta_ads", gtm: "gtm", utmify: "utmify", webhook: "webhook", tsemba: "tsemba_sms" };
 
 const IntegrationDetail = () => {
   const { tipo } = useParams();
@@ -181,6 +181,34 @@ const IntegrationDetail = () => {
                 </div>
               </motion.div>
             )}
+          </div>
+        )}
+
+        {tipo === "tsemba" && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>API Key Tsemba</Label>
+              <Input
+                type="password"
+                value={config.api_key || ""}
+                onChange={(e) => setConfig({ ...config, api_key: e.target.value })}
+                placeholder="sk_xxxxxxxxxxxxxxxx"
+              />
+              <p className="text-xs text-muted-foreground">Obtenha em: Painel Tsemba → API & Integrações → Chaves API (permissão sms:send)</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Sender ID <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input
+                value={config.sender_id || ""}
+                onChange={(e) => setConfig({ ...config, sender_id: e.target.value })}
+                placeholder="MINHAEMPRESA"
+              />
+              <p className="text-xs text-muted-foreground">Se vazio, usa "TSEMBA" como remetente padrão.</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">SMS enviado ao comprador quando a venda for aprovada:</p>
+              <p className="font-mono italic">"Olá {`{nome}`}! Sua compra de {`{produto}`} foi confirmada. Obrigado!"</p>
+            </div>
           </div>
         )}
 

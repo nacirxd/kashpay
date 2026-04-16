@@ -5,12 +5,45 @@ const corsHeaders = {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
+const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
 
 async function hashSHA256(value: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(value)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function normalizePhoneMZ(raw: string): string | null {
+  if (!raw) return null
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('258') && digits.length === 12) return `+${digits}`
+  if (digits.length === 9 && digits.startsWith('8')) return `+258${digits}`
+  if (digits.startsWith('+')) return digits
+  return null
+}
+
+async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string, message: string) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 10000)
+  try {
+    const body: Record<string, string> = { to, message }
+    if (senderId) body.sender_id = senderId
+    const resp = await fetch(TSEMBA_SMS_URL, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify(body),
+    })
+    const text = await resp.text()
+    console.log('Tsemba SMS response:', resp.status, text)
+    return resp.ok
+  } catch (err) {
+    console.error('Erro Tsemba SMS:', err)
+    return false
+  } finally {
+    clearTimeout(t)
+  }
 }
 
 async function convertMznToBrlCents(amountMzn: number) {
@@ -203,11 +236,28 @@ Deno.serve(async (req) => {
           }
         }
 
-        const [utmifyResult, webhookResult, metaResult] = await Promise.all([
+        const [utmifyResult, webhookResult, metaResult, tsembaResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'meta_ads').eq('ativo', true).maybeSingle(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'tsemba_sms').eq('ativo', true).maybeSingle(),
         ])
+
+        // Tsemba SMS - notify buyer when sale is approved
+        if (status === 'approved' && tsembaResult.data?.config) {
+          const tsembaCfg = tsembaResult.data.config as any
+          const apiKey = tsembaCfg.api_key
+          const senderId = tsembaCfg.sender_id || null
+          const buyerPhone = whatsapp || phone
+          const normalized = normalizePhoneMZ(buyerPhone || '')
+          if (apiKey && normalized && name) {
+            const productName = productData?.nome || 'Produto'
+            const message = `Ola ${name.split(' ')[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`
+            await sendTsembaSMS(apiKey, senderId, normalized, message)
+          } else {
+            console.log('Tsemba SMS ignorado: faltam api_key, telefone valido ou nome')
+          }
+        }
 
         // Meta Conversion API (CAPI) - server-side Purchase event
         if (status === 'approved' && metaResult.data?.config) {
