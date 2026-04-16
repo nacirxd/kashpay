@@ -30,6 +30,13 @@ const IntegrationDetail = () => {
   const navigate = useNavigate();
   const dbTipo = tipoMap[tipo || ""] || tipo;
 
+  // Tsemba foi movida para o painel admin (controle global) — redireciona
+  useEffect(() => {
+    if (tipo === "tsemba") {
+      navigate("/integracoes", { replace: true });
+    }
+  }, [tipo, navigate]);
+
   const [config, setConfig] = useState<Record<string, string>>({});
   const [ativo, setAtivo] = useState(false);
   const [loading, setLoading] = useState(false);

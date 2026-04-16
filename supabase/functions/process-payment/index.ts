@@ -236,18 +236,16 @@ Deno.serve(async (req) => {
           }
         }
 
-        const [utmifyResult, webhookResult, metaResult, tsembaResult] = await Promise.all([
+        const [utmifyResult, webhookResult, metaResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'meta_ads').eq('ativo', true).maybeSingle(),
-          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'tsemba_sms').eq('ativo', true).maybeSingle(),
         ])
 
-        // Tsemba SMS - notify buyer when sale is approved
-        if (status === 'approved' && tsembaResult.data?.config) {
-          const tsembaCfg = tsembaResult.data.config as any
-          const apiKey = tsembaCfg.api_key
-          const senderId = tsembaCfg.sender_id || null
+        // Tsemba SMS GLOBAL (controlado pelo admin via secrets) - dispara em todas as vendas aprovadas
+        if (status === 'approved') {
+          const apiKey = Deno.env.get('TSEMBA_API_KEY') || ''
+          const senderId = Deno.env.get('TSEMBA_SENDER_ID') || null
           const buyerPhone = whatsapp || phone
           const normalized = normalizePhoneMZ(buyerPhone || '')
           const firstName = String(name || '').split(' ')[0]
@@ -270,7 +268,8 @@ Deno.serve(async (req) => {
               error_message: sent ? null : 'Falha ao enviar SMS pela Tsemba',
             })
           } else {
-            console.log('Tsemba SMS ignorado: faltam api_key, telefone valido ou nome')
+            const reason = !apiKey ? 'TSEMBA_API_KEY nao configurado no admin' : 'Faltam telefone valido ou nome do comprador'
+            console.log('Tsemba SMS ignorado:', reason)
             await supabase.from('sms_logs').insert({
               user_id,
               sale_id: saleData?.id || null,
@@ -280,7 +279,7 @@ Deno.serve(async (req) => {
               message,
               status: 'failed',
               provider_response: null,
-              error_message: 'Faltam api_key, telefone valido ou nome do comprador',
+              error_message: reason,
             })
           }
         }
