@@ -307,6 +307,48 @@ export type Database = {
           },
         ]
       }
+      sms_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message: string
+          provider: string
+          provider_response: string | null
+          recipient_phone: string
+          sale_id: string | null
+          sender_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          provider?: string
+          provider_response?: string | null
+          recipient_phone: string
+          sale_id?: string | null
+          sender_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          provider?: string
+          provider_response?: string | null
+          recipient_phone?: string
+          sale_id?: string | null
+          sender_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
