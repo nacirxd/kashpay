@@ -459,6 +459,34 @@ Deno.serve(async (req) => {
           } catch (utmErr) {
             console.error("Erro UTMify admin:", utmErr);
           }
+
+          // 4. Tsemba SMS to buyer
+          try {
+            const { data: tsembaIntegration } = await supabaseAdmin
+              .from("integrations")
+              .select("config, ativo")
+              .eq("user_id", sale.user_id)
+              .eq("tipo", "tsemba_sms")
+              .eq("ativo", true)
+              .maybeSingle();
+
+            if (tsembaIntegration?.config) {
+              const tCfg = tsembaIntegration.config as any;
+              const apiKey = tCfg.api_key;
+              const senderId = tCfg.sender_id || null;
+              const buyerPhone = sale.buyer_whatsapp || sale.payment_phone || "";
+              const normalized = normalizePhoneMZ(buyerPhone);
+              if (apiKey && normalized && sale.buyer_name) {
+                const productName = product?.nome || "Produto";
+                const message = `Ola ${String(sale.buyer_name).split(" ")[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`;
+                await sendTsembaSMS(apiKey, senderId, normalized, message);
+              } else {
+                console.log("Tsemba SMS (admin) ignorado: faltam api_key, telefone valido ou nome");
+              }
+            }
+          } catch (smsErr) {
+            console.error("Erro Tsemba SMS (admin):", smsErr);
+          }
         }
         } catch (bgErr) {
           console.error("Erro no processamento pós-aprovação:", bgErr);
