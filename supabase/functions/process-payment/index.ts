@@ -6,6 +6,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
 
+async function hashSHA256(value: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(value)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 async function convertMznToBrlCents(amountMzn: number) {
   const fxController = new AbortController()
   const fxTimeout = setTimeout(() => fxController.abort(), 8000)
