@@ -178,16 +178,16 @@ Deno.serve(async (req) => {
     // Fire-and-forget: send to UTMify and webhook (don't block response)
     const bgWork = async () => {
       try {
+        // Fetch seller profile for contact info (used by emails + SMS)
+        const { data: sellerProfile } = await supabase
+          .from('profiles')
+          .select('nome, email, telefone, mpesa_telefone')
+          .eq('user_id', user_id)
+          .maybeSingle()
+
         // Send purchase confirmation email
         if (status === 'approved' && email) {
           try {
-            // Fetch seller profile for contact info
-            const { data: sellerProfile } = await supabase
-              .from('profiles')
-              .select('nome, email, telefone, mpesa_telefone')
-              .eq('user_id', user_id)
-              .maybeSingle()
-
             await supabase.functions.invoke('send-transactional-email', {
               body: {
                 templateName: 'purchase-confirmation',
