@@ -512,6 +512,51 @@ Deno.serve(async (req) => {
       });
     }
 
+    // LIST SMS LOGS (todos os utilizadores)
+    if (action === "list_sms_logs") {
+      const { data: logs } = await supabaseAdmin
+        .from("sms_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const userIds = [...new Set((logs || []).map((l: any) => l.user_id))];
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id, nome, email")
+        .in("user_id", userIds);
+      const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.user_id, p]));
+      const enriched = (logs || []).map((l: any) => ({
+        ...l,
+        seller_name: profileMap[l.user_id]?.nome || "—",
+        seller_email: profileMap[l.user_id]?.email || "—",
+      }));
+      return new Response(JSON.stringify(enriched), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // SEND TEST SMS
+    if (action === "send_test_sms") {
+      const apiKey = Deno.env.get("TSEMBA_API_KEY") || "";
+      const senderId = Deno.env.get("TSEMBA_SENDER_ID") || null;
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: "TSEMBA_API_KEY nao configurado nos secrets" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const phone = normalizePhoneMZ(String(body.phone || ""));
+      if (!phone) {
+        return new Response(JSON.stringify({ error: "Numero de telefone invalido (use formato MZ)" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const message = String(body.message || "Teste de SMS AureonPay - integracao Tsemba ativa.");
+      const sent = await sendTsembaSMS(apiKey, senderId, phone, message);
+      return new Response(JSON.stringify({ success: sent, sender_id: senderId, phone, message }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // GET 2FA SETUP
     if (action === "get_2fa_setup") {
       const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
