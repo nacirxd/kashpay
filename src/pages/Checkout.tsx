@@ -38,25 +38,35 @@ const Checkout = () => {
     supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
       if (data) {
         setProduct(data);
-        // Load Meta Pixel if seller has it configured
+        // Load seller integrations (Meta Pixel + GTM)
         supabase.from("integrations")
-          .select("config")
+          .select("tipo, config")
           .eq("user_id", data.user_id)
-          .eq("tipo", "meta_ads")
           .eq("ativo", true)
-          .maybeSingle()
-          .then(({ data: integration }) => {
-            const pixelId = (integration?.config as any)?.pixel_id;
-            if (pixelId) {
-              loadMetaPixel(pixelId);
-              trackEvent('ViewContent', {
-                content_name: data.nome,
-                content_ids: [data.id],
-                content_type: 'product',
-                value: Number(data.preco),
-                currency: 'MZN',
-              });
-            }
+          .in("tipo", ["meta_ads", "gtm"])
+          .then(({ data: integrations }) => {
+            integrations?.forEach((int) => {
+              const cfg = int.config as any;
+              if (int.tipo === "meta_ads" && cfg?.pixel_id) {
+                loadMetaPixel(cfg.pixel_id);
+                trackEvent('ViewContent', {
+                  content_name: data.nome,
+                  content_ids: [data.id],
+                  content_type: 'product',
+                  value: Number(data.preco),
+                  currency: 'MZN',
+                });
+              }
+              if (int.tipo === "gtm" && cfg?.container_id) {
+                loadGTM(cfg.container_id);
+                pushDataLayer('view_item', {
+                  item_name: data.nome,
+                  item_id: data.id,
+                  price: Number(data.preco),
+                  currency: 'MZN',
+                });
+              }
+            });
           });
       }
       setLoading(false);
