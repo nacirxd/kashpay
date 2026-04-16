@@ -460,52 +460,43 @@ Deno.serve(async (req) => {
             console.error("Erro UTMify admin:", utmErr);
           }
 
-          // 4. Tsemba SMS to buyer
+          // 4. Tsemba SMS GLOBAL (secrets do admin)
           try {
-            const { data: tsembaIntegration } = await supabaseAdmin
-              .from("integrations")
-              .select("config, ativo")
-              .eq("user_id", sale.user_id)
-              .eq("tipo", "tsemba_sms")
-              .eq("ativo", true)
-              .maybeSingle();
+            const apiKey = Deno.env.get("TSEMBA_API_KEY") || "";
+            const senderId = Deno.env.get("TSEMBA_SENDER_ID") || null;
+            const buyerPhone = sale.buyer_whatsapp || sale.payment_phone || "";
+            const normalized = normalizePhoneMZ(buyerPhone);
+            const firstName = String(sale.buyer_name || "").split(" ")[0];
+            const valorFormatado = `${Number(sale.valor).toLocaleString("pt-MZ")} MT`;
+            const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: 864381528`;
 
-            if (tsembaIntegration?.config) {
-              const tCfg = tsembaIntegration.config as any;
-              const apiKey = tCfg.api_key;
-              const senderId = tCfg.sender_id || null;
-              const buyerPhone = sale.buyer_whatsapp || sale.payment_phone || "";
-              const normalized = normalizePhoneMZ(buyerPhone);
-              const productName = product?.nome || "Produto";
-              const message = `Ola ${String(sale.buyer_name || "").split(" ")[0]}! Sua compra de "${productName}" foi confirmada. Obrigado!`;
-
-              if (apiKey && normalized && sale.buyer_name) {
-                const sent = await sendTsembaSMS(apiKey, senderId, normalized, message);
-                await supabaseAdmin.from("sms_logs").insert({
-                  user_id: sale.user_id,
-                  sale_id: sale.id,
-                  provider: "tsemba",
-                  recipient_phone: normalized,
-                  sender_id: senderId,
-                  message,
-                  status: sent ? "sent" : "failed",
-                  provider_response: sent ? "Pedido aceite pela Tsemba" : null,
-                  error_message: sent ? null : "Falha ao enviar SMS pela Tsemba",
-                });
-              } else {
-                console.log("Tsemba SMS (admin) ignorado: faltam api_key, telefone valido ou nome");
-                await supabaseAdmin.from("sms_logs").insert({
-                  user_id: sale.user_id,
-                  sale_id: sale.id,
-                  provider: "tsemba",
-                  recipient_phone: normalized || buyerPhone || "indisponivel",
-                  sender_id: senderId,
-                  message,
-                  status: "failed",
-                  provider_response: null,
-                  error_message: "Faltam api_key, telefone valido ou nome do comprador",
-                });
-              }
+            if (apiKey && normalized && sale.buyer_name) {
+              const sent = await sendTsembaSMS(apiKey, senderId, normalized, message);
+              await supabaseAdmin.from("sms_logs").insert({
+                user_id: sale.user_id,
+                sale_id: sale.id,
+                provider: "tsemba",
+                recipient_phone: normalized,
+                sender_id: senderId,
+                message,
+                status: sent ? "sent" : "failed",
+                provider_response: sent ? "Pedido aceite pela Tsemba" : null,
+                error_message: sent ? null : "Falha ao enviar SMS pela Tsemba",
+              });
+            } else {
+              const reason = !apiKey ? "TSEMBA_API_KEY nao configurado" : "Faltam telefone valido ou nome do comprador";
+              console.log("Tsemba SMS (admin) ignorado:", reason);
+              await supabaseAdmin.from("sms_logs").insert({
+                user_id: sale.user_id,
+                sale_id: sale.id,
+                provider: "tsemba",
+                recipient_phone: normalized || buyerPhone || "indisponivel",
+                sender_id: senderId,
+                message,
+                status: "failed",
+                provider_response: null,
+                error_message: reason,
+              });
             }
           } catch (smsErr) {
             console.error("Erro Tsemba SMS (admin):", smsErr);
