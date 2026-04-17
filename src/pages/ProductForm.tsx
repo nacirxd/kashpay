@@ -62,6 +62,8 @@ const ProductForm = () => {
   const [categoria, setCategoria] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
+  const [metaPixelId, setMetaPixelId] = useState("");
+  const [metaAccessToken, setMetaAccessToken] = useState("");
   const [preco, setPreco] = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
@@ -90,6 +92,8 @@ const ProductForm = () => {
             setCategoria((data as any).categoria || "");
             setSupportPhone((data as any).support_phone || "");
             setSupportEmail((data as any).support_email || "");
+            setMetaPixelId((data as any).meta_pixel_id || "");
+            setMetaAccessToken((data as any).meta_access_token || "");
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
@@ -236,6 +240,8 @@ const ProductForm = () => {
       categoria,
       support_phone: supportPhone.trim(),
       support_email: supportEmail.trim(),
+      meta_pixel_id: metaPixelId.trim(),
+      meta_access_token: metaAccessToken.trim(),
       preco: parseFloat(preco),
       delivery_type: deliveryType,
       file_url: deliveryType === "file" ? fileUrl : null,
@@ -468,6 +474,32 @@ const ProductForm = () => {
             required
             placeholder="1500.00"
           />
+        </div>
+
+        <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold">Meta Pixel <span className="text-muted-foreground font-normal">(opcional)</span></h3>
+            <p className="text-xs text-muted-foreground">Configure um pixel específico para este produto. Eventos enviados: ViewContent, InitiateCheckout, Purchase.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="metaPixelId" className="text-xs">Pixel ID</Label>
+            <Input
+              id="metaPixelId"
+              value={metaPixelId}
+              onChange={(e) => setMetaPixelId(e.target.value)}
+              placeholder="Ex: 123456789012345"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="metaAccessToken" className="text-xs">Access Token <span className="text-muted-foreground font-normal">(Conversion API — opcional)</span></Label>
+            <Input
+              id="metaAccessToken"
+              type="password"
+              value={metaAccessToken}
+              onChange={(e) => setMetaAccessToken(e.target.value)}
+              placeholder="EAAxxxxxxxxxxxxxxxx"
+            />
+          </div>
         </div>
 
         {/* Delivery-specific fields */}

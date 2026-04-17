@@ -159,6 +159,8 @@ export type Database = {
           file_url: string | null
           id: string
           image_url: string | null
+          meta_access_token: string | null
+          meta_pixel_id: string | null
           nome: string
           preco: number
           status: string
@@ -176,6 +178,8 @@ export type Database = {
           file_url?: string | null
           id?: string
           image_url?: string | null
+          meta_access_token?: string | null
+          meta_pixel_id?: string | null
           nome: string
           preco?: number
           status?: string
@@ -193,6 +197,8 @@ export type Database = {
           file_url?: string | null
           id?: string
           image_url?: string | null
+          meta_access_token?: string | null
+          meta_pixel_id?: string | null
           nome?: string
           preco?: number
           status?: string
