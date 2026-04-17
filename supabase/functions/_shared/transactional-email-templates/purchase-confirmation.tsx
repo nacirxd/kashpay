@@ -88,7 +88,7 @@ const PurchaseConfirmationEmail = ({
         {(sellerEmail || sellerWhatsapp) && (
           <>
             <Hr style={hr} />
-            <Text style={contactTitle}>Contacto do vendedor</Text>
+            <Text style={contactTitle}>Suporte</Text>
             {sellerName && <Text style={contactText}><strong>{sellerName}</strong></Text>}
             {sellerEmail && (
               <Text style={contactText}>
@@ -104,7 +104,7 @@ const PurchaseConfirmationEmail = ({
         )}
 
         <Text style={footer}>
-          Se tiver alguma dúvida, entre em contacto com o vendedor acima. Obrigado por comprar com {SITE_NAME}.
+          Se tiver alguma dúvida, entre em contacto com o suporte acima. Obrigado por comprar com {SITE_NAME}.
         </Text>
       </Container>
     </Body>

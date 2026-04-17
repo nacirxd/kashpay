@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 
     const { data: productData } = await supabase
       .from('products')
-      .select('id, nome, delivery_type, external_url, file_url')
+      .select('id, nome, delivery_type, external_url, file_url, support_phone, support_email')
       .eq('id', product_id)
       .maybeSingle()
 
@@ -201,8 +201,9 @@ Deno.serve(async (req) => {
                   accessUrl: productData?.delivery_type === 'link' ? productData?.external_url : undefined,
                   accessType: productData?.delivery_type,
                   sellerName: sellerProfile?.nome || undefined,
-                  sellerEmail: sellerProfile?.email || undefined,
-                  sellerWhatsapp: sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
+                  // Suporte do PRODUTO (preferido) com fallback para vendedor
+                  sellerEmail: productData?.support_email || sellerProfile?.email || undefined,
+                  sellerWhatsapp: productData?.support_phone || sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
                 },
               },
             })
@@ -250,7 +251,8 @@ Deno.serve(async (req) => {
           const normalized = normalizePhoneMZ(buyerPhone || '')
           const firstName = String(name || '').split(' ')[0]
           const valorFormatado = `${Number(amount).toLocaleString('pt-MZ')} MT`
-          const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: 864381528`
+          const supportContact = (productData?.support_phone || '').toString().trim() || '864381528'
+          const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: ${supportContact}`
 
           if (apiKey && normalized && name) {
             // Aguardar 3 segundos antes de enviar o SMS apos a compra
