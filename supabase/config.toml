@@ -13,3 +13,5 @@ project_id = "eabvrprjqmpdcxkhwvbf"
     verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
+  [functions.check-payment-status]
+    verify_jwt = false

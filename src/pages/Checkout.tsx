@@ -131,6 +131,7 @@ const Checkout = () => {
       currency: 'MZN',
       payment_method: method,
     });
+
     const fireSuccess = () => {
       trackEvent('Purchase', {
         content_name: product.nome,
@@ -146,24 +147,24 @@ const Checkout = () => {
         transaction_id: product.id,
       });
       setDone(true);
-      toast.success("Pagamento aprovado!");
+      toast.success("Pagamento confirmado!");
     };
 
-    // Polling fallback: verifica se a venda foi criada/aprovada mesmo com erro de rede
     const pollSale = async (): Promise<boolean> => {
       const maxAttempts = 8;
       for (let i = 0; i < maxAttempts; i++) {
         await new Promise((r) => setTimeout(r, 2000));
-        const { data: sales } = await supabase
-          .from("sales")
-          .select("id, status")
-          .eq("product_id", product.id)
-          .eq("buyer_email", email)
-          .eq("payment_phone", payPhone)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        const s = sales?.[0];
-        if (s && (s.status === "approved" || s.status === "pending")) return true;
+        const { data } = await supabase.functions.invoke("check-payment-status", {
+          body: {
+            product_id: product.id,
+            email,
+            phone: payPhone,
+          },
+        });
+
+        if (data?.found && (data.status === "approved" || data.status === "pending")) {
+          return true;
+        }
       }
       return false;
     };
@@ -187,22 +188,16 @@ const Checkout = () => {
       if (!error && (data?.status === "approved" || data?.status === "pending")) {
         fireSuccess();
       } else {
-        // Fallback: pode ser timeout/erro de rede. Verifica se a venda foi criada
         const ok = await pollSale();
-        if (ok) {
-          fireSuccess();
-        } else {
-          toast.error("Erro ao processar pagamento. Tente novamente.");
-        }
+        if (ok) fireSuccess();
+        else toast.error("Erro ao processar pagamento. Tente novamente.");
       }
     } catch {
       const ok = await pollSale();
-      if (ok) {
-        fireSuccess();
-      } else {
-        toast.error("Erro de conexão. Tente novamente.");
-      }
+      if (ok) fireSuccess();
+      else toast.error("Erro de conexão. Tente novamente.");
     }
+
     setPaying(false);
   };
 
