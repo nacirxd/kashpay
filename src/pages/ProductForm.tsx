@@ -8,10 +8,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
+
+const CATEGORIAS = [
+  "Cursos e Educação",
+  "E-books e Livros",
+  "Marketing Digital",
+  "Negócios e Empreendedorismo",
+  "Finanças e Investimentos",
+  "Desenvolvimento Pessoal",
+  "Saúde e Bem-estar",
+  "Fitness e Esporte",
+  "Beleza e Moda",
+  "Culinária e Receitas",
+  "Tecnologia e Programação",
+  "Design e Criatividade",
+  "Fotografia e Vídeo",
+  "Música e Áudio",
+  "Idiomas",
+  "Espiritualidade e Religião",
+  "Relacionamentos",
+  "Família e Filhos",
+  "Hobbies e Lazer",
+  "Viagens",
+  "Imobiliário",
+  "Direito",
+  "Engenharia",
+  "Software e SaaS",
+  "Templates e Ferramentas",
+  "Consultoria e Mentoria",
+  "Eventos e Ingressos",
+  "Outro",
+];
 
 const ProductForm = () => {
   const { user } = useAuth();
@@ -27,6 +59,9 @@ const ProductForm = () => {
 
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
+  const [supportEmail, setSupportEmail] = useState("");
   const [preco, setPreco] = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
@@ -52,6 +87,9 @@ const ProductForm = () => {
             setNome(data.nome);
             setDescricao(data.descricao || "");
             setPreco(String(data.preco));
+            setCategoria((data as any).categoria || "");
+            setSupportPhone((data as any).support_phone || "");
+            setSupportEmail((data as any).support_email || "");
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
@@ -161,12 +199,25 @@ const ProductForm = () => {
     e.preventDefault();
     if (!user) return;
 
+    if (!categoria) {
+      toast.error("Selecione um nicho/categoria.");
+      return;
+    }
+    if (!supportPhone.trim()) {
+      toast.error("Informe o número de suporte.");
+      return;
+    }
+    if (!supportEmail.trim()) {
+      toast.error("Informe o email de suporte.");
+      return;
+    }
+
     if (deliveryType === "file" && !fileUrl) {
       toast.error("Por favor envie um arquivo.");
       return;
     }
     if (deliveryType === "link" && !externalUrl) {
-      toast.error("Por favor insira o link externo.");
+      toast.error("Por favor insira o link do material.");
       return;
     }
     if (deliveryType === "link") {
@@ -182,6 +233,9 @@ const ProductForm = () => {
     const payload = {
       nome,
       descricao,
+      categoria,
+      support_phone: supportPhone.trim(),
+      support_email: supportEmail.trim(),
       preco: parseFloat(preco),
       delivery_type: deliveryType,
       file_url: deliveryType === "file" ? fileUrl : null,
@@ -310,16 +364,6 @@ const ProductForm = () => {
             placeholder="Ex: Curso de Marketing Digital"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="descricao">Descrição</Label>
-          <Textarea
-            id="descricao"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            placeholder="Descreva seu produto..."
-            rows={4}
-          />
-        </div>
 
         {/* Product image upload */}
         <div className="space-y-2">
@@ -360,6 +404,58 @@ const ProductForm = () => {
             onChange={handleImageUpload}
           />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="descricao">Descrição <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+          <Textarea
+            id="descricao"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder="Descreva seu produto..."
+            rows={4}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="categoria">Nicho / Categoria</Label>
+          <Select value={categoria} onValueChange={setCategoria}>
+            <SelectTrigger id="categoria">
+              <SelectValue placeholder="Selecione o nicho do produto" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIAS.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="supportPhone">Número de suporte</Label>
+            <Input
+              id="supportPhone"
+              value={supportPhone}
+              onChange={(e) => setSupportPhone(e.target.value)}
+              required
+              placeholder="84xxxxxxx"
+            />
+            <p className="text-xs text-muted-foreground">Aparecerá no SMS pós-compra.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="supportEmail">Email de suporte</Label>
+            <Input
+              id="supportEmail"
+              type="email"
+              value={supportEmail}
+              onChange={(e) => setSupportEmail(e.target.value)}
+              required
+              placeholder="suporte@exemplo.com"
+            />
+            <p className="text-xs text-muted-foreground">Aparecerá no email de compra.</p>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="preco">Preço (MZN)</Label>
           <Input
@@ -422,7 +518,7 @@ const ProductForm = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
           >
-            <Label htmlFor="externalUrl">Link de entrega</Label>
+            <Label htmlFor="externalUrl">Link do material</Label>
             <Input
               id="externalUrl"
               type="url"
