@@ -7,9 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, CheckCircle } from "lucide-react";
+import { ArrowLeft, Save, Send, CheckCircle, Facebook } from "lucide-react";
 import { motion } from "framer-motion";
+
+type ProductPixelRow = {
+  id: string;
+  nome: string;
+  meta_pixel_id: string | null;
+  meta_access_token: string | null;
+};
 
 type SmsLog = {
   id: string;
