@@ -62,6 +62,8 @@ const ProductForm = () => {
   const [categoria, setCategoria] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
+  const [metaPixelId, setMetaPixelId] = useState("");
+  const [metaAccessToken, setMetaAccessToken] = useState("");
   const [preco, setPreco] = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
@@ -90,6 +92,8 @@ const ProductForm = () => {
             setCategoria((data as any).categoria || "");
             setSupportPhone((data as any).support_phone || "");
             setSupportEmail((data as any).support_email || "");
+            setMetaPixelId((data as any).meta_pixel_id || "");
+            setMetaAccessToken((data as any).meta_access_token || "");
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
@@ -236,6 +240,8 @@ const ProductForm = () => {
       categoria,
       support_phone: supportPhone.trim(),
       support_email: supportEmail.trim(),
+      meta_pixel_id: metaPixelId.trim(),
+      meta_access_token: metaAccessToken.trim(),
       preco: parseFloat(preco),
       delivery_type: deliveryType,
       file_url: deliveryType === "file" ? fileUrl : null,
