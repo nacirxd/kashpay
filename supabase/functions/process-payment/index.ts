@@ -251,7 +251,8 @@ Deno.serve(async (req) => {
           const normalized = normalizePhoneMZ(buyerPhone || '')
           const firstName = String(name || '').split(' ')[0]
           const valorFormatado = `${Number(amount).toLocaleString('pt-MZ')} MT`
-          const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: 864381528`
+          const supportContact = (productData?.support_phone || '').toString().trim() || '864381528'
+          const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: ${supportContact}`
 
           if (apiKey && normalized && name) {
             // Aguardar 3 segundos antes de enviar o SMS apos a compra
