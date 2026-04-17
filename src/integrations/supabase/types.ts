@@ -151,6 +151,7 @@ export type Database = {
       }
       products: {
         Row: {
+          categoria: string | null
           created_at: string
           delivery_type: string
           descricao: string | null
@@ -161,10 +162,13 @@ export type Database = {
           nome: string
           preco: number
           status: string
+          support_email: string | null
+          support_phone: string | null
           tipo: string
           user_id: string
         }
         Insert: {
+          categoria?: string | null
           created_at?: string
           delivery_type?: string
           descricao?: string | null
@@ -175,10 +179,13 @@ export type Database = {
           nome: string
           preco?: number
           status?: string
+          support_email?: string | null
+          support_phone?: string | null
           tipo?: string
           user_id: string
         }
         Update: {
+          categoria?: string | null
           created_at?: string
           delivery_type?: string
           descricao?: string | null
@@ -189,6 +196,8 @@ export type Database = {
           nome?: string
           preco?: number
           status?: string
+          support_email?: string | null
+          support_phone?: string | null
           tipo?: string
           user_id?: string
         }
