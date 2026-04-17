@@ -23,9 +23,9 @@ function normalizePhoneMZ(raw: string): string | null {
   return null
 }
 
-async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string, message: string) {
+async function sendTsembaSMSOnce(apiKey: string, senderId: string | null, to: string, message: string, timeoutMs: number) {
   const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), 10000)
+  const t = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
     const body: Record<string, string> = { to, message }
     if (senderId) body.sender_id = senderId
@@ -37,13 +37,27 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
     })
     const text = await resp.text()
     console.log('Tsemba SMS response:', resp.status, text)
-    return resp.ok
-  } catch (err) {
+    return { ok: resp.ok, aborted: false }
+  } catch (err: any) {
+    const aborted = err?.name === 'AbortError'
     console.error('Erro Tsemba SMS:', err)
-    return false
+    return { ok: false, aborted }
   } finally {
     clearTimeout(t)
   }
+}
+
+async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string, message: string) {
+  // 1ª tentativa: 20s
+  let r = await sendTsembaSMSOnce(apiKey, senderId, to, message, 20000)
+  if (r.ok) return true
+  // Retry apenas se timeout
+  if (r.aborted) {
+    console.log('Tsemba SMS retry após timeout para', to)
+    r = await sendTsembaSMSOnce(apiKey, senderId, to, message, 25000)
+    if (r.ok) return true
+  }
+  return false
 }
 
 async function convertMznToBrlCents(amountMzn: number) {
