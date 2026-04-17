@@ -131,6 +131,43 @@ const Checkout = () => {
       currency: 'MZN',
       payment_method: method,
     });
+    const fireSuccess = () => {
+      trackEvent('Purchase', {
+        content_name: product.nome,
+        content_ids: [product.id],
+        value: Number(product.preco),
+        currency: 'MZN',
+      });
+      pushDataLayer('purchase', {
+        item_name: product.nome,
+        item_id: product.id,
+        price: Number(product.preco),
+        currency: 'MZN',
+        transaction_id: product.id,
+      });
+      setDone(true);
+      toast.success("Pagamento aprovado!");
+    };
+
+    // Polling fallback: verifica se a venda foi criada/aprovada mesmo com erro de rede
+    const pollSale = async (): Promise<boolean> => {
+      const maxAttempts = 8;
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: sales } = await supabase
+          .from("sales")
+          .select("id, status")
+          .eq("product_id", product.id)
+          .eq("buyer_email", email)
+          .eq("payment_phone", payPhone)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const s = sales?.[0];
+        if (s && (s.status === "approved" || s.status === "pending")) return true;
+      }
+      return false;
+    };
+
     try {
       const { data, error } = await supabase.functions.invoke("process-payment", {
         body: {
@@ -147,31 +184,24 @@ const Checkout = () => {
         },
       });
 
-      if (error) {
-        toast.error("Erro ao processar pagamento. Tente novamente.");
-      } else if (data?.status === "approved") {
-        trackEvent('Purchase', {
-          content_name: product.nome,
-          content_ids: [product.id],
-          value: Number(product.preco),
-          currency: 'MZN',
-        });
-        pushDataLayer('purchase', {
-          item_name: product.nome,
-          item_id: product.id,
-          price: Number(product.preco),
-          currency: 'MZN',
-          transaction_id: data?.data?.id || product.id,
-        });
-        setDone(true);
-        toast.success("Pagamento aprovado!");
-      } else if (data?.status === "pending") {
-        toast.info("Pedido enviado. Confirme o pagamento no seu telefone.");
+      if (!error && (data?.status === "approved" || data?.status === "pending")) {
+        fireSuccess();
       } else {
-        toast.error("Não foi possível iniciar o pagamento.");
+        // Fallback: pode ser timeout/erro de rede. Verifica se a venda foi criada
+        const ok = await pollSale();
+        if (ok) {
+          fireSuccess();
+        } else {
+          toast.error("Erro ao processar pagamento. Tente novamente.");
+        }
       }
     } catch {
-      toast.error("Erro de conexão. Tente novamente.");
+      const ok = await pollSale();
+      if (ok) {
+        fireSuccess();
+      } else {
+        toast.error("Erro de conexão. Tente novamente.");
+      }
     }
     setPaying(false);
   };
