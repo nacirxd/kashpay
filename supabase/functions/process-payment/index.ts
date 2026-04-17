@@ -201,8 +201,9 @@ Deno.serve(async (req) => {
                   accessUrl: productData?.delivery_type === 'link' ? productData?.external_url : undefined,
                   accessType: productData?.delivery_type,
                   sellerName: sellerProfile?.nome || undefined,
-                  sellerEmail: sellerProfile?.email || undefined,
-                  sellerWhatsapp: sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
+                  // Suporte do PRODUTO (preferido) com fallback para vendedor
+                  sellerEmail: productData?.support_email || sellerProfile?.email || undefined,
+                  sellerWhatsapp: productData?.support_phone || sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
                 },
               },
             })
