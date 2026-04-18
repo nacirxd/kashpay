@@ -23,6 +23,15 @@ function normalizePhoneMZ(raw: string): string | null {
   return null
 }
 
+// e2payments espera APENAS dígitos no formato 258XXXXXXXXX (sem +, sem espaços)
+function normalizePhoneE2Pay(raw: string): string | null {
+  if (!raw) return null
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length === 9 && /^8[4-7]/.test(digits)) return `258${digits}`
+  if (digits.length === 12 && digits.startsWith('258') && /^2588[4-7]/.test(digits)) return digits
+  return null
+}
+
 async function sendTsembaSMSOnce(apiKey: string, senderId: string | null, to: string, message: string, timeoutMs: number) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -152,6 +161,20 @@ Deno.serve(async (req) => {
       .eq('id', product_id)
       .maybeSingle()
 
+    // Normalizar telefone para o formato exigido pela e2payments (258XXXXXXXXX)
+    const e2payPhone = normalizePhoneE2Pay(phone)
+    if (!e2payPhone) {
+      console.error('Telefone inválido para e2payments:', phone)
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Número de telefone inválido. Use formato 84/85 (M-Pesa) ou 86/87 (e-Mola).',
+        status: 'pending',
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Call payment endpoint with timeout
     const payController = new AbortController()
     const payTimeout = setTimeout(() => payController.abort(), 20000)
@@ -159,6 +182,8 @@ Deno.serve(async (req) => {
     const endpoint = method === 'mpesa'
       ? 'https://e2payments.explicador.co.mz/v1/c2b/mpesa-payment/993700'
       : 'https://e2payments.explicador.co.mz/v1/c2b/emola-payment/993699'
+
+    console.log(`[e2pay] ${method} request → phone=${e2payPhone} amount=${amount} sale=${saleData?.id}`)
 
     const payResp = await fetch(endpoint, {
       method: 'POST',
@@ -171,17 +196,20 @@ Deno.serve(async (req) => {
         client_id: "9ec6e1b3-f7ba-42ce-a580-a781788989ed",
         amount: String(amount),
         reference: reference || "moonpay",
-        phone: phone,
+        phone: e2payPhone,
       }),
     })
     clearTimeout(payTimeout)
 
-    const payData = await payResp.json()
+    const payData = await payResp.json().catch(() => ({}))
+    console.log(`[e2pay] ${method} response status=${payResp.status} body=`, JSON.stringify(payData))
 
     // Update sale status based on payment result
     const status = payResp.ok ? 'approved' : 'pending'
     if (payResp.ok && saleData?.id) {
       await supabase.from('sales').update({ status: 'approved' }).eq('id', saleData.id)
+    } else if (saleData?.id) {
+      console.warn(`[e2pay] Venda ${saleData.id} ficou pending. status=${payResp.status}`)
     }
 
     // Return response immediately, then fire integrations in background
