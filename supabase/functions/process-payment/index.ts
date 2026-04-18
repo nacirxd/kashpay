@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
 
     const { data: productData } = await supabase
       .from('products')
-      .select('id, nome, delivery_type, external_url, file_url, support_phone, support_email')
+      .select('id, nome, delivery_type, external_url, file_url, support_phone, support_email, meta_pixel_id, meta_access_token')
       .eq('id', product_id)
       .maybeSingle()
 
@@ -251,10 +251,9 @@ Deno.serve(async (req) => {
           }
         }
 
-        const [utmifyResult, webhookResult, metaResult] = await Promise.all([
+        const [utmifyResult, webhookResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
-          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'meta_ads').eq('ativo', true).maybeSingle(),
         ])
 
         // Tsemba SMS GLOBAL (controlado pelo admin via secrets) - dispara em todas as vendas aprovadas
@@ -301,10 +300,10 @@ Deno.serve(async (req) => {
         }
 
         // Meta Conversion API (CAPI) - server-side Purchase event
-        if (status === 'approved' && metaResult.data?.config) {
-          const metaCfg = metaResult.data.config as any
-          const pixelId = metaCfg.pixel_id
-          const accessToken = metaCfg.access_token
+        // Pixel é por produto: products.meta_pixel_id + products.meta_access_token
+        if (status === 'approved') {
+          const pixelId = (productData as any)?.meta_pixel_id?.toString().trim()
+          const accessToken = (productData as any)?.meta_access_token?.toString().trim()
           if (pixelId && accessToken) {
             try {
               const eventTime = Math.floor(Date.now() / 1000)
@@ -315,6 +314,7 @@ Deno.serve(async (req) => {
                   data: [{
                     event_name: 'Purchase',
                     event_time: eventTime,
+                    event_id: saleData?.id || `${product_id}-${eventTime}`,
                     action_source: 'website',
                     user_data: {
                       em: email ? [await hashSHA256(email.toLowerCase().trim())] : [],
@@ -333,10 +333,12 @@ Deno.serve(async (req) => {
                 }),
               })
               const capiBody = await capiResp.text()
-              console.log('Meta CAPI response:', capiResp.status, capiBody)
+              console.log('Meta CAPI response (product pixel):', pixelId, capiResp.status, capiBody)
             } catch (capiErr) {
               console.error('Erro Meta CAPI:', capiErr)
             }
+          } else {
+            console.log('Meta CAPI ignorado: produto sem meta_pixel_id/meta_access_token')
           }
         }
 
