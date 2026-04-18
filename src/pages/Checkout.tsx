@@ -151,9 +151,9 @@ const Checkout = () => {
     };
 
     const pollSale = async (): Promise<boolean> => {
-      const maxAttempts = 8;
+      const maxAttempts = 12;
       for (let i = 0; i < maxAttempts; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
+        await new Promise((r) => setTimeout(r, 2500));
         const { data } = await supabase.functions.invoke("check-payment-status", {
           body: {
             product_id: product.id,
@@ -162,7 +162,8 @@ const Checkout = () => {
           },
         });
 
-        if (data?.found && (data.status === "approved" || data.status === "pending")) {
+        // Só considera sucesso real quando aprovado (não pending)
+        if (data?.found && data.status === "approved") {
           return true;
         }
       }
