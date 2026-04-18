@@ -23,12 +23,12 @@ function normalizePhoneMZ(raw: string): string | null {
   return null
 }
 
-// e2payments espera APENAS dígitos no formato 258XXXXXXXXX (sem +, sem espaços)
+// e2payments espera APENAS 9 dígitos: 8XXXXXXXX (sem 258, sem +, sem espaços)
 function normalizePhoneE2Pay(raw: string): string | null {
   if (!raw) return null
   const digits = raw.replace(/\D/g, '')
-  if (digits.length === 9 && /^8[4-7]/.test(digits)) return `258${digits}`
-  if (digits.length === 12 && digits.startsWith('258') && /^2588[4-7]/.test(digits)) return digits
+  if (digits.length === 9 && /^8[4-7]/.test(digits)) return digits
+  if (digits.length === 12 && digits.startsWith('258') && /^2588[4-7]/.test(digits)) return digits.slice(3)
   return null
 }
 
