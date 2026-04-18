@@ -15,3 +15,5 @@ project_id = "eabvrprjqmpdcxkhwvbf"
     verify_jwt = false
   [functions.check-payment-status]
     verify_jwt = false
+  [functions.cleanup-pending-sales]
+    verify_jwt = false

@@ -1,0 +1,2 @@
+ALTER TABLE public.sales DROP CONSTRAINT IF EXISTS sales_status_check;
+ALTER TABLE public.sales ADD CONSTRAINT sales_status_check CHECK (status = ANY (ARRAY['approved'::text, 'pending'::text, 'refunded'::text, 'chargeback'::text, 'failed'::text]));
