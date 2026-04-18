@@ -176,26 +176,84 @@ const IntegrationDetail = () => {
       <h1 className="text-lg font-semibold mb-6">{titles[tipo || ""] || "Integração"}</h1>
 
       <div className="max-w-lg space-y-6">
-        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
-          <div>
-            <p className="text-sm font-medium">Ativo</p>
-            <p className="text-xs text-muted-foreground">Habilitar esta integração</p>
+        {tipo !== "meta" && (
+          <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
+            <div>
+              <p className="text-sm font-medium">Ativo</p>
+              <p className="text-xs text-muted-foreground">Habilitar esta integração</p>
+            </div>
+            <Switch checked={ativo} onCheckedChange={setAtivo} />
           </div>
-          <Switch checked={ativo} onCheckedChange={setAtivo} />
-        </div>
+        )}
 
         {tipo === "meta" && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Pixel ID</Label>
-              <Input value={config.pixel_id || ""} onChange={(e) => setConfig({ ...config, pixel_id: e.target.value })} placeholder="Ex: 123456789" />
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-1">
+              <div className="flex items-center gap-2">
+                <Facebook className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Configuração por produto</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecione um produto e configure o Pixel ID e o Access Token específicos dele.
+                Cada produto pode ter o seu próprio pixel para rastreamento separado.
+              </p>
             </div>
+
             <div className="space-y-2">
-              <Label>Access Token (Conversion API)</Label>
-              <Input value={config.access_token || ""} onChange={(e) => setConfig({ ...config, access_token: e.target.value })} placeholder="Token de acesso" />
+              <Label>Produto</Label>
+              <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={products.length ? "Selecione um produto" : "Nenhum produto criado ainda"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        {p.nome}
+                        {p.meta_pixel_id && (
+                          <span className="text-[10px] rounded-full bg-primary/10 text-primary px-1.5 py-0.5">pixel ✓</span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {products.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Crie um produto primeiro em <button type="button" onClick={() => navigate("/produtos/novo")} className="underline text-primary">Produtos</button>.
+                </p>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">Eventos enviados: PageView, AddToCart, InitiateCheckout, Purchase</p>
-            <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar evento</Button>
+
+            {selectedProductId && (
+              <>
+                <div className="space-y-2">
+                  <Label>Pixel ID</Label>
+                  <Input
+                    value={productPixelId}
+                    onChange={(e) => setProductPixelId(e.target.value)}
+                    placeholder="Ex: 123456789012345"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Access Token <span className="text-muted-foreground font-normal">(Conversion API — opcional)</span></Label>
+                  <Input
+                    type="password"
+                    value={productAccessToken}
+                    onChange={(e) => setProductAccessToken(e.target.value)}
+                    placeholder="EAAxxxxxxxxxxxxxxxx"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Eventos enviados: ViewContent, InitiateCheckout, Purchase</p>
+                <Button onClick={handleSavePixel} disabled={savingPixel}>
+                  {savingPixel ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  ) : (
+                    <><Save className="mr-2 h-4 w-4" /> Salvar pixel deste produto</>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         )}
 
