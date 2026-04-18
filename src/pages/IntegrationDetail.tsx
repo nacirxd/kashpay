@@ -15,6 +15,7 @@ import { motion } from "framer-motion";
 type ProductPixelRow = {
   id: string;
   nome: string;
+  image_url: string | null;
   meta_pixel_id: string | null;
   meta_access_token: string | null;
 };
