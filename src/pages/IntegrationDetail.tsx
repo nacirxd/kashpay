@@ -54,15 +54,40 @@ const IntegrationDetail = () => {
   const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([]);
 
+  // Meta Pixel per-product state
+  const [products, setProducts] = useState<ProductPixelRow[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [productPixelId, setProductPixelId] = useState("");
+  const [productAccessToken, setProductAccessToken] = useState("");
+  const [savingPixel, setSavingPixel] = useState(false);
+
+  const loadProductsForPixel = () => {
+    if (!user) return;
+    supabase
+      .from("products")
+      .select("id, nome, meta_pixel_id, meta_access_token")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setProducts((data as ProductPixelRow[]) || []);
+      });
+  };
+
   useEffect(() => {
     if (!user || !dbTipo) return;
-    supabase.from("integrations").select("*").eq("user_id", user.id).eq("tipo", dbTipo).maybeSingle().then(({ data }) => {
-      if (data) {
-        setExistingId(data.id);
-        setConfig((data.config as Record<string, string>) || {});
-        setAtivo(data.ativo);
-      }
-    });
+    if (tipo !== "meta") {
+      supabase.from("integrations").select("*").eq("user_id", user.id).eq("tipo", dbTipo).maybeSingle().then(({ data }) => {
+        if (data) {
+          setExistingId(data.id);
+          setConfig((data.config as Record<string, string>) || {});
+          setAtivo(data.ativo);
+        }
+      });
+    }
+
+    if (tipo === "meta") {
+      loadProductsForPixel();
+    }
 
     if (tipo === "utmify") {
       supabase.from("sales").select("utm_source, utm_medium, utm_campaign, valor, status").eq("user_id", user.id).not("utm_source", "is", null).order("created_at", { ascending: false }).limit(20).then(({ data }) => {
@@ -76,6 +101,40 @@ const IntegrationDetail = () => {
       });
     }
   }, [user, dbTipo, tipo]);
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setProductPixelId("");
+      setProductAccessToken("");
+      return;
+    }
+    const p = products.find((x) => x.id === selectedProductId);
+    setProductPixelId(p?.meta_pixel_id || "");
+    setProductAccessToken(p?.meta_access_token || "");
+  }, [selectedProductId, products]);
+
+  const handleSavePixel = async () => {
+    if (!user || !selectedProductId) {
+      toast.error("Selecione um produto.");
+      return;
+    }
+    setSavingPixel(true);
+    const { error } = await supabase
+      .from("products")
+      .update({
+        meta_pixel_id: productPixelId.trim(),
+        meta_access_token: productAccessToken.trim(),
+      } as any)
+      .eq("id", selectedProductId)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Meta Pixel salvo no produto!");
+      loadProductsForPixel();
+    }
+    setSavingPixel(false);
+  };
 
   const handleSave = async () => {
     if (!user || !dbTipo) return;
