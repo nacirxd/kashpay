@@ -185,12 +185,17 @@ const Checkout = () => {
         },
       });
 
-      if (!error && (data?.status === "approved" || data?.status === "pending")) {
+      if (!error && data?.status === "approved") {
         fireSuccess();
+      } else if (!error && data?.status === "pending") {
+        // Aguardar confirmação real antes de marcar Purchase
+        const ok = await pollSale();
+        if (ok) fireSuccess();
+        else toast.info("Pagamento em processamento. Confirme no seu telefone.");
       } else {
         const ok = await pollSale();
         if (ok) fireSuccess();
-        else toast.error("Erro ao processar pagamento. Tente novamente.");
+        else toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
       }
     } catch {
       const ok = await pollSale();
