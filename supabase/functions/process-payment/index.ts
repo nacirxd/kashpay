@@ -251,10 +251,9 @@ Deno.serve(async (req) => {
           }
         }
 
-        const [utmifyResult, webhookResult, metaResult] = await Promise.all([
+        const [utmifyResult, webhookResult] = await Promise.all([
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
           supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
-          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'meta_ads').eq('ativo', true).maybeSingle(),
         ])
 
         // Tsemba SMS GLOBAL (controlado pelo admin via secrets) - dispara em todas as vendas aprovadas
