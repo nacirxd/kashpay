@@ -66,7 +66,7 @@ const IntegrationDetail = () => {
     if (!user) return;
     supabase
       .from("products")
-      .select("id, nome, meta_pixel_id, meta_access_token")
+      .select("id, nome, image_url, meta_pixel_id, meta_access_token")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
