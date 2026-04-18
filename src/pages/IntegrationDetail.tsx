@@ -7,9 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, CheckCircle } from "lucide-react";
+import { ArrowLeft, Save, Send, CheckCircle, Facebook } from "lucide-react";
 import { motion } from "framer-motion";
+
+type ProductPixelRow = {
+  id: string;
+  nome: string;
+  meta_pixel_id: string | null;
+  meta_access_token: string | null;
+};
 
 type SmsLog = {
   id: string;
@@ -46,15 +54,40 @@ const IntegrationDetail = () => {
   const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([]);
 
+  // Meta Pixel per-product state
+  const [products, setProducts] = useState<ProductPixelRow[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [productPixelId, setProductPixelId] = useState("");
+  const [productAccessToken, setProductAccessToken] = useState("");
+  const [savingPixel, setSavingPixel] = useState(false);
+
+  const loadProductsForPixel = () => {
+    if (!user) return;
+    supabase
+      .from("products")
+      .select("id, nome, meta_pixel_id, meta_access_token")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setProducts((data as ProductPixelRow[]) || []);
+      });
+  };
+
   useEffect(() => {
     if (!user || !dbTipo) return;
-    supabase.from("integrations").select("*").eq("user_id", user.id).eq("tipo", dbTipo).maybeSingle().then(({ data }) => {
-      if (data) {
-        setExistingId(data.id);
-        setConfig((data.config as Record<string, string>) || {});
-        setAtivo(data.ativo);
-      }
-    });
+    if (tipo !== "meta") {
+      supabase.from("integrations").select("*").eq("user_id", user.id).eq("tipo", dbTipo).maybeSingle().then(({ data }) => {
+        if (data) {
+          setExistingId(data.id);
+          setConfig((data.config as Record<string, string>) || {});
+          setAtivo(data.ativo);
+        }
+      });
+    }
+
+    if (tipo === "meta") {
+      loadProductsForPixel();
+    }
 
     if (tipo === "utmify") {
       supabase.from("sales").select("utm_source, utm_medium, utm_campaign, valor, status").eq("user_id", user.id).not("utm_source", "is", null).order("created_at", { ascending: false }).limit(20).then(({ data }) => {
@@ -68,6 +101,40 @@ const IntegrationDetail = () => {
       });
     }
   }, [user, dbTipo, tipo]);
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setProductPixelId("");
+      setProductAccessToken("");
+      return;
+    }
+    const p = products.find((x) => x.id === selectedProductId);
+    setProductPixelId(p?.meta_pixel_id || "");
+    setProductAccessToken(p?.meta_access_token || "");
+  }, [selectedProductId, products]);
+
+  const handleSavePixel = async () => {
+    if (!user || !selectedProductId) {
+      toast.error("Selecione um produto.");
+      return;
+    }
+    setSavingPixel(true);
+    const { error } = await supabase
+      .from("products")
+      .update({
+        meta_pixel_id: productPixelId.trim(),
+        meta_access_token: productAccessToken.trim(),
+      } as any)
+      .eq("id", selectedProductId)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Meta Pixel salvo no produto!");
+      loadProductsForPixel();
+    }
+    setSavingPixel(false);
+  };
 
   const handleSave = async () => {
     if (!user || !dbTipo) return;
@@ -109,26 +176,84 @@ const IntegrationDetail = () => {
       <h1 className="text-lg font-semibold mb-6">{titles[tipo || ""] || "Integração"}</h1>
 
       <div className="max-w-lg space-y-6">
-        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
-          <div>
-            <p className="text-sm font-medium">Ativo</p>
-            <p className="text-xs text-muted-foreground">Habilitar esta integração</p>
+        {tipo !== "meta" && (
+          <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
+            <div>
+              <p className="text-sm font-medium">Ativo</p>
+              <p className="text-xs text-muted-foreground">Habilitar esta integração</p>
+            </div>
+            <Switch checked={ativo} onCheckedChange={setAtivo} />
           </div>
-          <Switch checked={ativo} onCheckedChange={setAtivo} />
-        </div>
+        )}
 
         {tipo === "meta" && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Pixel ID</Label>
-              <Input value={config.pixel_id || ""} onChange={(e) => setConfig({ ...config, pixel_id: e.target.value })} placeholder="Ex: 123456789" />
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-1">
+              <div className="flex items-center gap-2">
+                <Facebook className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Configuração por produto</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecione um produto e configure o Pixel ID e o Access Token específicos dele.
+                Cada produto pode ter o seu próprio pixel para rastreamento separado.
+              </p>
             </div>
+
             <div className="space-y-2">
-              <Label>Access Token (Conversion API)</Label>
-              <Input value={config.access_token || ""} onChange={(e) => setConfig({ ...config, access_token: e.target.value })} placeholder="Token de acesso" />
+              <Label>Produto</Label>
+              <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={products.length ? "Selecione um produto" : "Nenhum produto criado ainda"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        {p.nome}
+                        {p.meta_pixel_id && (
+                          <span className="text-[10px] rounded-full bg-primary/10 text-primary px-1.5 py-0.5">pixel ✓</span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {products.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Crie um produto primeiro em <button type="button" onClick={() => navigate("/produtos/novo")} className="underline text-primary">Produtos</button>.
+                </p>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">Eventos enviados: PageView, AddToCart, InitiateCheckout, Purchase</p>
-            <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar evento</Button>
+
+            {selectedProductId && (
+              <>
+                <div className="space-y-2">
+                  <Label>Pixel ID</Label>
+                  <Input
+                    value={productPixelId}
+                    onChange={(e) => setProductPixelId(e.target.value)}
+                    placeholder="Ex: 123456789012345"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Access Token <span className="text-muted-foreground font-normal">(Conversion API — opcional)</span></Label>
+                  <Input
+                    type="password"
+                    value={productAccessToken}
+                    onChange={(e) => setProductAccessToken(e.target.value)}
+                    placeholder="EAAxxxxxxxxxxxxxxxx"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Eventos enviados: ViewContent, InitiateCheckout, Purchase</p>
+                <Button onClick={handleSavePixel} disabled={savingPixel}>
+                  {savingPixel ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  ) : (
+                    <><Save className="mr-2 h-4 w-4" /> Salvar pixel deste produto</>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         )}
 
@@ -273,9 +398,11 @@ const IntegrationDetail = () => {
           <p className="text-sm font-medium">{testResult}</p>
         )}
 
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
-        </Button>
+        {tipo !== "meta" && (
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
+          </Button>
+        )}
       </div>
     </DashboardLayout>
   );
