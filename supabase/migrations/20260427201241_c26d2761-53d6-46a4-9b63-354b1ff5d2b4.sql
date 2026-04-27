@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS payment_methods text[] NOT NULL DEFAULT ARRAY['mpesa','emola']::text[];

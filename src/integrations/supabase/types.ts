@@ -162,6 +162,7 @@ export type Database = {
           meta_access_token: string | null
           meta_pixel_id: string | null
           nome: string
+          payment_methods: string[]
           preco: number
           status: string
           support_email: string | null
@@ -181,6 +182,7 @@ export type Database = {
           meta_access_token?: string | null
           meta_pixel_id?: string | null
           nome: string
+          payment_methods?: string[]
           preco?: number
           status?: string
           support_email?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           meta_access_token?: string | null
           meta_pixel_id?: string | null
           nome?: string
+          payment_methods?: string[]
           preco?: number
           status?: string
           support_email?: string | null
