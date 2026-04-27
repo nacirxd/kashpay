@@ -566,70 +566,70 @@ const Checkout = () => {
       </div>
 
       <Dialog open={refOpen} onOpenChange={setRefOpen}>
-        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
-          <div className="p-6 space-y-5">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-bold tracking-tight">Detalhes do Pagamento por Referência</h2>
-              <p className="text-sm text-muted-foreground">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-full max-w-md p-0 gap-0 overflow-hidden max-h-[90vh] sm:max-h-[85vh] rounded-2xl">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[90vh] sm:max-h-[85vh]">
+            <div className="space-y-1 pr-8">
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tight">Detalhes do Pagamento por Referência</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Use estes dados para completar o pagamento através do seu banco
               </p>
             </div>
 
-            <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-center">
-              <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
-                <Clock className="h-4 w-4" />
+            <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-3 sm:p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-medium text-primary">
+                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Tempo restante
               </div>
-              <p className="mt-1 text-3xl font-mono font-bold text-primary">
+              <p className="mt-1 text-2xl sm:text-3xl font-mono font-bold text-primary">
                 {formatRefTime(refCountdown)}
               </p>
             </div>
 
             {refResult && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <button
                   type="button"
                   onClick={() => copyToClipboard(refResult.entity, "Entidade")}
-                  className="w-full flex items-center justify-between rounded-lg bg-muted/50 hover:bg-muted px-4 py-3 transition-colors text-left"
+                  className="w-full flex items-center justify-between gap-3 rounded-lg bg-muted/50 hover:bg-muted px-3 sm:px-4 py-2.5 sm:py-3 transition-colors text-left"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground">Entidade</p>
-                    <p className="text-lg font-mono font-bold">{refResult.entity}</p>
+                    <p className="text-base sm:text-lg font-mono font-bold truncate">{refResult.entity}</p>
                   </div>
-                  <Copy className="h-4 w-4 text-muted-foreground" />
+                  <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => copyToClipboard(refResult.reference, "Referência")}
-                  className="w-full flex items-center justify-between rounded-lg bg-muted/50 hover:bg-muted px-4 py-3 transition-colors text-left"
+                  className="w-full flex items-center justify-between gap-3 rounded-lg bg-muted/50 hover:bg-muted px-3 sm:px-4 py-2.5 sm:py-3 transition-colors text-left"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground">Referência</p>
-                    <p className="text-lg font-mono font-bold">{refResult.reference}</p>
+                    <p className="text-base sm:text-lg font-mono font-bold truncate">{refResult.reference}</p>
                   </div>
-                  <Copy className="h-4 w-4 text-muted-foreground" />
+                  <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => copyToClipboard(String(product.preco), "Valor")}
-                  className="w-full flex items-center justify-between rounded-lg bg-muted/50 hover:bg-muted px-4 py-3 transition-colors text-left"
+                  className="w-full flex items-center justify-between gap-3 rounded-lg bg-muted/50 hover:bg-muted px-3 sm:px-4 py-2.5 sm:py-3 transition-colors text-left"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground">Valor</p>
-                    <p className="text-lg font-mono font-bold">
+                    <p className="text-base sm:text-lg font-mono font-bold truncate">
                       {formatCurrency(Number(product.preco), productCurrency)}
                     </p>
                   </div>
-                  <Copy className="h-4 w-4 text-muted-foreground" />
+                  <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
                 </button>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <p className="text-sm font-semibold">Instruções:</p>
-              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+              <p className="text-xs sm:text-sm font-semibold">Instruções:</p>
+              <ol className="text-xs sm:text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                 <li>Acesse seu Internet Banking ou aplicativo do banco</li>
                 <li>Selecione a opção <strong className="text-foreground">"Pagamentos por Referência"</strong></li>
                 <li>Introduza a <strong className="text-foreground">Entidade</strong> e <strong className="text-foreground">Referência</strong> acima</li>
@@ -640,19 +640,19 @@ const Checkout = () => {
             <Button
               onClick={verifyRefPayment}
               disabled={verifying}
-              className="w-full h-12 text-base font-bold gap-2"
+              className="w-full h-11 sm:h-12 text-sm sm:text-base font-bold gap-2"
             >
               {verifying ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
               ) : (
                 <>
-                  <RefreshCw className="h-5 w-5" />
+                  <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5" />
                   Verificar Pagamento
                 </>
               )}
             </Button>
 
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-[11px] sm:text-xs text-muted-foreground">
               Após efectuar o pagamento, clique no botão acima para confirmar.
             </p>
           </div>
