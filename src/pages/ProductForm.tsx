@@ -513,7 +513,7 @@ const ProductForm = () => {
             {(currency === "AOA"
               ? [
                   { id: "mcx", label: "Multicaixa Express", logo: mcxLogo as string | null },
-                  { id: "ref", label: "Referência MCX", logo: null as string | null },
+                  { id: "ref", label: "Referência MCX", logo: refLogo as string | null },
                 ]
               : [
                   { id: "mpesa", label: "M-Pesa", logo: mpesaLogo as string | null },
