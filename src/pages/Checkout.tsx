@@ -356,8 +356,12 @@ const Checkout = () => {
                 Compra segura
               </span>
               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <img src="https://flagcdn.com/w40/mz.png" alt="MZ" className="h-3.5 w-5 rounded-sm object-cover" />
-                Moçambique
+                <img
+                  src={isAOA ? "https://flagcdn.com/w40/ao.png" : "https://flagcdn.com/w40/mz.png"}
+                  alt={isAOA ? "AO" : "MZ"}
+                  className="h-3.5 w-5 rounded-sm object-cover"
+                />
+                {isAOA ? "Angola" : "Moçambique"}
               </span>
             </div>
 
@@ -424,18 +428,82 @@ const Checkout = () => {
                     <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
                     <span className="text-sm font-semibold">e-Mola</span>
                   </button>}
+                  {enabledMethods.includes("mcx") && <button
+                    type="button"
+                    onClick={() => { setMethod("mcx"); setPayPhone(""); }}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                      method === "mcx"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                    }`}
+                    aria-label="Selecionar Multicaixa Express"
+                  >
+                    <span className="text-xl leading-none">📱</span>
+                    <span className="text-xs font-semibold leading-tight text-center">Multicaixa Express</span>
+                  </button>}
+                  {enabledMethods.includes("ref") && <button
+                    type="button"
+                    onClick={() => { setMethod("ref"); setPayPhone(""); }}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                      method === "ref"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                    }`}
+                    aria-label="Selecionar Referência"
+                  >
+                    <span className="text-xl leading-none">🧾</span>
+                    <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
+                  </button>}
                 </div>
               </div>
 
-              {method && (
+              {method && method !== "ref" && (
                 <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
                   <Label className="text-sm">Número de pagamento</Label>
                   <Input
                     value={payPhone}
                     onChange={(e) => setPayPhone(e.target.value)}
                     required
-                    placeholder={method === "mpesa" ? "84/85xxxxxxx" : "86/87xxxxxxx"}
+                    placeholder={
+                      method === "mpesa" ? "84/85xxxxxxx"
+                      : method === "emola" ? "86/87xxxxxxx"
+                      : "9XXXXXXXX"
+                    }
                   />
+                  {method === "mcx" && (
+                    <p className="text-xs text-muted-foreground">
+                      Vai receber uma notificação push no app Multicaixa Express para confirmar.
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {refResult && method === "ref" && (
+                <motion.div
+                  className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 space-y-3"
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                >
+                  <p className="text-sm font-semibold">Referência Multicaixa gerada</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pague num ATM, app de banking ou multicaixa express usando estes dados:
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Entidade</p>
+                      <p className="text-lg font-mono font-bold">{refResult.entity}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Referência</p>
+                      <p className="text-lg font-mono font-bold">{refResult.reference}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-primary/20">
+                    <span className="text-xs text-muted-foreground">Valor</span>
+                    <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground pt-1">
+                    Esta página atualizará automaticamente assim que o pagamento for confirmado.
+                  </p>
                 </motion.div>
               )}
 
@@ -444,12 +512,12 @@ const Checkout = () => {
                 <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
               </div>
 
-              {method && (
+              {method && !refResult && (
                 <Button type="submit" className="w-full h-12 text-base font-bold" disabled={paying}>
                   {paying ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   ) : (
-                    "Comprar agora"
+                    method === "ref" ? "Gerar referência" : "Comprar agora"
                   )}
                 </Button>
               )}
