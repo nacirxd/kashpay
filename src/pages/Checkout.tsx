@@ -123,16 +123,28 @@ const Checkout = () => {
       return;
     }
 
-    if (!payPhone) {
-      toast.error("Informe o número de pagamento.");
-      return;
-    }
-
-    const validMpesa = /^8[45]/.test(payPhone);
-    const validEmola = /^8[67]/.test(payPhone);
-    if ((method === "mpesa" && !validMpesa) || (method === "emola" && !validEmola)) {
-      toast.error("Use número correto para o método selecionado.");
-      return;
+    // REF (Referência Multicaixa) não pede telefone
+    if (method !== "ref") {
+      if (!payPhone) {
+        toast.error("Informe o número de pagamento.");
+        return;
+      }
+      const digits = payPhone.replace(/\D/g, "");
+      const validMpesa = /^8[45]\d{7}$/.test(digits);
+      const validEmola = /^8[67]\d{7}$/.test(digits);
+      const validMcx = /^9\d{8}$/.test(digits);
+      if (method === "mpesa" && !validMpesa) {
+        toast.error("M-Pesa: use 84 ou 85 seguido de 7 dígitos.");
+        return;
+      }
+      if (method === "emola" && !validEmola) {
+        toast.error("e-Mola: use 86 ou 87 seguido de 7 dígitos.");
+        return;
+      }
+      if (method === "mcx" && !validMcx) {
+        toast.error("Multicaixa Express: use número Angola com 9 dígitos (9XXXXXXXX).");
+        return;
+      }
     }
 
     setPaying(true);
@@ -142,13 +154,13 @@ const Checkout = () => {
       content_name: product.nome,
       content_ids: [product.id],
       value: Number(product.preco),
-      currency: 'MZN',
+      currency: productCurrency,
     });
     pushDataLayer('begin_checkout', {
       item_name: product.nome,
       item_id: product.id,
       price: Number(product.preco),
-      currency: 'MZN',
+      currency: productCurrency,
       payment_method: method,
     });
 
@@ -157,13 +169,13 @@ const Checkout = () => {
         content_name: product.nome,
         content_ids: [product.id],
         value: Number(product.preco),
-        currency: 'MZN',
+        currency: productCurrency,
       });
       pushDataLayer('purchase', {
         item_name: product.nome,
         item_id: product.id,
         price: Number(product.preco),
-        currency: 'MZN',
+        currency: productCurrency,
         transaction_id: product.id,
       });
       setDone(true);
@@ -191,32 +203,65 @@ const Checkout = () => {
     };
 
     try {
-      const { data, error } = await supabase.functions.invoke("process-payment", {
-        body: {
-          method,
-          phone: payPhone,
-          name,
-          email,
-          whatsapp: whatsapp || undefined,
-          amount: product.preco,
-          reference: "moonpay",
-          product_id: product.id,
-          user_id: product.user_id,
-          ...utms,
-        },
-      });
+      if (method === "mcx" || method === "ref") {
+        // Fluxo Kumbify (Angola)
+        const { data, error } = await supabase.functions.invoke("kumbify-create-payment", {
+          body: {
+            method,
+            phone: method === "mcx" ? payPhone : undefined,
+            name,
+            email,
+            whatsapp: whatsapp || undefined,
+            amount: Number(product.preco),
+            product_id: product.id,
+            user_id: product.user_id,
+            ...utms,
+          },
+        });
 
-      if (!error && data?.status === "approved") {
-        fireSuccess();
-      } else if (!error && data?.status === "pending") {
-        // Aguardar confirmação real antes de marcar Purchase
-        const ok = await pollSale();
-        if (ok) fireSuccess();
-        else toast.info("Pagamento em processamento. Confirme no seu telefone.");
+        if (error || !data?.success) {
+          toast.error(data?.error || "Erro ao iniciar pagamento. Tente novamente.");
+        } else if (method === "ref") {
+          // Mostra entidade + referência ao cliente; aguarda webhook
+          setRefResult({ entity: data.entity, reference: data.reference });
+          toast.success("Referência gerada. Pague num ATM ou app de banking.");
+          // Polling em background — quando aprovar, mostra ecrã de sucesso
+          pollSale().then((ok) => { if (ok) fireSuccess(); });
+        } else {
+          // MCX: cliente confirma push no telemóvel
+          toast.info("Confirme o pagamento no app Multicaixa Express.");
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.info("Aguardando confirmação. Vai receber email assim que pagar.");
+        }
       } else {
-        const ok = await pollSale();
-        if (ok) fireSuccess();
-        else toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+        // Fluxo e2payments (Moçambique)
+        const { data, error } = await supabase.functions.invoke("process-payment", {
+          body: {
+            method,
+            phone: payPhone,
+            name,
+            email,
+            whatsapp: whatsapp || undefined,
+            amount: product.preco,
+            reference: "moonpay",
+            product_id: product.id,
+            user_id: product.user_id,
+            ...utms,
+          },
+        });
+
+        if (!error && data?.status === "approved") {
+          fireSuccess();
+        } else if (!error && data?.status === "pending") {
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.info("Pagamento em processamento. Confirme no seu telefone.");
+        } else {
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+        }
       }
     } catch {
       const ok = await pollSale();
