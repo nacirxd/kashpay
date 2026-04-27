@@ -153,6 +153,7 @@ export type Database = {
         Row: {
           categoria: string | null
           created_at: string
+          currency: string
           delivery_type: string
           descricao: string | null
           external_url: string | null
@@ -173,6 +174,7 @@ export type Database = {
         Insert: {
           categoria?: string | null
           created_at?: string
+          currency?: string
           delivery_type?: string
           descricao?: string | null
           external_url?: string | null
@@ -193,6 +195,7 @@ export type Database = {
         Update: {
           categoria?: string | null
           created_at?: string
+          currency?: string
           delivery_type?: string
           descricao?: string | null
           external_url?: string | null
@@ -218,6 +221,7 @@ export type Database = {
           banco_conta: string | null
           banco_nome: string | null
           created_at: string
+          currency: string
           email: string
           emola_nome: string | null
           emola_telefone: string | null
@@ -234,6 +238,7 @@ export type Database = {
           banco_conta?: string | null
           banco_nome?: string | null
           created_at?: string
+          currency?: string
           email?: string
           emola_nome?: string | null
           emola_telefone?: string | null
@@ -250,6 +255,7 @@ export type Database = {
           banco_conta?: string | null
           banco_nome?: string | null
           created_at?: string
+          currency?: string
           email?: string
           emola_nome?: string | null
           emola_telefone?: string | null
@@ -269,7 +275,11 @@ export type Database = {
           buyer_name: string | null
           buyer_whatsapp: string | null
           created_at: string
+          external_transaction_id: string | null
+          gateway: string | null
           id: string
+          mcx_entity: string | null
+          mcx_reference: string | null
           payment_method: string | null
           payment_phone: string | null
           product_id: string
@@ -286,7 +296,11 @@ export type Database = {
           buyer_name?: string | null
           buyer_whatsapp?: string | null
           created_at?: string
+          external_transaction_id?: string | null
+          gateway?: string | null
           id?: string
+          mcx_entity?: string | null
+          mcx_reference?: string | null
           payment_method?: string | null
           payment_phone?: string | null
           product_id: string
@@ -303,7 +317,11 @@ export type Database = {
           buyer_name?: string | null
           buyer_whatsapp?: string | null
           created_at?: string
+          external_transaction_id?: string | null
+          gateway?: string | null
           id?: string
+          mcx_entity?: string | null
+          mcx_reference?: string | null
           payment_method?: string | null
           payment_phone?: string | null
           product_id?: string
