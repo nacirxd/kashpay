@@ -463,7 +463,7 @@ const Checkout = () => {
                 <Input
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder={productCurrency === "AOA" ? "+244 9XX XXX XXX" : "+258 84 XXX XXXX"}
+                  placeholder={productCurrency === "AOA" ? "9XX XXX XXX" : "84 XXX XXXX"}
                 />
               </div>
 
