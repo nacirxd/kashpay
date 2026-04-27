@@ -542,41 +542,12 @@ const Checkout = () => {
                 </motion.div>
               )}
 
-              {refResult && method === "ref" && (
-                <motion.div
-                  className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 space-y-3"
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                >
-                  <p className="text-sm font-semibold">Referência Multicaixa gerada</p>
-                  <p className="text-xs text-muted-foreground">
-                    Pague num ATM, app de banking ou multicaixa express usando estes dados:
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div>
-                      <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Entidade</p>
-                      <p className="text-lg font-mono font-bold">{refResult.entity}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Referência</p>
-                      <p className="text-lg font-mono font-bold">{refResult.reference}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-primary/20">
-                    <span className="text-xs text-muted-foreground">Valor</span>
-                    <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground pt-1">
-                    Esta página atualizará automaticamente assim que o pagamento for confirmado.
-                  </p>
-                </motion.div>
-              )}
-
               <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
                 <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
                 <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
               </div>
 
-              {method && !refResult && (
+              {method && (
                 <Button type="submit" className="w-full h-12 text-base font-bold" disabled={paying}>
                   {paying ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
@@ -593,6 +564,100 @@ const Checkout = () => {
           </div>
         </motion.div>
       </div>
+
+      <Dialog open={refOpen} onOpenChange={setRefOpen}>
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+          <div className="p-6 space-y-5">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold tracking-tight">Detalhes do Pagamento por Referência</h2>
+              <p className="text-sm text-muted-foreground">
+                Use estes dados para completar o pagamento através do seu banco
+              </p>
+            </div>
+
+            <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
+                <Clock className="h-4 w-4" />
+                Tempo restante
+              </div>
+              <p className="mt-1 text-3xl font-mono font-bold text-primary">
+                {formatRefTime(refCountdown)}
+              </p>
+            </div>
+
+            {refResult && (
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(refResult.entity, "Entidade")}
+                  className="w-full flex items-center justify-between rounded-lg bg-muted/50 hover:bg-muted px-4 py-3 transition-colors text-left"
+                >
+                  <div>
+                    <p className="text-xs text-muted-foreground">Entidade</p>
+                    <p className="text-lg font-mono font-bold">{refResult.entity}</p>
+                  </div>
+                  <Copy className="h-4 w-4 text-muted-foreground" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(refResult.reference, "Referência")}
+                  className="w-full flex items-center justify-between rounded-lg bg-muted/50 hover:bg-muted px-4 py-3 transition-colors text-left"
+                >
+                  <div>
+                    <p className="text-xs text-muted-foreground">Referência</p>
+                    <p className="text-lg font-mono font-bold">{refResult.reference}</p>
+                  </div>
+                  <Copy className="h-4 w-4 text-muted-foreground" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(String(product.preco), "Valor")}
+                  className="w-full flex items-center justify-between rounded-lg bg-muted/50 hover:bg-muted px-4 py-3 transition-colors text-left"
+                >
+                  <div>
+                    <p className="text-xs text-muted-foreground">Valor</p>
+                    <p className="text-lg font-mono font-bold">
+                      {formatCurrency(Number(product.preco), productCurrency)}
+                    </p>
+                  </div>
+                  <Copy className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <p className="text-sm font-semibold">Instruções:</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Acesse seu Internet Banking ou aplicativo do banco</li>
+                <li>Selecione a opção <strong className="text-foreground">"Pagamentos por Referência"</strong></li>
+                <li>Introduza a <strong className="text-foreground">Entidade</strong> e <strong className="text-foreground">Referência</strong> acima</li>
+                <li>Confirme o valor e autorize o pagamento</li>
+              </ol>
+            </div>
+
+            <Button
+              onClick={verifyRefPayment}
+              disabled={verifying}
+              className="w-full h-12 text-base font-bold gap-2"
+            >
+              {verifying ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+              ) : (
+                <>
+                  <RefreshCw className="h-5 w-5" />
+                  Verificar Pagamento
+                </>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-muted-foreground">
+              Após efectuar o pagamento, clique no botão acima para confirmar.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
