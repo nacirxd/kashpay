@@ -15,6 +15,8 @@ import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X }
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
+import mcxLogo from "@/assets/multicaixa-express.svg";
+import refLogo from "@/assets/referencia.svg";
 
 const CATEGORIAS = [
   "Cursos e Educação",
@@ -510,8 +512,8 @@ const ProductForm = () => {
           <div className="grid grid-cols-2 gap-2">
             {(currency === "AOA"
               ? [
-                  { id: "mcx", label: "Multicaixa Express", logo: null as string | null },
-                  { id: "ref", label: "Referência MCX", logo: null as string | null },
+                  { id: "mcx", label: "Multicaixa Express", logo: mcxLogo as string | null },
+                  { id: "ref", label: "Referência MCX", logo: refLogo as string | null },
                 ]
               : [
                   { id: "mpesa", label: "M-Pesa", logo: mpesaLogo as string | null },
