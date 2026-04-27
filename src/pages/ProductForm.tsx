@@ -67,6 +67,7 @@ const ProductForm = () => {
   const [metaPixelId, setMetaPixelId] = useState("");
   const [metaAccessToken, setMetaAccessToken] = useState("");
   const [preco, setPreco] = useState("");
+  const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
@@ -80,6 +81,19 @@ const ProductForm = () => {
   const [productSales, setProductSales] = useState<any[]>([]);
 
   useEffect(() => {
+    // Carrega a moeda do perfil para definir os métodos disponíveis
+    if (user) {
+      supabase.from("profiles").select("currency").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+        const c = ((data as any)?.currency as "MZN" | "AOA") || "MZN";
+        setCurrency(c);
+        // Só ajusta o default se ainda estiver no default original
+        setPaymentMethods((prev) => {
+          const defaultMzn = prev.length === 2 && prev.includes("mpesa") && prev.includes("emola");
+          if (!isEditing && defaultMzn && c === "AOA") return ["mcx", "ref"];
+          return prev;
+        });
+      });
+    }
     if (isEditing && user) {
       supabase
         .from("products")
@@ -100,6 +114,8 @@ const ProductForm = () => {
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
+            const prodCurrency = ((data as any).currency as "MZN" | "AOA") || "MZN";
+            setCurrency(prodCurrency);
             const pm = (data as any).payment_methods;
             if (Array.isArray(pm) && pm.length > 0) setPaymentMethods(pm);
             if ((data as any).image_url) {
