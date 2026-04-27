@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
+import mpesaLogo from "@/assets/mpesa.svg";
+import emolaLogo from "@/assets/emola.svg";
 
 const CATEGORIAS = [
   "Cursos e Educação",
@@ -65,6 +67,7 @@ const ProductForm = () => {
   const [metaPixelId, setMetaPixelId] = useState("");
   const [metaAccessToken, setMetaAccessToken] = useState("");
   const [preco, setPreco] = useState("");
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   const [externalUrl, setExternalUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
@@ -97,6 +100,8 @@ const ProductForm = () => {
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setFileUrl((data as any).file_url || "");
+            const pm = (data as any).payment_methods;
+            if (Array.isArray(pm) && pm.length > 0) setPaymentMethods(pm);
             if ((data as any).image_url) {
               setImageUrl((data as any).image_url);
               const { data: pubUrl } = supabase.storage.from("product-images").getPublicUrl((data as any).image_url);
@@ -224,6 +229,10 @@ const ProductForm = () => {
       toast.error("Por favor insira o link do material.");
       return;
     }
+    if (paymentMethods.length === 0) {
+      toast.error("Selecione pelo menos um método de pagamento.");
+      return;
+    }
     if (deliveryType === "link") {
       try {
         new URL(externalUrl);
@@ -244,6 +253,7 @@ const ProductForm = () => {
       meta_access_token: metaAccessToken.trim(),
       preco: parseFloat(preco),
       delivery_type: deliveryType,
+      payment_methods: paymentMethods,
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
       image_url: imageUrl || null,
@@ -474,6 +484,38 @@ const ProductForm = () => {
             required
             placeholder="1500.00"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Métodos de pagamento aceites</Label>
+          <p className="text-xs text-muted-foreground">Escolha quais métodos serão exibidos no checkout deste produto.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: "mpesa", label: "M-Pesa", logo: mpesaLogo },
+              { id: "emola", label: "e-Mola", logo: emolaLogo },
+            ].map((m) => {
+              const active = paymentMethods.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() =>
+                    setPaymentMethods((prev) =>
+                      prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]
+                    )
+                  }
+                  className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                    active
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                  }`}
+                >
+                  <img src={m.logo} alt={m.label} className="h-7 w-7 object-contain" />
+                  <span className="text-sm font-semibold">{m.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Meta Pixel agora é configurado em /integracoes/meta selecionando o produto */}
