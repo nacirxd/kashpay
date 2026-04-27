@@ -3,11 +3,10 @@ export function formatMZN(value: number): string {
 }
 
 export function formatAOA(value: number): string {
-  const formatted = value
-    .toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    .replace(/\./g, " ")
-    .replace(/\u00A0/g, " ");
-  return `Kz ${formatted}`;
+  const fixed = value.toFixed(2); // "5000.00"
+  const [intPart, decPart] = fixed.split(".");
+  const withThousands = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return `Kz ${withThousands},${decPart}`;
 }
 
 export function formatCurrency(value: number, currency: "MZN" | "AOA" | string | null | undefined = "MZN"): string {
