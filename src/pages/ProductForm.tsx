@@ -486,6 +486,38 @@ const ProductForm = () => {
           />
         </div>
 
+        <div className="space-y-2">
+          <Label>Métodos de pagamento aceites</Label>
+          <p className="text-xs text-muted-foreground">Escolha quais métodos serão exibidos no checkout deste produto.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: "mpesa", label: "M-Pesa", logo: mpesaLogo },
+              { id: "emola", label: "e-Mola", logo: emolaLogo },
+            ].map((m) => {
+              const active = paymentMethods.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() =>
+                    setPaymentMethods((prev) =>
+                      prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]
+                    )
+                  }
+                  className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                    active
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                  }`}
+                >
+                  <img src={m.logo} alt={m.label} className="h-7 w-7 object-contain" />
+                  <span className="text-sm font-semibold">{m.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Meta Pixel agora é configurado em /integracoes/meta selecionando o produto */}
 
         {/* Delivery-specific fields */}
