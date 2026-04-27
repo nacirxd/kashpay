@@ -115,6 +115,62 @@ const Checkout = () => {
     return `00:${m}:${sec}`;
   }, []);
 
+  // Countdown for the reference modal (2h)
+  useEffect(() => {
+    if (!refOpen || refCountdown <= 0) return;
+    const t = setInterval(() => setRefCountdown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [refOpen, refCountdown]);
+
+  const formatRefTime = (s: number) => {
+    const h = Math.floor(s / 3600).toString().padStart(2, "0");
+    const m = Math.floor((s % 3600) / 60).toString().padStart(2, "0");
+    const sec = (s % 60).toString().padStart(2, "0");
+    return `${h}:${m}:${sec}`;
+  };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copiado`);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const verifyRefPayment = async () => {
+    if (!product) return;
+    setVerifying(true);
+    try {
+      const { data } = await supabase.functions.invoke("check-payment-status", {
+        body: { product_id: product.id, email, phone: payPhone || undefined },
+      });
+      if (data?.found && data.status === "approved") {
+        setRefOpen(false);
+        trackEvent('Purchase', {
+          content_name: product.nome,
+          content_ids: [product.id],
+          value: Number(product.preco),
+          currency: productCurrency,
+        });
+        pushDataLayer('purchase', {
+          item_name: product.nome,
+          item_id: product.id,
+          price: Number(product.preco),
+          currency: productCurrency,
+          transaction_id: product.id,
+        });
+        setDone(true);
+        toast.success("Pagamento confirmado!");
+      } else {
+        toast.info("Ainda não recebemos o pagamento. Tente novamente em instantes.");
+      }
+    } catch {
+      toast.error("Erro ao verificar pagamento.");
+    }
+    setVerifying(false);
+  };
+
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
