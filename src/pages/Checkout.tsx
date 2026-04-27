@@ -331,7 +331,7 @@ const Checkout = () => {
               <div className="min-w-0">
                 <p className="font-bold text-base truncate">{product.nome}</p>
                 {product.descricao && <p className="text-xs text-muted-foreground truncate">{product.descricao}</p>}
-                <p className="text-lg font-bold text-primary mt-0.5">{formatMZN(Number(product.preco))}</p>
+                <p className="text-lg font-bold text-primary mt-0.5">{formatCurrency(Number(product.preco), productCurrency)}</p>
               </div>
             </div>
 
@@ -396,7 +396,7 @@ const Checkout = () => {
 
               <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
                 <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
-                <span className="text-sm font-bold">{formatMZN(Number(product.preco))}</span>
+                <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
               </div>
 
               {method && (
