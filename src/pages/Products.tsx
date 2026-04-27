@@ -87,7 +87,7 @@ const Products = () => {
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate font-semibold mb-1">{p.nome}</h3>
                   <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{p.descricao || "Sem descrição"}</p>
-                  <p className="text-xl font-bold text-primary">{formatMZN(Number(p.preco))}</p>
+                  <p className="text-xl font-bold text-primary">{formatCurrency(Number(p.preco), (p as any).currency)}</p>
                 </div>
               </div>
 
