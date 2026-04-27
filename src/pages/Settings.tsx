@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Save, Lock, Camera } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ const Settings = () => {
   const [sobrenome, setSobrenome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -33,6 +35,7 @@ const Settings = () => {
         setSobrenome(restName.join(" "));
         setEmail(data.email);
         setTelefone(data.telefone || "");
+        setCurrency(((data as any).currency as "MZN" | "AOA") || "MZN");
         setAvatarUrl((data as any).avatar_url || "");
       }
     });
@@ -89,7 +92,7 @@ const Settings = () => {
 
     const { error: profileError } = await supabase
       .from("profiles")
-      .update({ nome: fullName, telefone: trimmedTelefone })
+      .update({ nome: fullName, telefone: trimmedTelefone, currency } as any)
       .eq("user_id", user.id);
 
     if (profileError) { toast.error(profileError.message); setLoading(false); return; }
