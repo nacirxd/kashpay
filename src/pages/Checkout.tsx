@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { formatMZN } from "@/lib/currency";
+import { formatCurrency } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
@@ -24,13 +24,21 @@ const Checkout = () => {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [payPhone, setPayPhone] = useState("");
-  const [method, setMethod] = useState<"mpesa" | "emola" | null>(null);
+  type PayMethod = "mpesa" | "emola" | "mcx" | "ref";
+  const [method, setMethod] = useState<PayMethod | null>(null);
   const [countdown, setCountdown] = useState(10 * 60);
+  const [refResult, setRefResult] = useState<{ entity: string; reference: string } | null>(null);
 
-  const enabledMethods: ("mpesa" | "emola")[] = (() => {
+  const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
+  const isAOA = productCurrency === "AOA";
+
+  const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola"];
+  const enabledMethods: PayMethod[] = (() => {
     const pm = product?.payment_methods;
-    if (Array.isArray(pm) && pm.length > 0) return pm.filter((m: string) => m === "mpesa" || m === "emola") as ("mpesa" | "emola")[];
-    return ["mpesa", "emola"];
+    if (Array.isArray(pm) && pm.length > 0) {
+      return (pm as string[]).filter((m): m is PayMethod => allMethods.includes(m as PayMethod));
+    }
+    return allMethods;
   })();
 
   useEffect(() => {
@@ -115,16 +123,28 @@ const Checkout = () => {
       return;
     }
 
-    if (!payPhone) {
-      toast.error("Informe o número de pagamento.");
-      return;
-    }
-
-    const validMpesa = /^8[45]/.test(payPhone);
-    const validEmola = /^8[67]/.test(payPhone);
-    if ((method === "mpesa" && !validMpesa) || (method === "emola" && !validEmola)) {
-      toast.error("Use número correto para o método selecionado.");
-      return;
+    // REF (Referência Multicaixa) não pede telefone
+    if (method !== "ref") {
+      if (!payPhone) {
+        toast.error("Informe o número de pagamento.");
+        return;
+      }
+      const digits = payPhone.replace(/\D/g, "");
+      const validMpesa = /^8[45]\d{7}$/.test(digits);
+      const validEmola = /^8[67]\d{7}$/.test(digits);
+      const validMcx = /^9\d{8}$/.test(digits);
+      if (method === "mpesa" && !validMpesa) {
+        toast.error("M-Pesa: use 84 ou 85 seguido de 7 dígitos.");
+        return;
+      }
+      if (method === "emola" && !validEmola) {
+        toast.error("e-Mola: use 86 ou 87 seguido de 7 dígitos.");
+        return;
+      }
+      if (method === "mcx" && !validMcx) {
+        toast.error("Multicaixa Express: use número Angola com 9 dígitos (9XXXXXXXX).");
+        return;
+      }
     }
 
     setPaying(true);
@@ -134,13 +154,13 @@ const Checkout = () => {
       content_name: product.nome,
       content_ids: [product.id],
       value: Number(product.preco),
-      currency: 'MZN',
+      currency: productCurrency,
     });
     pushDataLayer('begin_checkout', {
       item_name: product.nome,
       item_id: product.id,
       price: Number(product.preco),
-      currency: 'MZN',
+      currency: productCurrency,
       payment_method: method,
     });
 
@@ -149,13 +169,13 @@ const Checkout = () => {
         content_name: product.nome,
         content_ids: [product.id],
         value: Number(product.preco),
-        currency: 'MZN',
+        currency: productCurrency,
       });
       pushDataLayer('purchase', {
         item_name: product.nome,
         item_id: product.id,
         price: Number(product.preco),
-        currency: 'MZN',
+        currency: productCurrency,
         transaction_id: product.id,
       });
       setDone(true);
@@ -183,32 +203,65 @@ const Checkout = () => {
     };
 
     try {
-      const { data, error } = await supabase.functions.invoke("process-payment", {
-        body: {
-          method,
-          phone: payPhone,
-          name,
-          email,
-          whatsapp: whatsapp || undefined,
-          amount: product.preco,
-          reference: "moonpay",
-          product_id: product.id,
-          user_id: product.user_id,
-          ...utms,
-        },
-      });
+      if (method === "mcx" || method === "ref") {
+        // Fluxo Kumbify (Angola)
+        const { data, error } = await supabase.functions.invoke("kumbify-create-payment", {
+          body: {
+            method,
+            phone: method === "mcx" ? payPhone : undefined,
+            name,
+            email,
+            whatsapp: whatsapp || undefined,
+            amount: Number(product.preco),
+            product_id: product.id,
+            user_id: product.user_id,
+            ...utms,
+          },
+        });
 
-      if (!error && data?.status === "approved") {
-        fireSuccess();
-      } else if (!error && data?.status === "pending") {
-        // Aguardar confirmação real antes de marcar Purchase
-        const ok = await pollSale();
-        if (ok) fireSuccess();
-        else toast.info("Pagamento em processamento. Confirme no seu telefone.");
+        if (error || !data?.success) {
+          toast.error(data?.error || "Erro ao iniciar pagamento. Tente novamente.");
+        } else if (method === "ref") {
+          // Mostra entidade + referência ao cliente; aguarda webhook
+          setRefResult({ entity: data.entity, reference: data.reference });
+          toast.success("Referência gerada. Pague num ATM ou app de banking.");
+          // Polling em background — quando aprovar, mostra ecrã de sucesso
+          pollSale().then((ok) => { if (ok) fireSuccess(); });
+        } else {
+          // MCX: cliente confirma push no telemóvel
+          toast.info("Confirme o pagamento no app Multicaixa Express.");
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.info("Aguardando confirmação. Vai receber email assim que pagar.");
+        }
       } else {
-        const ok = await pollSale();
-        if (ok) fireSuccess();
-        else toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+        // Fluxo e2payments (Moçambique)
+        const { data, error } = await supabase.functions.invoke("process-payment", {
+          body: {
+            method,
+            phone: payPhone,
+            name,
+            email,
+            whatsapp: whatsapp || undefined,
+            amount: product.preco,
+            reference: "moonpay",
+            product_id: product.id,
+            user_id: product.user_id,
+            ...utms,
+          },
+        });
+
+        if (!error && data?.status === "approved") {
+          fireSuccess();
+        } else if (!error && data?.status === "pending") {
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.info("Pagamento em processamento. Confirme no seu telefone.");
+        } else {
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+        }
       }
     } catch {
       const ok = await pollSale();
@@ -303,8 +356,12 @@ const Checkout = () => {
                 Compra segura
               </span>
               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <img src="https://flagcdn.com/w40/mz.png" alt="MZ" className="h-3.5 w-5 rounded-sm object-cover" />
-                Moçambique
+                <img
+                  src={isAOA ? "https://flagcdn.com/w40/ao.png" : "https://flagcdn.com/w40/mz.png"}
+                  alt={isAOA ? "AO" : "MZ"}
+                  className="h-3.5 w-5 rounded-sm object-cover"
+                />
+                {isAOA ? "Angola" : "Moçambique"}
               </span>
             </div>
 
@@ -323,7 +380,7 @@ const Checkout = () => {
               <div className="min-w-0">
                 <p className="font-bold text-base truncate">{product.nome}</p>
                 {product.descricao && <p className="text-xs text-muted-foreground truncate">{product.descricao}</p>}
-                <p className="text-lg font-bold text-primary mt-0.5">{formatMZN(Number(product.preco))}</p>
+                <p className="text-lg font-bold text-primary mt-0.5">{formatCurrency(Number(product.preco), productCurrency)}</p>
               </div>
             </div>
 
@@ -371,32 +428,96 @@ const Checkout = () => {
                     <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
                     <span className="text-sm font-semibold">e-Mola</span>
                   </button>}
+                  {enabledMethods.includes("mcx") && <button
+                    type="button"
+                    onClick={() => { setMethod("mcx"); setPayPhone(""); }}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                      method === "mcx"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                    }`}
+                    aria-label="Selecionar Multicaixa Express"
+                  >
+                    <span className="text-xl leading-none">📱</span>
+                    <span className="text-xs font-semibold leading-tight text-center">Multicaixa Express</span>
+                  </button>}
+                  {enabledMethods.includes("ref") && <button
+                    type="button"
+                    onClick={() => { setMethod("ref"); setPayPhone(""); }}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                      method === "ref"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                    }`}
+                    aria-label="Selecionar Referência"
+                  >
+                    <span className="text-xl leading-none">🧾</span>
+                    <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
+                  </button>}
                 </div>
               </div>
 
-              {method && (
+              {method && method !== "ref" && (
                 <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
                   <Label className="text-sm">Número de pagamento</Label>
                   <Input
                     value={payPhone}
                     onChange={(e) => setPayPhone(e.target.value)}
                     required
-                    placeholder={method === "mpesa" ? "84/85xxxxxxx" : "86/87xxxxxxx"}
+                    placeholder={
+                      method === "mpesa" ? "84/85xxxxxxx"
+                      : method === "emola" ? "86/87xxxxxxx"
+                      : "9XXXXXXXX"
+                    }
                   />
+                  {method === "mcx" && (
+                    <p className="text-xs text-muted-foreground">
+                      Vai receber uma notificação push no app Multicaixa Express para confirmar.
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {refResult && method === "ref" && (
+                <motion.div
+                  className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 space-y-3"
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                >
+                  <p className="text-sm font-semibold">Referência Multicaixa gerada</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pague num ATM, app de banking ou multicaixa express usando estes dados:
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Entidade</p>
+                      <p className="text-lg font-mono font-bold">{refResult.entity}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Referência</p>
+                      <p className="text-lg font-mono font-bold">{refResult.reference}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-primary/20">
+                    <span className="text-xs text-muted-foreground">Valor</span>
+                    <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground pt-1">
+                    Esta página atualizará automaticamente assim que o pagamento for confirmado.
+                  </p>
                 </motion.div>
               )}
 
               <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
                 <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
-                <span className="text-sm font-bold">{formatMZN(Number(product.preco))}</span>
+                <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
               </div>
 
-              {method && (
+              {method && !refResult && (
                 <Button type="submit" className="w-full h-12 text-base font-bold" disabled={paying}>
                   {paying ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   ) : (
-                    "Comprar agora"
+                    method === "ref" ? "Gerar referência" : "Comprar agora"
                   )}
                 </Button>
               )}
