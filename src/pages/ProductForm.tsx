@@ -269,6 +269,7 @@ const ProductForm = () => {
       meta_access_token: metaAccessToken.trim(),
       preco: parseFloat(preco),
       delivery_type: deliveryType,
+      currency,
       payment_methods: paymentMethods,
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
@@ -489,7 +490,7 @@ const ProductForm = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="preco">Preço (MZN)</Label>
+          <Label htmlFor="preco">Preço ({currency === "AOA" ? "Kz — Kwanza" : "MT — Metical"})</Label>
           <Input
             id="preco"
             type="number"
@@ -498,18 +499,25 @@ const ProductForm = () => {
             value={preco}
             onChange={(e) => setPreco(e.target.value)}
             required
-            placeholder="1500.00"
+            placeholder={currency === "AOA" ? "5000.00" : "1500.00"}
           />
+          <p className="text-xs text-muted-foreground">A moeda é definida no seu perfil em Configurações.</p>
         </div>
 
         <div className="space-y-2">
           <Label>Métodos de pagamento aceites</Label>
           <p className="text-xs text-muted-foreground">Escolha quais métodos serão exibidos no checkout deste produto.</p>
           <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: "mpesa", label: "M-Pesa", logo: mpesaLogo },
-              { id: "emola", label: "e-Mola", logo: emolaLogo },
-            ].map((m) => {
+            {(currency === "AOA"
+              ? [
+                  { id: "mcx", label: "Multicaixa Express", logo: null as string | null },
+                  { id: "ref", label: "Referência MCX", logo: null as string | null },
+                ]
+              : [
+                  { id: "mpesa", label: "M-Pesa", logo: mpesaLogo as string | null },
+                  { id: "emola", label: "e-Mola", logo: emolaLogo as string | null },
+                ]
+            ).map((m) => {
               const active = paymentMethods.includes(m.id);
               return (
                 <button
@@ -526,7 +534,11 @@ const ProductForm = () => {
                       : "border-border bg-background text-muted-foreground hover:border-primary/30"
                   }`}
                 >
-                  <img src={m.logo} alt={m.label} className="h-7 w-7 object-contain" />
+                  {m.logo ? (
+                    <img src={m.logo} alt={m.label} className="h-7 w-7 object-contain" />
+                  ) : (
+                    <span className="text-lg">{m.id === "mcx" ? "📱" : "🧾"}</span>
+                  )}
                   <span className="text-sm font-semibold">{m.label}</span>
                 </button>
               );
