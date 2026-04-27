@@ -176,6 +176,17 @@ const Settings = () => {
             <Label>Telefone</Label>
             <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="+258 84 000 0000" />
           </div>
+          <div className="space-y-2">
+            <Label>Moeda das vendas</Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as "MZN" | "AOA")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MZN">🇲🇿 Metical (MZN) — M-Pesa, e-Mola</SelectItem>
+                <SelectItem value="AOA">🇦🇴 Kwanza (AOA) — Multicaixa Express, Referência</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Define a moeda e os métodos de pagamento dos seus produtos.</p>
+          </div>
           <Button onClick={handleSave} disabled={loading}>
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
           </Button>
