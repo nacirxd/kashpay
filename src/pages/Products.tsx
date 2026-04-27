@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, ExternalLink, Pencil, Trash2, Copy, Package } from "lucide-react";
-import { formatMZN } from "@/lib/currency";
+import { formatCurrency } from "@/lib/currency";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
