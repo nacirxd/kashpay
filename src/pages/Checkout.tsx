@@ -13,6 +13,8 @@ import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
+import mcxLogo from "@/assets/multicaixa-express.svg";
+import refLogo from "@/assets/referencia.svg";
 
 const Checkout = () => {
   const { id } = useParams();
@@ -438,7 +440,7 @@ const Checkout = () => {
                     }`}
                     aria-label="Selecionar Multicaixa Express"
                   >
-                    <span className="text-xl leading-none">📱</span>
+                    <img src={mcxLogo} alt="Multicaixa Express" className="h-8 w-8 object-contain" />
                     <span className="text-xs font-semibold leading-tight text-center">Multicaixa Express</span>
                   </button>}
                   {enabledMethods.includes("ref") && <button
@@ -451,7 +453,7 @@ const Checkout = () => {
                     }`}
                     aria-label="Selecionar Referência"
                   >
-                    <span className="text-xl leading-none">🧾</span>
+                    <img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" />
                     <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
                   </button>}
                 </div>
