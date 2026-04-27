@@ -3,7 +3,11 @@ export function formatMZN(value: number): string {
 }
 
 export function formatAOA(value: number): string {
-  return `Kz ${value.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatted = value
+    .toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .replace(/\./g, " ")
+    .replace(/\u00A0/g, " ");
+  return `Kz ${formatted}`;
 }
 
 export function formatCurrency(value: number, currency: "MZN" | "AOA" | string | null | undefined = "MZN"): string {
