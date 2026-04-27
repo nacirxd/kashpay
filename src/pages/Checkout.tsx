@@ -10,7 +10,8 @@ import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock } from "lucide-react";
+import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
@@ -30,6 +31,9 @@ const Checkout = () => {
   const [method, setMethod] = useState<PayMethod | null>(null);
   const [countdown, setCountdown] = useState(10 * 60);
   const [refResult, setRefResult] = useState<{ entity: string; reference: string } | null>(null);
+  const [refOpen, setRefOpen] = useState(false);
+  const [refCountdown, setRefCountdown] = useState(2 * 60 * 60);
+  const [verifying, setVerifying] = useState(false);
 
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
@@ -226,6 +230,8 @@ const Checkout = () => {
         } else if (method === "ref") {
           // Mostra entidade + referência ao cliente; aguarda webhook
           setRefResult({ entity: data.entity, reference: data.reference });
+          setRefOpen(true);
+          setRefCountdown(2 * 60 * 60);
           toast.success("Referência gerada. Pague num ATM ou app de banking.");
           // Polling em background — quando aprovar, mostra ecrã de sucesso
           pollSale().then((ok) => { if (ok) fireSuccess(); });
