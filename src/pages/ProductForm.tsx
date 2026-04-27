@@ -492,11 +492,11 @@ const ProductForm = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Moeda do produto</Label>
+          <Label>País do produto</Label>
           <div className="grid grid-cols-2 gap-2">
             {([
-              { id: "MZN", label: "Metical (MT)", flag: "🇲🇿", methods: ["mpesa", "emola"] },
-              { id: "AOA", label: "Kwanza (Kz)", flag: "🇦🇴", methods: ["mcx", "ref"] },
+              { id: "MZN", country: "Moçambique", label: "Metical (MT)", flag: "🇲🇿", methods: ["mpesa", "emola"] },
+              { id: "AOA", country: "Angola", label: "Kwanza (Kz)", flag: "🇦🇴", methods: ["mcx", "ref"] },
             ] as const).map((c) => {
               const active = currency === c.id;
               return (
@@ -513,13 +513,16 @@ const ProductForm = () => {
                       : "border-border bg-background text-muted-foreground hover:border-primary/30"
                   }`}
                 >
-                  <span className="text-lg leading-none">{c.flag}</span>
-                  <span className="text-sm font-semibold">{c.label}</span>
+                  <span className="text-xl leading-none">{c.flag}</span>
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="text-sm font-semibold">{c.country}</span>
+                    <span className="text-[11px] opacity-70">{c.label}</span>
+                  </div>
                 </button>
               );
             })}
           </div>
-          <p className="text-xs text-muted-foreground">Define a moeda e os métodos de pagamento disponíveis para este produto.</p>
+          <p className="text-xs text-muted-foreground">Define o país, a moeda e os métodos de pagamento disponíveis para este produto.</p>
         </div>
 
         <div className="space-y-2">
