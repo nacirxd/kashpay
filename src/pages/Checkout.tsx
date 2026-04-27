@@ -27,6 +27,18 @@ const Checkout = () => {
   const [method, setMethod] = useState<"mpesa" | "emola" | null>(null);
   const [countdown, setCountdown] = useState(10 * 60);
 
+  const enabledMethods: ("mpesa" | "emola")[] = (() => {
+    const pm = product?.payment_methods;
+    if (Array.isArray(pm) && pm.length > 0) return pm.filter((m: string) => m === "mpesa" || m === "emola") as ("mpesa" | "emola")[];
+    return ["mpesa", "emola"];
+  })();
+
+  useEffect(() => {
+    if (enabledMethods.length === 1 && method !== enabledMethods[0]) {
+      setMethod(enabledMethods[0]);
+    }
+  }, [product]);
+
   useEffect(() => {
     captureUTMs();
   }, []);
@@ -332,8 +344,8 @@ const Checkout = () => {
 
               <div className="space-y-1.5">
                 <Label className="text-sm">Método de pagamento</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
+                <div className={`grid gap-2 ${enabledMethods.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  {enabledMethods.includes("mpesa") && <button
                     type="button"
                     onClick={() => { setMethod("mpesa"); setPayPhone(""); }}
                     className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
@@ -345,8 +357,8 @@ const Checkout = () => {
                   >
                     <img src={mpesaLogo} alt="M-Pesa" className="h-8 w-8 object-contain" />
                     <span className="text-sm font-semibold">M-Pesa</span>
-                  </button>
-                  <button
+                  </button>}
+                  {enabledMethods.includes("emola") && <button
                     type="button"
                     onClick={() => { setMethod("emola"); setPayPhone(""); }}
                     className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
@@ -358,7 +370,7 @@ const Checkout = () => {
                   >
                     <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
                     <span className="text-sm font-semibold">e-Mola</span>
-                  </button>
+                  </button>}
                 </div>
               </div>
 
