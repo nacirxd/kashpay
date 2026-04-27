@@ -492,6 +492,37 @@ const ProductForm = () => {
         </div>
 
         <div className="space-y-2">
+          <Label>Moeda do produto</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { id: "MZN", label: "Metical (MT)", flag: "🇲🇿", methods: ["mpesa", "emola"] },
+              { id: "AOA", label: "Kwanza (Kz)", flag: "🇦🇴", methods: ["mcx", "ref"] },
+            ] as const).map((c) => {
+              const active = currency === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setCurrency(c.id);
+                    setPaymentMethods([...c.methods]);
+                  }}
+                  className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                    active
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                  }`}
+                >
+                  <span className="text-lg leading-none">{c.flag}</span>
+                  <span className="text-sm font-semibold">{c.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">Define a moeda e os métodos de pagamento disponíveis para este produto.</p>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="preco">Preço ({currency === "AOA" ? "Kz — Kwanza" : "MT — Metical"})</Label>
           <Input
             id="preco"
@@ -503,7 +534,6 @@ const ProductForm = () => {
             required
             placeholder={currency === "AOA" ? "5000.00" : "1500.00"}
           />
-          <p className="text-xs text-muted-foreground">A moeda é definida no seu perfil em Configurações.</p>
         </div>
 
         <div className="space-y-2">
