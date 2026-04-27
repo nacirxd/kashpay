@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { formatMZN } from "@/lib/currency";
+import { formatCurrency } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
@@ -24,13 +24,21 @@ const Checkout = () => {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [payPhone, setPayPhone] = useState("");
-  const [method, setMethod] = useState<"mpesa" | "emola" | null>(null);
+  type PayMethod = "mpesa" | "emola" | "mcx" | "ref";
+  const [method, setMethod] = useState<PayMethod | null>(null);
   const [countdown, setCountdown] = useState(10 * 60);
+  const [refResult, setRefResult] = useState<{ entity: string; reference: string } | null>(null);
 
-  const enabledMethods: ("mpesa" | "emola")[] = (() => {
+  const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
+  const isAOA = productCurrency === "AOA";
+
+  const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola"];
+  const enabledMethods: PayMethod[] = (() => {
     const pm = product?.payment_methods;
-    if (Array.isArray(pm) && pm.length > 0) return pm.filter((m: string) => m === "mpesa" || m === "emola") as ("mpesa" | "emola")[];
-    return ["mpesa", "emola"];
+    if (Array.isArray(pm) && pm.length > 0) {
+      return (pm as string[]).filter((m): m is PayMethod => allMethods.includes(m as PayMethod));
+    }
+    return allMethods;
   })();
 
   useEffect(() => {
