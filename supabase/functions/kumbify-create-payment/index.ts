@@ -163,9 +163,16 @@ Deno.serve(async (req) => {
     const update: Record<string, unknown> = {
       external_transaction_id: payData.externalTransactionId || merchantTransactionId,
     }
+    // Kumbify retorna referência em payData.reference = { number, entity, amount }
+    // ou em payData.data.responseStatus.reference = { referenceNumber, entity, dueDate }
+    const refObj = payData?.reference || payData?.data?.responseStatus?.reference || null
+    const entity = refObj?.entity || null
+    const reference = refObj?.number || refObj?.referenceNumber || null
+    const externalTxId = payData?.externalTransactionId || payData?.transaction_id || payData?.data?.id || merchantTransactionId
+    update.external_transaction_id = externalTxId
     if (kMethod === 'REF') {
-      update.mcx_entity = payData.entity || null
-      update.mcx_reference = payData.reference || null
+      update.mcx_entity = entity
+      update.mcx_reference = reference
     }
     await supabase.from('sales').update(update).eq('id', saleData.id)
 
@@ -174,9 +181,9 @@ Deno.serve(async (req) => {
       sale_id: saleData.id,
       method: kMethod,
       merchantTransactionId,
-      externalTransactionId: payData.externalTransactionId,
-      entity: payData.entity || null,
-      reference: payData.reference || null,
+      externalTransactionId: externalTxId,
+      entity,
+      reference,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
