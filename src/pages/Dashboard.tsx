@@ -25,7 +25,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [allSales, setAllSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [preset, setPreset] = useState<FilterPreset>("30d");
+  const [preset, setPreset] = useState<FilterPreset>("today");
   const [customRange, setCustomRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
 
   const dateRange: DateRange = useMemo(() => {
