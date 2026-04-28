@@ -351,28 +351,7 @@ const Dashboard = () => {
               </motion.div>
             )}
 
-            {productData.length > 0 && (
-              <motion.div
-                className="rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold">Top produtos</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Receita por produto</p>
-                </div>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={productData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={100} />
-                    <Tooltip formatter={tooltipFormatter} contentStyle={CustomTooltipStyle} />
-                    <Bar dataKey="value" fill="hsl(160,84%,39%)" radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </motion.div>
-            )}
+            {/* Top produtos removed */}
           </div>
 
           {/* Payment channels + Financial summary */}
