@@ -59,6 +59,25 @@ const Checkout = () => {
 
   const utms = getStoredUTMs();
 
+  // Downsell: se o cliente tentar voltar/sair do checkout sem concluir,
+  // redireciona para o link de downsell configurado no produto.
+  useEffect(() => {
+    const downsellUrl: string | undefined = product?.downsell_url || undefined;
+    if (!downsellUrl || done) return;
+
+    // Empilha um estado para podermos detectar o "voltar" do navegador
+    window.history.pushState({ checkoutGuard: true }, "");
+
+    const onPopState = () => {
+      window.location.href = downsellUrl;
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [product, done]);
+
   useEffect(() => {
     if (!id) return;
     supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
