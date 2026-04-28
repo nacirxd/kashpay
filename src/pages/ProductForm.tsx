@@ -676,6 +676,38 @@ const ProductForm = () => {
           </motion.div>
         )}
 
+        {/* Upsell / Downsell */}
+        <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Ofertas pós-compra <span className="text-muted-foreground font-normal">(opcional)</span></h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Se preencher um link de upsell, o comprador será redirecionado para esse link assim que o pagamento for aprovado.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="upsellUrl">Link de upsell</Label>
+            <Input
+              id="upsellUrl"
+              type="url"
+              value={upsellUrl}
+              onChange={(e) => setUpsellUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Oferta extra apresentada após a compra aprovada.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="downsellUrl">Link de downsell</Label>
+            <Input
+              id="downsellUrl"
+              type="url"
+              value={downsellUrl}
+              onChange={(e) => setDownsellUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Alternativa caso o cliente recuse o upsell.</p>
+          </div>
+        </div>
+
         <Button type="submit" disabled={loading}>
           {loading ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
