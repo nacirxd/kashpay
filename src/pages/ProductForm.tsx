@@ -72,6 +72,8 @@ const ProductForm = () => {
   const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   const [externalUrl, setExternalUrl] = useState("");
+  const [upsellUrl, setUpsellUrl] = useState("");
+  const [downsellUrl, setDownsellUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -115,6 +117,8 @@ const ProductForm = () => {
             setMetaAccessToken((data as any).meta_access_token || "");
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
+            setUpsellUrl((data as any).upsell_url || "");
+            setDownsellUrl((data as any).downsell_url || "");
             setFileUrl((data as any).file_url || "");
             const prodCurrency = ((data as any).currency as "MZN" | "AOA") || "MZN";
             setCurrency(prodCurrency);
@@ -259,6 +263,18 @@ const ProductForm = () => {
         return;
       }
     }
+    if (upsellUrl.trim()) {
+      try { new URL(upsellUrl.trim()); } catch {
+        toast.error("Link de upsell inválido.");
+        return;
+      }
+    }
+    if (downsellUrl.trim()) {
+      try { new URL(downsellUrl.trim()); } catch {
+        toast.error("Link de downsell inválido.");
+        return;
+      }
+    }
 
     setLoading(true);
     const payload = {
@@ -275,6 +291,8 @@ const ProductForm = () => {
       payment_methods: paymentMethods,
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
+      upsell_url: upsellUrl.trim() || null,
+      downsell_url: downsellUrl.trim() || null,
       image_url: imageUrl || null,
     };
 
@@ -657,6 +675,38 @@ const ProductForm = () => {
             </p>
           </motion.div>
         )}
+
+        {/* Upsell / Downsell */}
+        <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Ofertas pós-compra <span className="text-muted-foreground font-normal">(opcional)</span></h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Se preencher um link de upsell, o comprador será redirecionado para esse link assim que o pagamento for aprovado.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="upsellUrl">Link de upsell</Label>
+            <Input
+              id="upsellUrl"
+              type="url"
+              value={upsellUrl}
+              onChange={(e) => setUpsellUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Oferta extra apresentada após a compra aprovada.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="downsellUrl">Link de downsell</Label>
+            <Input
+              id="downsellUrl"
+              type="url"
+              value={downsellUrl}
+              onChange={(e) => setDownsellUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Alternativa caso o cliente recuse o upsell.</p>
+          </div>
+        </div>
 
         <Button type="submit" disabled={loading}>
           {loading ? (

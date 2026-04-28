@@ -354,6 +354,14 @@ const Checkout = () => {
 
   if (done) {
     const deliveryType = product.delivery_type || "link";
+    const upsellUrl: string | undefined = product.upsell_url || undefined;
+
+    // Se houver link de upsell, redireciona automaticamente após a aprovação
+    if (upsellUrl) {
+      setTimeout(() => {
+        window.location.href = upsellUrl;
+      }, 1500);
+    }
 
     const handleDownload = async () => {
       if (!product.file_url) return;
@@ -375,6 +383,17 @@ const Checkout = () => {
             Obrigado pela sua compra de <strong>{product.nome}</strong>.
           </p>
 
+          {upsellUrl ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">A redirecionar para a próxima oferta...</p>
+              <Button asChild size="lg" className="gap-2">
+                <a href={upsellUrl}>
+                  <ExternalLink className="h-5 w-5" /> Continuar
+                </a>
+              </Button>
+            </div>
+          ) : (
+            <>
           {deliveryType === "file" && product.file_url && (
             <Button onClick={handleDownload} size="lg" className="gap-2">
               <Download className="h-5 w-5" /> Baixar arquivo
@@ -399,6 +418,8 @@ const Checkout = () => {
                 Seu acesso foi liberado. Verifique seu email para instruções.
               </p>
             </div>
+          )}
+            </>
           )}
         </motion.div>
       </div>
