@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, DollarSign, Eye, ShoppingBag, XCircle, Calendar, ArrowUpRight, ArrowDownRight, CreditCard, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -116,6 +116,40 @@ const Dashboard = () => {
       map[pName] = (map[pName] || 0) + Number(s.valor);
     });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+  }, [filteredSales]);
+
+  const PAYMENT_LABELS: Record<string, string> = {
+    mpesa: "M-Pesa",
+    emola: "e-Mola",
+    referencia: "Referência Bancária",
+    multicaixa_express: "Express",
+    mcx_express: "Express",
+    paypay: "PayPay",
+  };
+  const PAYMENT_COLORS: Record<string, string> = {
+    mpesa: "#ef4444",
+    emola: "#f59e0b",
+    referencia: "#3b82f6",
+    multicaixa_express: "#f97316",
+    mcx_express: "#f97316",
+    paypay: "#10b981",
+    default: "#6366f1",
+  };
+
+  const paymentChannels = useMemo(() => {
+    const map = new Map<string, { method: string; count: number; total: number }>();
+    filteredSales.filter((s) => s.status === "approved").forEach((s) => {
+      const m = (s.payment_method || s.gateway || "default").toLowerCase();
+      const cur = map.get(m) || { method: m, count: 0, total: 0 };
+      cur.count++;
+      cur.total += Number(s.valor);
+      map.set(m, cur);
+    });
+    const arr = Array.from(map.values());
+    const sum = arr.reduce((a, c) => a + c.total, 0) || 1;
+    return arr
+      .map((c) => ({ ...c, pct: (c.total / sum) * 100 }))
+      .sort((a, b) => b.total - a.total);
   }, [filteredSales]);
 
   const statCards = [
@@ -339,6 +373,108 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               </motion.div>
             )}
+          </div>
+
+          {/* Payment channels + Financial summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <motion.div
+              className="rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42 }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                </div>
+                <h3 className="text-base font-semibold">Canais de Pagamento</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-5 ml-11">Distribuição do volume transacionado por método.</p>
+              {paymentChannels.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                  <CreditCard className="h-10 w-10 mb-2 opacity-30" />
+                  <p className="text-sm">Sem dados no período</p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {paymentChannels.map((c) => {
+                    const color = PAYMENT_COLORS[c.method] || PAYMENT_COLORS.default;
+                    const label = PAYMENT_LABELS[c.method] || c.method;
+                    return (
+                      <div key={c.method}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-9 rounded-full" style={{ background: color }} />
+                            <div>
+                              <div className="text-sm font-semibold">{label}</div>
+                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                {c.count} transacções
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold">{formatMZN(c.total)}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-md bg-primary/15 text-primary font-semibold">
+                              {c.pct.toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${c.pct}%`, background: color }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              className="rounded-2xl border border-border/40 bg-card p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.44 }}
+            >
+              <h3 className="text-base font-semibold">Resumo Financeiro</h3>
+              <p className="text-xs text-muted-foreground mb-5">Análise de receitas realizadas (apenas vendas completadas)</p>
+              <div className="space-y-4 text-sm">
+                <div className="flex justify-between items-center pb-3 border-b border-border/40">
+                  <span className="text-muted-foreground">Receita Total:</span>
+                  <span className="font-bold">{formatMZN(stats.receita)}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-border/40">
+                  <span className="text-muted-foreground">Receita Directa:</span>
+                  <span className="font-bold text-primary">{formatMZN(stats.receita)}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-border/40">
+                  <span className="text-muted-foreground">Venda Indirecta (Meus Afiliados):</span>
+                  <span className="font-bold text-violet-500">{formatMZN(0)}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-border/40">
+                  <span className="text-muted-foreground">Ganhos como Afiliado:</span>
+                  <span className="font-bold text-primary">{formatMZN(0)}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-border/40">
+                  <span className="text-muted-foreground">Comissões Pagas:</span>
+                  <span className="font-bold text-destructive">-{formatMZN(0)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 p-4 mt-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                      <Wallet className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Receita Líquida</div>
+                      <div className="text-xs text-muted-foreground">Após deduções de comissões</div>
+                    </div>
+                  </div>
+                  <span className="font-bold text-base">{formatMZN(stats.receita)}</span>
+                </div>
+              </div>
+            </motion.div>
           </div>
 
           {/* Recent sales */}
