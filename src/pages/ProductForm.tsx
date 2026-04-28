@@ -263,6 +263,18 @@ const ProductForm = () => {
         return;
       }
     }
+    if (upsellUrl.trim()) {
+      try { new URL(upsellUrl.trim()); } catch {
+        toast.error("Link de upsell inválido.");
+        return;
+      }
+    }
+    if (downsellUrl.trim()) {
+      try { new URL(downsellUrl.trim()); } catch {
+        toast.error("Link de downsell inválido.");
+        return;
+      }
+    }
 
     setLoading(true);
     const payload = {
