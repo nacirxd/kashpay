@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { formatMZN } from "@/lib/currency";
+import { formatCurrency } from "@/lib/currency";
 import { exportCSV, exportPDF } from "@/lib/exportReports";
 import { motion } from "framer-motion";
 import { ShoppingCart, Download, FileText, Eye, X, Phone, Mail, User, CreditCard, Calendar, Package, Hash, Search } from "lucide-react";
@@ -22,7 +22,7 @@ const Sales = () => {
     if (!user) return;
     supabase
       .from("sales")
-      .select("*, products(nome)")
+      .select("*, products(nome, currency)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
@@ -174,7 +174,7 @@ const Sales = () => {
                         <td className="px-6 py-3 font-medium">{s.buyer_name || "-"}</td>
                         <td className="px-6 py-3 text-muted-foreground">{s.buyer_whatsapp || "-"}</td>
                         <td className="px-6 py-3">{(s.products as any)?.nome || "-"}</td>
-                        <td className="px-6 py-3 font-medium">{formatMZN(Number(s.valor))}</td>
+                        <td className="px-6 py-3 font-medium">{formatCurrency(Number(s.valor), (s.products as any)?.currency)}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[s.status] || ""}`}>
                             {statusLabels[s.status] || s.status}
@@ -230,7 +230,7 @@ const Sales = () => {
               <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produto</h3>
                 <DetailRow icon={Package} label="Produto" value={(selectedSale.products as any)?.nome} />
-                <DetailRow icon={Hash} label="Valor" value={formatMZN(Number(selectedSale.valor))} highlight />
+                <DetailRow icon={Hash} label="Valor" value={formatCurrency(Number(selectedSale.valor), (selectedSale.products as any)?.currency)} highlight />
               </div>
 
               {/* Payment info */}
