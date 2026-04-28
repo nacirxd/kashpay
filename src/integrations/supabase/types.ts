@@ -156,6 +156,7 @@ export type Database = {
           currency: string
           delivery_type: string
           descricao: string | null
+          downsell_url: string | null
           external_url: string | null
           file_url: string | null
           id: string
@@ -169,6 +170,7 @@ export type Database = {
           support_email: string | null
           support_phone: string | null
           tipo: string
+          upsell_url: string | null
           user_id: string
         }
         Insert: {
@@ -177,6 +179,7 @@ export type Database = {
           currency?: string
           delivery_type?: string
           descricao?: string | null
+          downsell_url?: string | null
           external_url?: string | null
           file_url?: string | null
           id?: string
@@ -190,6 +193,7 @@ export type Database = {
           support_email?: string | null
           support_phone?: string | null
           tipo?: string
+          upsell_url?: string | null
           user_id: string
         }
         Update: {
@@ -198,6 +202,7 @@ export type Database = {
           currency?: string
           delivery_type?: string
           descricao?: string | null
+          downsell_url?: string | null
           external_url?: string | null
           file_url?: string | null
           id?: string
@@ -211,6 +216,7 @@ export type Database = {
           support_email?: string | null
           support_phone?: string | null
           tipo?: string
+          upsell_url?: string | null
           user_id?: string
         }
         Relationships: []
