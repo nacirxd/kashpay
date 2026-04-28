@@ -23,6 +23,7 @@ import IntegrationDetail from "./pages/IntegrationDetail";
 import Settings from "./pages/Settings";
 import Finances from "./pages/Finances";
 import Sales from "./pages/Sales";
+import Reports from "./pages/Reports";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
@@ -60,6 +61,7 @@ const App = () => {
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
               <Route path="/vendas" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
+              <Route path="/relatorios" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               <Route path="/produtos/novo" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
               <Route path="/produtos/:id" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
               <Route path="/integracoes" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
