@@ -72,6 +72,8 @@ const ProductForm = () => {
   const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   const [externalUrl, setExternalUrl] = useState("");
+  const [upsellUrl, setUpsellUrl] = useState("");
+  const [downsellUrl, setDownsellUrl] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -115,6 +117,8 @@ const ProductForm = () => {
             setMetaAccessToken((data as any).meta_access_token || "");
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
+            setUpsellUrl((data as any).upsell_url || "");
+            setDownsellUrl((data as any).downsell_url || "");
             setFileUrl((data as any).file_url || "");
             const prodCurrency = ((data as any).currency as "MZN" | "AOA") || "MZN";
             setCurrency(prodCurrency);
@@ -275,6 +279,8 @@ const ProductForm = () => {
       payment_methods: paymentMethods,
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
+      upsell_url: upsellUrl.trim() || null,
+      downsell_url: downsellUrl.trim() || null,
       image_url: imageUrl || null,
     };
 
