@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
 
     // Call payment endpoint with timeout
     const payController = new AbortController()
-    const payTimeout = setTimeout(() => payController.abort(), 20000)
+    const payTimeout = setTimeout(() => payController.abort(), 45000)
 
     const endpoint = method === 'mpesa'
       ? 'https://e2payments.explicador.co.mz/v1/c2b/mpesa-payment/993700'
@@ -185,35 +185,50 @@ Deno.serve(async (req) => {
 
     console.log(`[e2pay] ${method} request → phone=${e2payPhone} amount=${amount} sale=${saleData?.id}`)
 
-    const payResp = await fetch(endpoint, {
-      method: 'POST',
-      signal: payController.signal,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: new URLSearchParams({
-        client_id: "9ec6e1b3-f7ba-42ce-a580-a781788989ed",
-        amount: String(amount),
-        reference: reference || "moonpay",
-        phone: e2payPhone,
-      }),
-    })
-    clearTimeout(payTimeout)
+    let payResp: Response | null = null
+    let payData: any = {}
+    let networkError: string | null = null
+    try {
+      payResp = await fetch(endpoint, {
+        method: 'POST',
+        signal: payController.signal,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: new URLSearchParams({
+          client_id: "9ec6e1b3-f7ba-42ce-a580-a781788989ed",
+          amount: String(amount),
+          reference: reference || "moonpay",
+          phone: e2payPhone,
+        }),
+      })
+      payData = await payResp.json().catch(() => ({}))
+      console.log(`[e2pay] ${method} response status=${payResp.status} body=`, JSON.stringify(payData))
+    } catch (err: any) {
+      networkError = err?.name === 'AbortError' ? 'timeout' : (err?.message || 'network_error')
+      console.error(`[e2pay] ${method} fetch erro:`, networkError)
+    } finally {
+      clearTimeout(payTimeout)
+    }
 
-    const payData = await payResp.json().catch(() => ({}))
-    console.log(`[e2pay] ${method} response status=${payResp.status} body=`, JSON.stringify(payData))
-
-    // Update sale status based on payment result
-    const status = payResp.ok ? 'approved' : 'pending'
-    if (payResp.ok && saleData?.id) {
-      await supabase.from('sales').update({ status: 'approved' }).eq('id', saleData.id)
-    } else if (saleData?.id) {
-      console.warn(`[e2pay] Venda ${saleData.id} ficou pending. status=${payResp.status}`)
+    // Update sale status: approved on success, failed on any error/timeout (no orphan pending)
+    const ok = !!payResp && payResp.ok
+    const status = ok ? 'approved' : 'failed'
+    if (saleData?.id) {
+      await supabase.from('sales').update({ status }).eq('id', saleData.id)
+      if (!ok) {
+        console.warn(`[e2pay] Venda ${saleData.id} marcada como FAILED. http=${payResp?.status || 'n/a'} err=${networkError || 'http_error'}`)
+      }
     }
 
     // Return response immediately, then fire integrations in background
-    const response = new Response(JSON.stringify({ success: payResp.ok, data: payData, status }), {
+    const response = new Response(JSON.stringify({
+      success: ok,
+      data: payData,
+      status,
+      error: ok ? undefined : (networkError || `Pagamento recusado (HTTP ${payResp?.status || 'n/a'})`),
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 

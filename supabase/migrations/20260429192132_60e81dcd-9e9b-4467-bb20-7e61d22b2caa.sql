@@ -1,0 +1,1 @@
+UPDATE public.sales SET status = 'approved' WHERE id = 'e397652a-0e06-459b-b20a-398492340561' AND status = 'pending';
