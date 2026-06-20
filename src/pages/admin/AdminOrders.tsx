@@ -41,15 +41,18 @@ const statusMap: Record<string, { label: string; classes: string }> = {
   pending: { label: "Pendente", classes: "bg-yellow-500/10 text-yellow-400" },
   approved: { label: "Pago", classes: "bg-emerald-500/10 text-emerald-400" },
   rejected: { label: "Não Pago", classes: "bg-red-500/10 text-red-400" },
+  failed: { label: "Falhou", classes: "bg-red-500/10 text-red-400" },
+  processing: { label: "Processando", classes: "bg-blue-500/10 text-blue-400" },
 };
 
-type StatusFilter = "all" | "pending" | "approved" | "rejected";
+type StatusFilter = "all" | "pending" | "approved" | "rejected" | "failed";
 
 const filterButtons: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "Todos" },
   { key: "pending", label: "Pendentes" },
   { key: "approved", label: "Pagos" },
   { key: "rejected", label: "Não Pagos" },
+  { key: "failed", label: "Falhados" },
 ];
 
 const AdminOrders = () => {
@@ -91,6 +94,7 @@ const AdminOrders = () => {
     pending: orders.filter((o) => o.status === "pending").length,
     approved: orders.filter((o) => o.status === "approved").length,
     rejected: orders.filter((o) => o.status === "rejected").length,
+    failed: orders.filter((o) => o.status === "failed").length,
   }), [orders]);
 
   const handleUpdate = async () => {
@@ -195,7 +199,7 @@ const AdminOrders = () => {
                     </TableCell>
                     <TableCell className="text-gray-400 text-xs">{formatDateTimeMZ(o.created_at)}</TableCell>
                     <TableCell>
-                      {o.status === "pending" && (
+                      {(o.status === "pending" || o.status === "failed" || o.status === "processing" || o.status === "rejected") && (
                         <div className="flex gap-2">
                           <button
                             onClick={() => setConfirm({ id: o.id, status: "approved", buyer: o.buyer_name || "comprador" })}
@@ -203,12 +207,14 @@ const AdminOrders = () => {
                           >
                             Pago
                           </button>
+                          {o.status !== "rejected" && (
                           <button
                             onClick={() => setConfirm({ id: o.id, status: "rejected", buyer: o.buyer_name || "comprador" })}
                             className="rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
                           >
                             Não Pago
                           </button>
+                          )}
                         </div>
                       )}
                     </TableCell>
