@@ -16,7 +16,6 @@ import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
-import zenofyLogo from "@/assets/zenofy.svg";
 
 const Checkout = () => {
   const { id } = useParams();
@@ -535,92 +534,92 @@ const Checkout = () => {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-sm">Método de pagamento</Label>
-                <div className={`grid gap-2 ${enabledMethods.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                  {enabledMethods.includes("mpesa") && method !== "zenofy" && <button
-                    type="button"
-                    onClick={() => { setMethod("mpesa"); setPayPhone(""); }}
-                    className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
-                      method === "mpesa"
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
-                    }`}
-                    aria-label="Selecionar M-Pesa"
-                  >
-                    <img src={mpesaLogo} alt="M-Pesa" className="h-8 w-8 object-contain" />
-                    <span className="text-sm font-semibold">M-Pesa</span>
-                  </button>}
-                  {enabledMethods.includes("emola") && method !== "zenofy" && <button
-                    type="button"
-                    onClick={() => { setMethod("emola"); setPayPhone(""); }}
-                    className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
-                      method === "emola"
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
-                    }`}
-                    aria-label="Selecionar e-Mola"
-                  >
-                    <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
-                    <span className="text-sm font-semibold">e-Mola</span>
-                  </button>}
-                  {enabledMethods.includes("mcx") && method !== "zenofy" && <button
-                    type="button"
-                    onClick={() => { setMethod("mcx"); setPayPhone(""); }}
-                    className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
-                      method === "mcx"
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
-                    }`}
-                    aria-label="Selecionar Multicaixa Express"
-                  >
-                    <img src={mcxLogo} alt="Multicaixa Express" className="h-8 w-8 object-contain" />
-                    <span className="text-xs font-semibold leading-tight text-center">Multicaixa Express</span>
-                  </button>}
-                  {enabledMethods.includes("ref") && method !== "zenofy" && <button
-                    type="button"
-                    onClick={() => { setMethod("ref"); setPayPhone(""); }}
-                    className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
-                      method === "ref"
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
-                    }`}
-                    aria-label="Selecionar Referência"
-                  >
-                    <img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" />
-                    <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
-                  </button>}
-                  {enabledMethods.includes("zenofy") && <button
-                    type="button"
-                    onClick={() => { setMethod("zenofy"); setPayPhone(""); }}
-                    className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
-                      method === "zenofy"
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
-                    }`}
-                    aria-label="Selecionar Zenofy"
-                  >
-                    <img src={zenofyLogo} alt="Zenofy" className="h-6 w-auto object-contain" />
-                    <span className="text-sm font-semibold">Zenofy</span>
-                  </button>}
-                </div>
+              {!(enabledMethods.length === 1 && enabledMethods[0] === "zenofy") && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Método de pagamento</Label>
+                  <div className={`grid gap-2 ${enabledMethods.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {enabledMethods.includes("mpesa") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("mpesa"); setPayPhone(""); }}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "mpesa"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar M-Pesa"
+                    >
+                      <img src={mpesaLogo} alt="M-Pesa" className="h-8 w-8 object-contain" />
+                      <span className="text-sm font-semibold">M-Pesa</span>
+                    </button>}
+                    {enabledMethods.includes("emola") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("emola"); setPayPhone(""); }}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "emola"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar e-Mola"
+                    >
+                      <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
+                      <span className="text-sm font-semibold">e-Mola</span>
+                    </button>}
+                    {enabledMethods.includes("mcx") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("mcx"); setPayPhone(""); }}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "mcx"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar Multicaixa Express"
+                    >
+                      <img src={mcxLogo} alt="Multicaixa Express" className="h-8 w-8 object-contain" />
+                      <span className="text-xs font-semibold leading-tight text-center">Multicaixa Express</span>
+                    </button>}
+                    {enabledMethods.includes("ref") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("ref"); setPayPhone(""); }}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "ref"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar Referência"
+                    >
+                      <img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" />
+                      <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
+                    </button>}
+                    {enabledMethods.includes("zenofy") && enabledMethods.length > 1 && <button
+                      type="button"
+                      onClick={() => { setMethod("zenofy"); setPayPhone(""); }}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "zenofy"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar Zenofy"
+                    >
+                      <span className="text-sm font-semibold">Zenofy</span>
+                    </button>}
+                  </div>
 
-                {method === "zenofy" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground"
-                  >
-                    <div className="flex items-center gap-2 font-semibold">
-                      <img src={zenofyLogo} alt="Zenofy" className="h-4 w-auto object-contain" />
-                      Zenofy selecionado
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Será redirecionado para o pagamento seguro da Zenofy.
-                    </p>
-                  </motion.div>
-                )}
-              </div>
+                  {method === "zenofy" && enabledMethods.length > 1 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground"
+                    >
+                      <div className="flex items-center gap-2 font-semibold">
+                        <span>Zenofy selecionado</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Será redirecionado para o pagamento seguro da Zenofy.
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              )}
 
               {method && method !== "ref" && method !== "zenofy" && (
                 <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
