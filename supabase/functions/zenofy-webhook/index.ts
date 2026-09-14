@@ -4,6 +4,7 @@ const corsHeaders = {
 }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { sendUtmifyOrder } from '../_shared/utmify.ts'
 
 /**
  * Webhook chamado pela Zenofy.
