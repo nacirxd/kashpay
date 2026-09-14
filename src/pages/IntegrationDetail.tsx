@@ -202,7 +202,71 @@ const IntegrationDetail = () => {
     }
   };
 
+  const renderProductPicker = (kind: "pixel" | "webhook") => (
+    <div className="space-y-2">
+      <Label>Selecione o produto</Label>
+      {products.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Crie um produto primeiro em{" "}
+          <button type="button" onClick={() => navigate("/produtos/novo")} className="underline text-primary">
+            Produtos
+          </button>.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
+          {products.map((p) => {
+            const imgSrc = p.image_url
+              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${p.image_url}`
+              : null;
+            const isSelected = selectedProductId === p.id;
+            const configured = kind === "pixel" ? !!p.meta_pixel_id : !!p.webhook_url;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedProductId(p.id)}
+                className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                  isSelected ? "border-primary bg-primary/5" : "border-border/50 bg-card hover:border-primary/30"
+                }`}
+              >
+                {imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={p.nome}
+                    className="h-12 w-12 rounded-lg object-cover shrink-0 border border-border/50"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border/50">
+                    {kind === "pixel" ? (
+                      <Facebook className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Send className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{p.nome}</p>
+                  {configured ? (
+                    <span className="text-[10px] inline-block rounded-full bg-primary/10 text-primary px-1.5 py-0.5 mt-0.5">
+                      {kind === "pixel" ? "pixel ✓" : "webhook ✓"}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">
+                      {kind === "pixel" ? "sem pixel" : "sem webhook"}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
+
     <DashboardLayout>
       <button onClick={() => navigate("/integracoes")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Voltar
