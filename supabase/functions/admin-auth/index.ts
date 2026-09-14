@@ -49,6 +49,28 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
     clearTimeout(t);
   }
 }
+
+const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook';
+
+async function notifySmsWebhook(url: string, payload: Record<string, unknown>) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    console.log('SMS webhook (admin) response:', resp.status, await resp.text());
+    return resp.ok;
+  } catch (err) {
+    console.error('Erro no SMS webhook (admin):', err);
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
