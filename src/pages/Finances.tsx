@@ -103,6 +103,8 @@ const Finances = () => {
       reembolsado: refunded.reduce((a, s) => a + Number(s.valor), 0),
       total: sales.length,
       pendingWithdraw,
+      aLiberar: totalHeld,
+
     };
   }, [sales, withdrawals]);
 
