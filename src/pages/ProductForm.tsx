@@ -595,7 +595,7 @@ const ProductForm = () => {
                   {m.logo ? (
                     <img src={m.logo} alt={m.label} className="h-7 w-7 object-contain" />
                   ) : (
-                    <span className="text-lg">{m.id === "mcx" ? "📱" : m.id === "zenofy" ? "⚡" : "🧾"}</span>
+                    <span className="text-lg">{m.id === "mcx" ? "📱" : "🧾"}</span>
                   )}
                   <span className="text-sm font-semibold">{m.label}</span>
                 </button>
