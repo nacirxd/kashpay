@@ -159,10 +159,10 @@ Deno.serve(async (req) => {
       reference: saleData.id,
       payment_methods: zenofyPaymentMethods,
       metadata: { sale_id: saleData.id, product_id, user_id },
-      customer: { name, email, phone: localPhone || undefined },
+      customer: { name, email, phone: toE164MZ(localPhone) },
       name,
       email,
-      phone: localPhone || undefined,
+      phone: toE164MZ(localPhone),
       success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}` : undefined,
       cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zcancel=1` : undefined,
     }
