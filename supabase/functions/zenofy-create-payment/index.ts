@@ -10,8 +10,14 @@ const ZENOFY_BASE = 'https://api.zenofy.io'
 function normalizePhoneMZ9(raw: string): string | null {
   if (!raw) return null
   const digits = String(raw).replace(/\D/g, '')
-  const local = digits.startsWith('258') && digits.length === 12 ? digits.slice(3) : digits
+  let local = digits.startsWith('258') ? digits.slice(3) : digits
+  if (local.length > 9) local = local.slice(0, 9)
   return /^8[2-7]\d{7}$/.test(local) ? local : null
+}
+
+// Zenofy exige E.164: +258XXXXXXXXX
+function toE164MZ(local: string | null): string | null {
+  return local ? `+258${local}` : null
 }
 
 function pickUrl(obj: any): string | null {
