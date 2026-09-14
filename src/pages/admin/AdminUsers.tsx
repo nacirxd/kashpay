@@ -155,9 +155,13 @@ const AdminUsers = () => {
                   <TableCell className="text-gray-400">{u.email}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      u.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                      u.status === "active"
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : u.status === "pending"
+                        ? "bg-amber-500/10 text-amber-400"
+                        : "bg-red-500/10 text-red-400"
                     }`}>
-                      {u.status === "active" ? "Ativo" : "Banido"}
+                      {u.status === "active" ? "Ativo" : u.status === "pending" ? "Aguardando aprovação" : "Banido"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -168,6 +172,21 @@ const AdminUsers = () => {
                       >
                         Banir
                       </button>
+                    ) : u.status === "pending" ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setConfirm({ user_id: u.user_id, status: "active", name: u.nome || u.email })}
+                          className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                        >
+                          Aprovar
+                        </button>
+                        <button
+                          onClick={() => setConfirm({ user_id: u.user_id, status: "banned", name: u.nome || u.email })}
+                          className="rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+                        >
+                          Rejeitar
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => setConfirm({ user_id: u.user_id, status: "active", name: u.nome || u.email })}
