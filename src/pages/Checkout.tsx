@@ -38,20 +38,30 @@ const Checkout = () => {
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
 
-  const [methodFlags, setMethodFlags] = useState<{ mpesa: boolean; emola: boolean }>({ mpesa: true, emola: true });
+  const [methodFlags, setMethodFlags] = useState<{ mpesa: boolean; emola: boolean } | null>(null);
+
+  const loadMethodFlags = async () => {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["mpesa_enabled", "emola_enabled"]);
+    if (error) return;
+    const map = Object.fromEntries((data || []).map((r: any) => [r.key, String(r.value)]));
+    setMethodFlags({
+      mpesa: map.mpesa_enabled !== "false",
+      emola: map.emola_enabled !== "false",
+    });
+  };
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("key, value")
-        .in("key", ["mpesa_enabled", "emola_enabled"]);
-      const map = Object.fromEntries((data || []).map((r: any) => [r.key, r.value]));
-      setMethodFlags({
-        mpesa: map.mpesa_enabled !== "false",
-        emola: map.emola_enabled !== "false",
-      });
-    })();
+    loadMethodFlags();
+    const onFocus = () => loadMethodFlags();
+    window.addEventListener("focus", onFocus);
+    const interval = setInterval(loadMethodFlags, 60000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola", "zenofy"];
@@ -60,14 +70,20 @@ const Checkout = () => {
     const base = Array.isArray(pm) && pm.length > 0
       ? (pm as string[]).filter((m): m is PayMethod => allMethods.includes(m as PayMethod))
       : allMethods;
+    if (isAOA) return base;
+    if (!methodFlags) return base.filter((m) => m !== "mpesa" && m !== "emola");
     return base.filter((m) => (m === "mpesa" ? methodFlags.mpesa : m === "emola" ? methodFlags.emola : true));
   })();
 
   useEffect(() => {
     if (enabledMethods.length === 1 && method !== enabledMethods[0]) {
       setMethod(enabledMethods[0]);
+      return;
     }
-  }, [product]);
+    if (method && !enabledMethods.includes(method)) {
+      setMethod(enabledMethods.length === 1 ? enabledMethods[0] : null);
+    }
+  }, [product, methodFlags]);
 
   useEffect(() => {
     captureUTMs();
