@@ -79,14 +79,15 @@ const Finances = () => {
 
   const summary = useMemo(() => {
     const now = Date.now();
-    const H24 = 24 * 60 * 60 * 1000;
+    const RELEASE_MS = 7 * 24 * 60 * 60 * 1000;
     const approved = sales.filter((s) => s.status === "approved");
     const pending = sales.filter((s) => s.status === "pending");
     const refunded = sales.filter((s) => s.status === "refunded" || s.status === "chargeback");
 
-    // Approved sales older than 24h are available; within 24h are held
-    const availableApproved = approved.filter((s) => now - new Date(s.created_at).getTime() >= H24);
-    const heldApproved = approved.filter((s) => now - new Date(s.created_at).getTime() < H24);
+    // Vendas aprovadas só ficam liberadas 7 dias depois da compra
+    const availableApproved = approved.filter((s) => now - new Date(s.created_at).getTime() >= RELEASE_MS);
+    const heldApproved = approved.filter((s) => now - new Date(s.created_at).getTime() < RELEASE_MS);
+
 
     const totalAvailable = availableApproved.reduce((a, s) => a + Number(s.valor), 0);
     const totalHeld = heldApproved.reduce((a, s) => a + Number(s.valor), 0);
@@ -102,6 +103,8 @@ const Finances = () => {
       reembolsado: refunded.reduce((a, s) => a + Number(s.valor), 0),
       total: sales.length,
       pendingWithdraw,
+      aLiberar: totalHeld,
+
     };
   }, [sales, withdrawals]);
 
@@ -357,7 +360,13 @@ const Finances = () => {
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
                       Saldo disponível: <span className="font-semibold text-foreground">{formatMZN(summary.saldo)}</span>
+                      {summary.aLiberar > 0 && (
+                        <span className="mt-1 block text-xs">
+                          A liberar em até 7 dias: {formatMZN(summary.aLiberar)}
+                        </span>
+                      )}
                     </p>
+
                     <form onSubmit={handleWithdraw} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="valor">Valor (MT)</Label>
