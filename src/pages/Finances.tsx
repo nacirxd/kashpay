@@ -360,7 +360,13 @@ const Finances = () => {
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
                       Saldo disponível: <span className="font-semibold text-foreground">{formatMZN(summary.saldo)}</span>
+                      {summary.aLiberar > 0 && (
+                        <span className="mt-1 block text-xs">
+                          A liberar em até 7 dias: {formatMZN(summary.aLiberar)}
+                        </span>
+                      )}
                     </p>
+
                     <form onSubmit={handleWithdraw} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="valor">Valor (MT)</Label>
