@@ -193,6 +193,7 @@ export type Database = {
           tipo: string
           upsell_url: string | null
           user_id: string
+          webhook_url: string | null
           zenofy_product_id: string | null
         }
         Insert: {
@@ -217,6 +218,7 @@ export type Database = {
           tipo?: string
           upsell_url?: string | null
           user_id: string
+          webhook_url?: string | null
           zenofy_product_id?: string | null
         }
         Update: {
@@ -241,6 +243,7 @@ export type Database = {
           tipo?: string
           upsell_url?: string | null
           user_id?: string
+          webhook_url?: string | null
           zenofy_product_id?: string | null
         }
         Relationships: []

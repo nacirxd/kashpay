@@ -7,10 +7,10 @@ import { motion } from "framer-motion";
 import { Facebook, BarChart3, Webhook, Tag, MessageSquare } from "lucide-react";
 
 const integrationTypes = [
-  { tipo: "meta_ads", label: "Meta Ads", desc: "Facebook Pixel & Conversion API", icon: Facebook, path: "/integracoes/meta" },
+  { tipo: "meta_ads", label: "Meta Ads", desc: "Pixel por produto (Facebook & Conversion API)", icon: Facebook, path: "/integracoes/meta" },
   { tipo: "gtm", label: "Google Tag Manager", desc: "Tags e eventos centralizados", icon: Tag, path: "/integracoes/gtm" },
   { tipo: "utmify", label: "UTMify", desc: "Rastreamento de UTMs e campanhas", icon: BarChart3, path: "/integracoes/utmify" },
-  { tipo: "webhook", label: "Webhook", desc: "Envie eventos para URLs externas", icon: Webhook, path: "/integracoes/webhook" },
+  { tipo: "webhook", label: "Webhook", desc: "URL por produto para eventos de venda", icon: Webhook, path: "/integracoes/webhook" },
   { tipo: "tsemba_sms", label: "Tsemba SMS", desc: "SMS automático ao comprador na venda", icon: MessageSquare, path: "/integracoes/tsemba" },
 ];
 
@@ -24,9 +24,19 @@ const Integrations = () => {
     supabase.from("integrations").select("tipo, ativo").eq("user_id", user.id).then(({ data }) => {
       const map: Record<string, boolean> = {};
       (data || []).forEach((d) => { map[d.tipo] = d.ativo; });
-      setActiveMap(map);
+      setActiveMap((prev) => ({ ...prev, ...map }));
+    });
+
+    supabase.from("products").select("meta_pixel_id, webhook_url").eq("user_id", user.id).then(({ data }) => {
+      const rows = (data as { meta_pixel_id: string | null; webhook_url: string | null }[]) || [];
+      setActiveMap((prev) => ({
+        ...prev,
+        meta_ads: rows.some((r) => !!r.meta_pixel_id?.trim()),
+        webhook: rows.some((r) => !!r.webhook_url?.trim()),
+      }));
     });
   }, [user]);
+
 
   return (
     <DashboardLayout>

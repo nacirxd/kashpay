@@ -18,7 +18,9 @@ type ProductPixelRow = {
   image_url: string | null;
   meta_pixel_id: string | null;
   meta_access_token: string | null;
+  webhook_url: string | null;
 };
+
 
 type SmsLog = {
   id: string;
@@ -55,18 +57,21 @@ const IntegrationDetail = () => {
   const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([]);
 
-  // Meta Pixel per-product state
+  // Per-product state (Meta Pixel + Webhook)
   const [products, setProducts] = useState<ProductPixelRow[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [productPixelId, setProductPixelId] = useState("");
   const [productAccessToken, setProductAccessToken] = useState("");
+  const [productWebhookUrl, setProductWebhookUrl] = useState("");
   const [savingPixel, setSavingPixel] = useState(false);
+  const [savingWebhook, setSavingWebhook] = useState(false);
+  const perProduct = tipo === "meta" || tipo === "webhook";
 
   const loadProductsForPixel = () => {
     if (!user) return;
     supabase
       .from("products")
-      .select("id, nome, image_url, meta_pixel_id, meta_access_token")
+      .select("id, nome, image_url, meta_pixel_id, meta_access_token, webhook_url")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
@@ -76,7 +81,7 @@ const IntegrationDetail = () => {
 
   useEffect(() => {
     if (!user || !dbTipo) return;
-    if (tipo !== "meta") {
+    if (!perProduct) {
       supabase.from("integrations").select("*").eq("user_id", user.id).eq("tipo", dbTipo).maybeSingle().then(({ data }) => {
         if (data) {
           setExistingId(data.id);
@@ -86,7 +91,7 @@ const IntegrationDetail = () => {
       });
     }
 
-    if (tipo === "meta") {
+    if (perProduct) {
       loadProductsForPixel();
     }
 
@@ -101,17 +106,19 @@ const IntegrationDetail = () => {
         setSmsLogs((data as SmsLog[]) || []);
       });
     }
-  }, [user, dbTipo, tipo]);
+  }, [user, dbTipo, tipo, perProduct]);
 
   useEffect(() => {
     if (!selectedProductId) {
       setProductPixelId("");
       setProductAccessToken("");
+      setProductWebhookUrl("");
       return;
     }
     const p = products.find((x) => x.id === selectedProductId);
     setProductPixelId(p?.meta_pixel_id || "");
     setProductAccessToken(p?.meta_access_token || "");
+    setProductWebhookUrl(p?.webhook_url || "");
   }, [selectedProductId, products]);
 
   const handleSavePixel = async () => {
@@ -137,6 +144,32 @@ const IntegrationDetail = () => {
     setSavingPixel(false);
   };
 
+  const handleSaveWebhook = async () => {
+    if (!user || !selectedProductId) {
+      toast.error("Selecione um produto.");
+      return;
+    }
+    const url = productWebhookUrl.trim();
+    if (url && !/^https?:\/\/.+/i.test(url)) {
+      toast.error("Informe uma URL válida iniciando por https://");
+      return;
+    }
+    setSavingWebhook(true);
+    const { error } = await supabase
+      .from("products")
+      .update({ webhook_url: url || null } as any)
+      .eq("id", selectedProductId)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Webhook salvo no produto!");
+      loadProductsForPixel();
+    }
+    setSavingWebhook(false);
+  };
+
+
   const handleSave = async () => {
     if (!user || !dbTipo) return;
     setLoading(true);
@@ -154,11 +187,11 @@ const IntegrationDetail = () => {
     setTestResult(null);
     if (tipo === "meta" && config.pixel_id) {
       setTestResult("✅ Pixel ID validado. Eventos serão enviados: PageView, AddToCart, InitiateCheckout, Purchase.");
-    } else if (tipo === "webhook" && config.url) {
+    } else if (tipo === "webhook" && productWebhookUrl.trim()) {
       try {
         setTestResult("⏳ Enviando teste...");
         await new Promise((r) => setTimeout(r, 1000));
-        const logEntry = `[${new Date().toLocaleTimeString("pt-MZ", { timeZone: "Africa/Maputo" })}] POST ${config.url} → 200 OK (teste)`;
+        const logEntry = `[${new Date().toLocaleTimeString("pt-MZ", { timeZone: "Africa/Maputo" })}] POST ${productWebhookUrl.trim()} → 200 OK (teste)`;
         setWebhookLogs((prev) => [logEntry, ...prev].slice(0, 10));
         setTestResult("✅ Webhook testado com sucesso!");
       } catch {
@@ -169,7 +202,71 @@ const IntegrationDetail = () => {
     }
   };
 
+  const renderProductPicker = (kind: "pixel" | "webhook") => (
+    <div className="space-y-2">
+      <Label>Selecione o produto</Label>
+      {products.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Crie um produto primeiro em{" "}
+          <button type="button" onClick={() => navigate("/produtos/novo")} className="underline text-primary">
+            Produtos
+          </button>.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
+          {products.map((p) => {
+            const imgSrc = p.image_url
+              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${p.image_url}`
+              : null;
+            const isSelected = selectedProductId === p.id;
+            const configured = kind === "pixel" ? !!p.meta_pixel_id : !!p.webhook_url;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedProductId(p.id)}
+                className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                  isSelected ? "border-primary bg-primary/5" : "border-border/50 bg-card hover:border-primary/30"
+                }`}
+              >
+                {imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={p.nome}
+                    className="h-12 w-12 rounded-lg object-cover shrink-0 border border-border/50"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border/50">
+                    {kind === "pixel" ? (
+                      <Facebook className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Send className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{p.nome}</p>
+                  {configured ? (
+                    <span className="text-[10px] inline-block rounded-full bg-primary/10 text-primary px-1.5 py-0.5 mt-0.5">
+                      {kind === "pixel" ? "pixel ✓" : "webhook ✓"}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">
+                      {kind === "pixel" ? "sem pixel" : "sem webhook"}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
+
     <DashboardLayout>
       <button onClick={() => navigate("/integracoes")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Voltar
@@ -177,7 +274,7 @@ const IntegrationDetail = () => {
       <h1 className="text-lg font-semibold mb-6">{titles[tipo || ""] || "Integração"}</h1>
 
       <div className="max-w-lg space-y-6">
-        {tipo !== "meta" && (
+        {!perProduct && (
           <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
             <div>
               <p className="text-sm font-medium">Ativo</p>
@@ -200,61 +297,8 @@ const IntegrationDetail = () => {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Selecione o produto</Label>
-              {products.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Crie um produto primeiro em{" "}
-                  <button type="button" onClick={() => navigate("/produtos/novo")} className="underline text-primary">
-                    Produtos
-                  </button>.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
-                  {products.map((p) => {
-                    const imgSrc = p.image_url
-                      ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${p.image_url}`
-                      : null;
-                    const isSelected = selectedProductId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setSelectedProductId(p.id)}
-                        className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border/50 bg-card hover:border-primary/30"
-                        }`}
-                      >
-                        {imgSrc ? (
-                          <img
-                            src={imgSrc}
-                            alt={p.nome}
-                            className="h-12 w-12 rounded-lg object-cover shrink-0 border border-border/50"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border/50">
-                            <Facebook className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{p.nome}</p>
-                          {p.meta_pixel_id ? (
-                            <span className="text-[10px] inline-block rounded-full bg-primary/10 text-primary px-1.5 py-0.5 mt-0.5">
-                              pixel ✓
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground">sem pixel</span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            {renderProductPicker("pixel")}
+
 
             {selectedProductId && (
               <>
@@ -340,12 +384,42 @@ const IntegrationDetail = () => {
 
         {tipo === "webhook" && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>URL do Webhook</Label>
-              <Input value={config.url || ""} onChange={(e) => setConfig({ ...config, url: e.target.value })} placeholder="https://seu-servidor.com/webhook" />
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-1">
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Configuração por produto</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecione um produto e defina a URL que vai receber os eventos das vendas dele.
+                Cada produto pode ter o seu próprio webhook.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">Eventos enviados via POST: compra aprovada, reembolso, chargeback.</p>
-            <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar envio</Button>
+
+            {renderProductPicker("webhook")}
+
+            {selectedProductId && (
+              <>
+                <div className="space-y-2">
+                  <Label>URL do Webhook</Label>
+                  <Input
+                    value={productWebhookUrl}
+                    onChange={(e) => setProductWebhookUrl(e.target.value)}
+                    placeholder="https://seu-servidor.com/webhook"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Eventos enviados via POST: compra aprovada, reembolso, chargeback.</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={handleSaveWebhook} disabled={savingWebhook}>
+                    {savingWebhook ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    ) : (
+                      <><Save className="mr-2 h-4 w-4" /> Salvar webhook deste produto</>
+                    )}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar envio</Button>
+                </div>
+              </>
+            )}
 
             {webhookLogs.length > 0 && (
               <motion.div className="rounded-xl border border-border/50 bg-card p-4 shadow-soft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -362,6 +436,7 @@ const IntegrationDetail = () => {
             )}
           </div>
         )}
+
 
         {tipo === "tsemba" && (
           <div className="space-y-4">
@@ -429,7 +504,7 @@ const IntegrationDetail = () => {
           <p className="text-sm font-medium">{testResult}</p>
         )}
 
-        {tipo !== "meta" && (
+        {!perProduct && (
           <Button onClick={handleSave} disabled={loading}>
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
           </Button>
