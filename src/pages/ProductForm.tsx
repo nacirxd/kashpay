@@ -321,6 +321,10 @@ const ProductForm = () => {
       upsell_url: upsellUrl.trim() || null,
       downsell_url: downsellUrl.trim() || null,
       image_url: imageUrl || null,
+      order_bump_product_id: hasBump ? bumpProductId : null,
+      order_bump_price: hasBump && bumpPrice.trim() ? parseFloat(bumpPrice) : null,
+      order_bump_title: hasBump ? bumpTitle.trim() || null : null,
+      order_bump_description: hasBump ? bumpDescription.trim() || null : null,
     };
 
     if (isEditing) {
