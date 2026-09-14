@@ -13,12 +13,15 @@ const AdminSettings = () => {
   const [zenofyId, setZenofyId] = useState("");
   const [zenofyLoading, setZenofyLoading] = useState(true);
   const [zenofySaving, setZenofySaving] = useState(false);
+  const [smsUrl, setSmsUrl] = useState("");
+  const [smsSaving, setSmsSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const data = await adminFetch("get_settings");
         setZenofyId(data?.zenofy_product_id || "");
+        setSmsUrl(data?.sms_webhook_url || "");
       } catch (e: any) {
         toast.error(e.message);
       }
@@ -36,6 +39,22 @@ const AdminSettings = () => {
       toast.error(e.message);
     }
     setZenofySaving(false);
+  };
+
+  const saveSmsUrl = async () => {
+    const value = smsUrl.trim();
+    if (value && !/^https?:\/\//.test(value)) {
+      toast.error("O endereço deve começar por http:// ou https://");
+      return;
+    }
+    setSmsSaving(true);
+    try {
+      await adminFetch("update_setting", { key: "sms_webhook_url", value });
+      toast.success("Endereço do sistema de SMS salvo");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setSmsSaving(false);
   };
 
   const handleGet2FA = async () => {
@@ -85,6 +104,34 @@ const AdminSettings = () => {
           Webhook Zenofy: https://eabvrprjqmpdcxkhwvbf.supabase.co/functions/v1/zenofy-webhook
         </p>
       </div>
+
+      <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg mb-6">
+        <h2 className="font-semibold text-gray-100 mb-1">Sistema de SMS (aviso de venda)</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Sempre que uma venda é aprovada, os dados da venda são enviados para este endereço para que o SMS seja disparado.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            value={smsUrl}
+            onChange={(e) => setSmsUrl(e.target.value)}
+            placeholder={zenofyLoading ? "Carregando..." : "https://zenofyetsembasms.online/api/public/tsemba/webhook"}
+            disabled={zenofyLoading}
+            className="flex-1 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-100 font-mono outline-none focus:border-emerald-600"
+          />
+          <button
+            onClick={saveSmsUrl}
+            disabled={smsSaving || zenofyLoading}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+          >
+            {smsSaving ? "..." : "Salvar"}
+          </button>
+        </div>
+        <p className="text-xs text-gray-600 mt-3 break-all font-mono">
+          Se ficar vazio, usamos: https://zenofyetsembasms.online/api/public/tsemba/webhook
+        </p>
+      </div>
+
+
 
       <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg">
         <div className="flex items-center gap-3 mb-4">

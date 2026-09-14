@@ -69,6 +69,29 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
   return false
 }
 
+// Sistema de SMS externo (recebe aviso de venda aprovada e envia o SMS)
+const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
+
+async function notifySmsWebhook(url: string, payload: Record<string, unknown>) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 10000)
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    console.log('SMS webhook response:', resp.status, await resp.text())
+    return resp.ok
+  } catch (err) {
+    console.error('Erro no SMS webhook:', err)
+    return false
+  } finally {
+    clearTimeout(t)
+  }
+}
+
 async function convertMznToBrlCents(amountMzn: number) {
   const fxController = new AbortController()
   const fxTimeout = setTimeout(() => fxController.abort(), 8000)
@@ -341,6 +364,39 @@ Deno.serve(async (req) => {
             })
           }
         }
+
+        // Sistema de SMS externo: aviso de venda aprovada
+        if (status === 'approved') {
+          try {
+            const { data: smsSetting } = await supabase
+              .from('app_settings')
+              .select('value')
+              .eq('key', 'sms_webhook_url')
+              .maybeSingle()
+            const smsUrl = (smsSetting?.value || '').toString().trim() || DEFAULT_SMS_WEBHOOK_URL
+            if (/^https?:\/\//.test(smsUrl)) {
+              await notifySmsWebhook(smsUrl, {
+                event: 'sale.approved',
+                sale_id: saleData?.id || null,
+                product_id,
+                product_name: productData?.nome || null,
+                seller_id: user_id,
+                amount: amountNumber,
+                currency: productData?.currency || 'MZN',
+                payment_method: method,
+                buyer_name: name || null,
+                buyer_email: email || null,
+                buyer_phone: normalizePhoneMZ(whatsapp || phone || '') || phone || null,
+                support_phone: productData?.support_phone || null,
+                created_at: new Date().toISOString(),
+              })
+            }
+          } catch (smsHookErr) {
+            console.error('Erro ao avisar sistema de SMS:', smsHookErr)
+          }
+        }
+
+
 
         // Meta Conversion API (CAPI) - server-side Purchase event
         // Pixel é por produto: products.meta_pixel_id + products.meta_access_token

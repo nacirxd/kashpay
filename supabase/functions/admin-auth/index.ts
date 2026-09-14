@@ -49,6 +49,28 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
     clearTimeout(t);
   }
 }
+
+const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook';
+
+async function notifySmsWebhook(url: string, payload: Record<string, unknown>) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    console.log('SMS webhook (admin) response:', resp.status, await resp.text());
+    return resp.ok;
+  } catch (err) {
+    console.error('Erro no SMS webhook (admin):', err);
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -270,7 +292,7 @@ Deno.serve(async (req) => {
     // UPDATE GLOBAL SETTING
     if (action === "update_setting") {
       const key = typeof body.key === "string" ? body.key.trim() : "";
-      const allowed = ["zenofy_product_id"];
+      const allowed = ["zenofy_product_id", "sms_webhook_url"];
       if (!allowed.includes(key)) throw new Error("Configuração inválida");
       const value = typeof body.value === "string" ? body.value.trim() : "";
       const { error } = await supabaseAdmin
@@ -534,6 +556,35 @@ Deno.serve(async (req) => {
             }
           } catch (smsErr) {
             console.error("Erro Tsemba SMS (admin):", smsErr);
+          }
+
+          // 5. Sistema de SMS externo: aviso de venda aprovada
+          try {
+            const { data: smsSetting } = await supabaseAdmin
+              .from("app_settings")
+              .select("value")
+              .eq("key", "sms_webhook_url")
+              .maybeSingle();
+            const smsUrl = (smsSetting?.value || "").toString().trim() || DEFAULT_SMS_WEBHOOK_URL;
+            if (/^https?:\/\//.test(smsUrl)) {
+              await notifySmsWebhook(smsUrl, {
+                event: "sale.approved",
+                sale_id: sale.id,
+                product_id: sale.product_id,
+                product_name: product?.nome || null,
+                seller_id: sale.user_id,
+                amount: Number(sale.valor),
+                currency: (product as any)?.currency || "MZN",
+                payment_method: sale.payment_method || null,
+                buyer_name: sale.buyer_name || null,
+                buyer_email: sale.buyer_email || null,
+                buyer_phone: normalizePhoneMZ(sale.buyer_whatsapp || sale.payment_phone || "") || sale.buyer_whatsapp || null,
+                support_phone: (product as any)?.support_phone || null,
+                created_at: new Date().toISOString(),
+              });
+            }
+          } catch (smsHookErr) {
+            console.error("Erro ao avisar sistema de SMS (admin):", smsHookErr);
           }
         }
         } catch (bgErr) {
