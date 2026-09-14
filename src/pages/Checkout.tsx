@@ -305,6 +305,20 @@ const Checkout = () => {
       return;
     }
 
+    if ((method === "mpesa" || method === "emola")) {
+      await loadMethodFlags();
+      const { data: fresh } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", `${method}_enabled`)
+        .maybeSingle();
+      if (fresh && String(fresh.value) === "false") {
+        toast.error(`${method === "mpesa" ? "M-Pesa" : "e-Mola"} está temporariamente indisponível.`);
+        setMethod(null);
+        return;
+      }
+    }
+
     // REF (Referência Multicaixa) e Zenofy não pedem telefone aqui
     if (method !== "ref" && method !== "zenofy") {
       if (!payPhone) {
