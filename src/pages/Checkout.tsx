@@ -122,6 +122,58 @@ const Checkout = () => {
     });
   }, [id]);
 
+  // Ao voltar da Zenofy: confirma o pagamento diretamente na Zenofy
+  useEffect(() => {
+    if (!product || done) return;
+    const params = new URLSearchParams(window.location.search);
+    let saleId = params.get("zsale");
+    if (!saleId) {
+      try { saleId = localStorage.getItem(`zenofy_sale_${product.id}`); } catch { saleId = null; }
+    }
+    if (!saleId) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const check = async () => {
+      attempts++;
+      try {
+        const { data } = await supabase.functions.invoke("zenofy-check-status", {
+          body: { sale_id: saleId },
+        });
+        if (cancelled) return;
+        if (data?.status === "approved") {
+          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          trackEvent('Purchase', {
+            content_name: product.nome,
+            content_ids: [product.id],
+            value: Number(product.preco),
+            currency: productCurrency,
+          });
+          pushDataLayer('purchase', {
+            item_name: product.nome,
+            item_id: product.id,
+            price: Number(product.preco),
+            currency: productCurrency,
+            transaction_id: product.id,
+          });
+          setDone(true);
+          toast.success("Pagamento confirmado!");
+          return;
+        }
+        if (data?.status === "failed") {
+          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          return;
+        }
+      } catch { /* tenta de novo */ }
+      if (!cancelled && attempts < 40) setTimeout(check, 5000);
+    };
+    check();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product, done]);
+
+
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
@@ -189,6 +241,23 @@ const Checkout = () => {
     }
     setVerifying(false);
   };
+
+  // Verifica diretamente na Zenofy o estado de uma venda (não depende do aviso da Zenofy)
+  const pollZenofySale = async (saleId: string, maxAttempts = 12): Promise<boolean> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const { data } = await supabase.functions.invoke("zenofy-check-status", {
+          body: { sale_id: saleId },
+        });
+        if (data?.status === "approved") return true;
+        if (data?.status === "failed") return false;
+      } catch { /* tenta de novo */ }
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+    return false;
+  };
+
+
 
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,9 +364,15 @@ const Checkout = () => {
             amount: Number(product.preco),
             product_id: product.id,
             user_id: product.user_id,
+            return_url: `${window.location.origin}${window.location.pathname}`,
             ...utms,
           },
         });
+
+        if (data?.sale_id) {
+          try { localStorage.setItem(`zenofy_sale_${product.id}`, data.sale_id); } catch { /* ignore */ }
+        }
+
 
         if (error || !data?.success) {
           toast.error(data?.error || "Erro ao iniciar pagamento pela Zenofy. Tente novamente.");
@@ -307,10 +382,11 @@ const Checkout = () => {
           return;
         } else {
           toast.info("Pagamento criado na Zenofy. Aguardando confirmação...");
-          const ok = await pollSale();
+          const ok = await pollZenofySale(data.sale_id, 20);
           if (ok) fireSuccess();
           else toast.info("Vai receber email assim que o pagamento for confirmado.");
         }
+
       } else if (method === "mcx" || method === "ref") {
         // Fluxo Kumbify (Angola)
         const { data, error } = await supabase.functions.invoke("kumbify-create-payment", {

@@ -25,4 +25,7 @@ project_id = "eabvrprjqmpdcxkhwvbf"
     verify_jwt = false
   [functions.zenofy-webhook]
     verify_jwt = false
+  [functions.zenofy-check-status]
+    verify_jwt = false
+
 

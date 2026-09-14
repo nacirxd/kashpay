@@ -54,8 +54,9 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const {
       amount, product_id, user_id, name, email, phone, whatsapp,
-      utm_source, utm_medium, utm_campaign, utm_content,
+      utm_source, utm_medium, utm_campaign, utm_content, return_url,
     } = body
+
 
     if (!amount || !product_id || !user_id || !name || !email) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -118,6 +119,11 @@ Deno.serve(async (req) => {
       })
     }
 
+    const baseReturn = typeof return_url === 'string' && /^https?:\/\//.test(return_url)
+      ? return_url
+      : null
+    const sep = baseReturn && baseReturn.includes('?') ? '&' : '?'
+
     const payload: Record<string, unknown> = {
       productId: zenofyProductId,
       amount: Math.round(amountNumber * 100), // unidades menores
@@ -128,7 +134,10 @@ Deno.serve(async (req) => {
       name,
       email,
       phone: localPhone || undefined,
+      success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}` : undefined,
+      cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zcancel=1` : undefined,
     }
+
 
     const ctrl = new AbortController()
     const t = setTimeout(() => ctrl.abort(), 30000)
