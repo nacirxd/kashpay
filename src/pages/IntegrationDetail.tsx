@@ -384,12 +384,42 @@ const IntegrationDetail = () => {
 
         {tipo === "webhook" && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>URL do Webhook</Label>
-              <Input value={config.url || ""} onChange={(e) => setConfig({ ...config, url: e.target.value })} placeholder="https://seu-servidor.com/webhook" />
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-1">
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Configuração por produto</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecione um produto e defina a URL que vai receber os eventos das vendas dele.
+                Cada produto pode ter o seu próprio webhook.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">Eventos enviados via POST: compra aprovada, reembolso, chargeback.</p>
-            <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar envio</Button>
+
+            {renderProductPicker("webhook")}
+
+            {selectedProductId && (
+              <>
+                <div className="space-y-2">
+                  <Label>URL do Webhook</Label>
+                  <Input
+                    value={productWebhookUrl}
+                    onChange={(e) => setProductWebhookUrl(e.target.value)}
+                    placeholder="https://seu-servidor.com/webhook"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Eventos enviados via POST: compra aprovada, reembolso, chargeback.</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={handleSaveWebhook} disabled={savingWebhook}>
+                    {savingWebhook ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    ) : (
+                      <><Save className="mr-2 h-4 w-4" /> Salvar webhook deste produto</>
+                    )}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleTest}><Send className="mr-2 h-3 w-3" /> Testar envio</Button>
+                </div>
+              </>
+            )}
 
             {webhookLogs.length > 0 && (
               <motion.div className="rounded-xl border border-border/50 bg-card p-4 shadow-soft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -406,6 +436,7 @@ const IntegrationDetail = () => {
             )}
           </div>
         )}
+
 
         {tipo === "tsemba" && (
           <div className="space-y-4">
