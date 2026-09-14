@@ -14,11 +14,11 @@ interface IntegrationItem {
 const integrations: IntegrationItem[] = [
   { logo: mpesaLogo, name: "M-Pesa", desc: "Pagamentos via M-Pesa" },
   { logo: emolaLogo, name: "e-Mola", desc: "Pagamentos via e-Mola" },
+  { logo: zenofyLogo, name: "Zenofy", desc: "Pagamentos via Zenofy" },
   { icon: MessageSquare, name: "WhatsApp", desc: "Entrega automática" },
   { icon: Target, name: "Meta Ads", desc: "Pixel + Conversion API" },
   { icon: Tag, name: "Google Tag", desc: "Tags e eventos" },
   { icon: Webhook, name: "Webhook", desc: "Eventos personalizados" },
-  { icon: Zap, name: "n8n", desc: "Automações avançadas" },
   { icon: BarChart3, name: "Analytics", desc: "Métricas em tempo real" },
 ];
 
