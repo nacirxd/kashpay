@@ -172,6 +172,7 @@ export type Database = {
           tipo: string
           upsell_url: string | null
           user_id: string
+          zenofy_product_id: string | null
         }
         Insert: {
           categoria?: string | null
@@ -195,6 +196,7 @@ export type Database = {
           tipo?: string
           upsell_url?: string | null
           user_id: string
+          zenofy_product_id?: string | null
         }
         Update: {
           categoria?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           tipo?: string
           upsell_url?: string | null
           user_id?: string
+          zenofy_product_id?: string | null
         }
         Relationships: []
       }
@@ -296,6 +299,7 @@ export type Database = {
           utm_medium: string | null
           utm_source: string | null
           valor: number
+          zenofy_checkout_id: string | null
         }
         Insert: {
           buyer_email?: string | null
@@ -317,6 +321,7 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           valor: number
+          zenofy_checkout_id?: string | null
         }
         Update: {
           buyer_email?: string | null
@@ -338,6 +343,7 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           valor?: number
+          zenofy_checkout_id?: string | null
         }
         Relationships: [
           {
