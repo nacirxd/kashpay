@@ -34,6 +34,8 @@ const Checkout = () => {
   const [refOpen, setRefOpen] = useState(false);
   const [refCountdown, setRefCountdown] = useState(2 * 60 * 60);
   const [verifying, setVerifying] = useState(false);
+  const [bumpProduct, setBumpProduct] = useState<any>(null);
+  const [bumpAccepted, setBumpAccepted] = useState(false);
 
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
