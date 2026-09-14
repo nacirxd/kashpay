@@ -504,7 +504,7 @@ const IntegrationDetail = () => {
           <p className="text-sm font-medium">{testResult}</p>
         )}
 
-        {tipo !== "meta" && (
+        {!perProduct && (
           <Button onClick={handleSave} disabled={loading}>
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><Save className="mr-2 h-4 w-4" /> Salvar</>}
           </Button>
