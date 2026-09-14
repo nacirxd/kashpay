@@ -92,6 +92,14 @@ const ProductForm = () => {
   const [productSales, setProductSales] = useState<any[]>([]);
 
   useEffect(() => {
+    // Lista de produtos do vendedor (para a oferta extra / order bump)
+    if (user) {
+      supabase
+        .from("products")
+        .select("id, nome, preco, currency")
+        .eq("user_id", user.id)
+        .then(({ data }) => setMyProducts(data || []));
+    }
     // Carrega a moeda do perfil para definir os métodos disponíveis
     if (user) {
       supabase.from("profiles").select("currency").eq("user_id", user.id).maybeSingle().then(({ data }) => {
