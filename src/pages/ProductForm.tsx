@@ -292,7 +292,7 @@ const ProductForm = () => {
       delivery_type: deliveryType,
       currency,
       payment_methods: paymentMethods,
-      zenofy_product_id: zenofyProductId.trim() || null,
+      
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
       upsell_url: upsellUrl.trim() || null,
@@ -603,24 +603,6 @@ const ProductForm = () => {
             })}
           </div>
 
-          {paymentMethods.includes("zenofy") && (
-            <div className="space-y-1.5 rounded-lg border border-border bg-muted/30 p-3">
-              <Label htmlFor="zenofyProductId">ID do produto na Zenofy</Label>
-              <Input
-                id="zenofyProductId"
-                value={zenofyProductId}
-                onChange={(e) => setZenofyProductId(e.target.value)}
-                placeholder="Cole aqui o ID do produto criado na Zenofy"
-              />
-              <p className="text-xs text-muted-foreground">
-                Obrigatório para receber pagamentos pela Zenofy. Na Zenofy, configure o URL de notificação:
-                <br />
-                <code className="text-[11px] break-all">
-                  {import.meta.env.VITE_SUPABASE_URL}/functions/v1/zenofy-webhook
-                </code>
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Meta Pixel agora é configurado em /integracoes/meta selecionando o produto */}
