@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json()
     const {
-      amount, product_id, user_id, name, email, phone, whatsapp,
+      amount, product_id, user_id, name, email, phone, whatsapp, bump_product_id, bump_valor,
       utm_source, utm_medium, utm_campaign, utm_content, return_url,
     } = body
 
@@ -145,6 +145,8 @@ Deno.serve(async (req) => {
       payment_method: 'zenofy',
       payment_phone: localPhone,
       gateway: 'zenofy',
+      bump_product_id: bump_product_id || null,
+      bump_valor: bump_valor != null ? Number(bump_valor) : null,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,

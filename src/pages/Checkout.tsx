@@ -34,6 +34,8 @@ const Checkout = () => {
   const [refOpen, setRefOpen] = useState(false);
   const [refCountdown, setRefCountdown] = useState(2 * 60 * 60);
   const [verifying, setVerifying] = useState(false);
+  const [bumpProduct, setBumpProduct] = useState<any>(null);
+  const [bumpAccepted, setBumpAccepted] = useState(false);
 
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
@@ -115,6 +117,20 @@ const Checkout = () => {
     supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
       if (data) {
         setProduct(data);
+
+        // Oferta extra (order bump)
+        const bumpId = (data as any).order_bump_product_id;
+        if (bumpId) {
+          supabase
+            .from("products")
+            .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
+            .eq("id", bumpId)
+            .maybeSingle()
+            .then(({ data: bp }) => {
+              if (bp) setBumpProduct(bp);
+            });
+        }
+
 
         // 1) Pixel específico do produto (prioridade)
         const productPixelId = (data as any).meta_pixel_id?.trim();
@@ -291,6 +307,12 @@ const Checkout = () => {
 
 
 
+  const bumpPrice = bumpProduct
+    ? Number(product?.order_bump_price ?? bumpProduct.preco)
+    : 0;
+  const basePrice = Number(product?.preco || 0);
+  const totalPrice = basePrice + (bumpAccepted && bumpProduct ? bumpPrice : 0);
+
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
@@ -349,13 +371,13 @@ const Checkout = () => {
     trackEvent('InitiateCheckout', {
       content_name: product.nome,
       content_ids: [product.id],
-      value: Number(product.preco),
+      value: totalPrice,
       currency: productCurrency,
     });
     pushDataLayer('begin_checkout', {
       item_name: product.nome,
       item_id: product.id,
-      price: Number(product.preco),
+      price: totalPrice,
       currency: productCurrency,
       payment_method: method,
     });
@@ -364,13 +386,13 @@ const Checkout = () => {
       trackEvent('Purchase', {
         content_name: product.nome,
         content_ids: [product.id],
-        value: Number(product.preco),
+        value: totalPrice,
         currency: productCurrency,
       });
       pushDataLayer('purchase', {
         item_name: product.nome,
         item_id: product.id,
-        price: Number(product.preco),
+        price: totalPrice,
         currency: productCurrency,
         transaction_id: product.id,
       });
@@ -407,8 +429,10 @@ const Checkout = () => {
             email,
             phone: payPhone || whatsapp || undefined,
             whatsapp: whatsapp || undefined,
-            amount: Number(product.preco),
+            amount: totalPrice,
             product_id: product.id,
+            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
+            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
             user_id: product.user_id,
             return_url: `${window.location.origin}${window.location.pathname}`,
             ...utms,
@@ -442,8 +466,10 @@ const Checkout = () => {
             name,
             email,
             whatsapp: whatsapp || undefined,
-            amount: Number(product.preco),
+            amount: totalPrice,
             product_id: product.id,
+            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
+            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
             user_id: product.user_id,
             ...utms,
           },
@@ -475,8 +501,10 @@ const Checkout = () => {
             name,
             email,
             whatsapp: whatsapp || undefined,
-            amount: product.preco,
+            amount: totalPrice,
             reference: "moonpay",
+            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
+            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
             product_id: product.id,
             user_id: product.user_id,
             ...utms,
@@ -585,6 +613,23 @@ const Checkout = () => {
               <p className="text-sm text-muted-foreground">
                 Seu acesso foi liberado. Verifique seu email para instruções.
               </p>
+            </div>
+          )}
+
+          {bumpAccepted && bumpProduct && (
+            <div className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
+              <p className="text-sm font-semibold mb-2">Oferta extra: {bumpProduct.nome}</p>
+              {bumpProduct.delivery_type === "link" && bumpProduct.external_url ? (
+                <Button asChild variant="outline" size="sm" className="gap-2">
+                  <a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" /> Acessar conteúdo extra
+                  </a>
+                </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Enviámos o acesso para o seu email.
+                </p>
+              )}
             </div>
           )}
             </>
@@ -765,9 +810,72 @@ const Checkout = () => {
                 </motion.div>
               )}
 
-              <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
-                <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
-                <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
+              {bumpProduct && (
+                <motion.button
+                  type="button"
+                  onClick={() => setBumpAccepted((v) => !v)}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`w-full text-left rounded-xl border-2 border-dashed p-3 transition-all ${
+                    bumpAccepted
+                      ? "border-primary bg-primary/5"
+                      : "border-primary/40 bg-primary/[0.03] hover:border-primary/70"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${
+                        bumpAccepted ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {bumpAccepted && <CheckCircle className="h-3.5 w-3.5" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold leading-snug">
+                        {product.order_bump_title || `Sim! Quero adicionar ${bumpProduct.nome}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {product.order_bump_description || bumpProduct.descricao || "Adicione este extra à sua compra."}
+                      </p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="text-sm font-bold text-primary">
+                          + {formatCurrency(bumpPrice, productCurrency)}
+                        </span>
+                        {bumpPrice < Number(bumpProduct.preco) && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatCurrency(Number(bumpProduct.preco), productCurrency)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {bumpProduct.image_url && (
+                      <img
+                        src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
+                        alt={bumpProduct.nome}
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                      />
+                    )}
+                  </div>
+                </motion.button>
+              )}
+
+              <div className="border-t border-border/50 mt-2 pt-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground truncate">{product.nome}</span>
+                  <span className="text-sm font-bold">{formatCurrency(basePrice, productCurrency)}</span>
+                </div>
+                {bumpAccepted && bumpProduct && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground truncate">{bumpProduct.nome}</span>
+                    <span className="text-sm font-bold">{formatCurrency(bumpPrice, productCurrency)}</span>
+                  </div>
+                )}
+                {bumpAccepted && bumpProduct && (
+                  <div className="flex items-center justify-between border-t border-border/50 pt-1.5">
+                    <span className="text-sm font-bold">Total</span>
+                    <span className="text-base font-bold text-primary">{formatCurrency(totalPrice, productCurrency)}</span>
+                  </div>
+                )}
               </div>
 
               {method && (

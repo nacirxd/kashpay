@@ -3,6 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { deliverOrderBump } from '../_shared/orderBump.ts'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, amount, reference, product_id, user_id, name, email, whatsapp, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
+    const { method, phone, amount, reference, product_id, user_id, name, email, whatsapp, bump_product_id, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
     if (!method || !phone || !amount || !product_id || !user_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -190,6 +191,8 @@ Deno.serve(async (req) => {
       buyer_whatsapp: whatsapp || null,
       payment_method: method || null,
       payment_phone: phone || null,
+      bump_product_id: bump_product_id || null,
+      bump_valor: bump_valor != null ? Number(bump_valor) : null,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
@@ -282,6 +285,18 @@ Deno.serve(async (req) => {
           .select('nome, email, telefone, mpesa_telefone')
           .eq('user_id', user_id)
           .maybeSingle()
+
+        // Entrega da oferta extra (order bump)
+        if (status === 'approved' && bump_product_id) {
+          await deliverOrderBump(supabase, {
+            id: saleData?.id,
+            buyer_email: email,
+            buyer_name: name,
+            payment_method: method,
+            bump_product_id,
+            bump_valor: bump_valor != null ? Number(bump_valor) : null,
+          }, method)
+        }
 
         // Send purchase confirmation email
         if (status === 'approved' && email) {

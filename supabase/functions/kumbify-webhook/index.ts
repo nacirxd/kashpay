@@ -4,6 +4,7 @@ const corsHeaders = {
 }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { deliverOrderBump } from '../_shared/orderBump.ts'
 
 /**
  * Webhook chamado pela Kumbify quando o status do pagamento muda.
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
     // Localiza a venda por external_transaction_id
     const { data: sale } = await supabase
       .from('sales')
-      .select('id, status, user_id, valor, product_id, buyer_email, buyer_name, payment_method')
+      .select('id, status, user_id, valor, product_id, buyer_email, buyer_name, payment_method, bump_product_id, bump_valor')
       .eq('external_transaction_id', externalId)
       .maybeSingle()
 
@@ -71,6 +72,7 @@ Deno.serve(async (req) => {
 
     // Se aprovou, dispara emails de confirmação (compra + notificação ao vendedor)
     if (newStatus === 'approved') {
+      await deliverOrderBump(supabase, sale, sale.payment_method)
       try {
         const { data: productData } = await supabase
           .from('products')
