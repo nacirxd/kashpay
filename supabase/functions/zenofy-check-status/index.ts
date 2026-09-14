@@ -5,6 +5,7 @@ const corsHeaders = {
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendUtmifyOrder } from '../_shared/utmify.ts'
+import { deliverOrderBump } from '../_shared/orderBump.ts'
 
 const ZENOFY_BASE = 'https://api.zenofy.io'
 const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
@@ -118,6 +119,8 @@ async function approveSale(supabase: Supa, sale: any) {
   } catch (e) {
     console.error('[zenofy-status] erro emails:', e)
   }
+
+  await deliverOrderBump(supabase, sale, 'zenofy')
 
   // Aviso ao sistema de SMS
   try {

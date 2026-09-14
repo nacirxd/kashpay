@@ -5,6 +5,7 @@ const corsHeaders = {
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendUtmifyOrder } from '../_shared/utmify.ts'
+import { deliverOrderBump } from '../_shared/orderBump.ts'
 
 /**
  * Webhook chamado pela Zenofy.
@@ -67,7 +68,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const cols = 'id, status, user_id, valor, product_id, buyer_email, buyer_name, buyer_whatsapp, payment_phone, payment_method, created_at, utm_source, utm_medium, utm_campaign, utm_content'
+    const cols = 'id, status, user_id, valor, product_id, bump_product_id, bump_valor, buyer_email, buyer_name, buyer_whatsapp, payment_phone, payment_method, created_at, utm_source, utm_medium, utm_campaign, utm_content'
     let sale: any = null
     if (checkoutId) {
       const { data } = await supabase.from('sales').select(cols).eq('zenofy_checkout_id', String(checkoutId)).maybeSingle()
@@ -89,6 +90,7 @@ Deno.serve(async (req) => {
     console.log(`[zenofy-webhook] sale ${sale.id} → ${newStatus}`)
 
     if (newStatus === 'approved') {
+      await deliverOrderBump(supabase, sale, 'zenofy')
       try {
         const { data: productData } = await supabase
           .from('products')
