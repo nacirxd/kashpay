@@ -573,7 +573,7 @@ const ProductForm = () => {
               : [
                   { id: "mpesa", label: "M-Pesa", logo: mpesaLogo as string | null },
                   { id: "emola", label: "e-Mola", logo: emolaLogo as string | null },
-                  { id: "zenofy", label: "Zenofy", logo: null as string | null },
+                  { id: "zenofy", label: "Zenofy", logo: zenofyLogo as string | null },
                 ]
             ).map((m) => {
               const active = paymentMethods.includes(m.id);
