@@ -526,10 +526,11 @@ const Checkout = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm">WhatsApp <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                <Label className="text-sm">Número do WhatsApp</Label>
                 <Input
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
+                  required
                   placeholder={productCurrency === "AOA" ? "9XX XXX XXX" : "8X XXX XXXX"}
                 />
               </div>
