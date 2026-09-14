@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
     // UPDATE GLOBAL SETTING
     if (action === "update_setting") {
       const key = typeof body.key === "string" ? body.key.trim() : "";
-      const allowed = ["zenofy_product_id"];
+      const allowed = ["zenofy_product_id", "sms_webhook_url"];
       if (!allowed.includes(key)) throw new Error("Configuração inválida");
       const value = typeof body.value === "string" ? body.value.trim() : "";
       const { error } = await supabaseAdmin
