@@ -274,7 +274,7 @@ const IntegrationDetail = () => {
       <h1 className="text-lg font-semibold mb-6">{titles[tipo || ""] || "Integração"}</h1>
 
       <div className="max-w-lg space-y-6">
-        {tipo !== "meta" && (
+        {!perProduct && (
           <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
             <div>
               <p className="text-sm font-medium">Ativo</p>
