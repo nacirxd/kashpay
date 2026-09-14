@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
-import { Webhook, MessageSquare, Zap, BarChart3, Target, Tag } from "lucide-react";
+import zenofyLogo from "@/assets/zenofy.svg";
+import { Webhook, MessageSquare, BarChart3, Target, Tag } from "lucide-react";
 
 interface IntegrationItem {
   name: string;
