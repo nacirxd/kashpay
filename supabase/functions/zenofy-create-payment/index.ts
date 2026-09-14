@@ -34,6 +34,17 @@ function pickUrl(obj: any): string | null {
   return null
 }
 
+function forcePortuguese(url: string | null): string | null {
+  if (!url) return null
+  try {
+    const checkoutUrl = new URL(url)
+    checkoutUrl.searchParams.set('lang', 'pt')
+    return checkoutUrl.toString()
+  } catch {
+    return url
+  }
+}
+
 function pickId(obj: any): string | null {
   const candidates = [
     obj?.checkout_id, obj?.checkoutId, obj?.orderId, obj?.order_id,
@@ -211,7 +222,7 @@ Deno.serve(async (req) => {
     }
 
     const checkoutId = pickId(data)
-    const checkoutUrl = pickUrl(data)
+    const checkoutUrl = forcePortuguese(pickUrl(data))
 
     await supabase.from('sales').update({
       zenofy_checkout_id: checkoutId,
