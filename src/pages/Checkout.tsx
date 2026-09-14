@@ -307,6 +307,12 @@ const Checkout = () => {
 
 
 
+  const bumpPrice = bumpProduct
+    ? Number(product?.order_bump_price ?? bumpProduct.preco)
+    : 0;
+  const basePrice = Number(product?.preco || 0);
+  const totalPrice = basePrice + (bumpAccepted && bumpProduct ? bumpPrice : 0);
+
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
