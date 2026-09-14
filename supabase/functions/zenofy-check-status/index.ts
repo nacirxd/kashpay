@@ -145,6 +145,9 @@ async function approveSale(supabase: Supa, sale: any) {
     console.error('[zenofy-status] erro SMS:', e)
   }
 
+  // UTMify
+  await sendUtmifyOrder(supabase, sale, product as any, 'zenofy')
+
   // Webhook do produto
   try {
     const productWebhook = (product as any)?.webhook_url?.toString().trim()
