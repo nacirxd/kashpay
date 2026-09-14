@@ -453,15 +453,18 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Webhook
-        if (webhookResult.data?.config && (webhookResult.data.config as any).url) {
+        // Webhook — por produto (fallback: integração global antiga)
+        const productWebhookUrl = (productData as any)?.webhook_url?.toString().trim()
+        const legacyWebhookUrl = (webhookResult.data?.config as any)?.url
+        const webhookUrl = productWebhookUrl || legacyWebhookUrl
+        if (webhookUrl) {
           const ctrl = new AbortController()
           const t = setTimeout(() => ctrl.abort(), 8000)
-          await fetch((webhookResult.data.config as any).url, {
+          await fetch(webhookUrl, {
             method: 'POST',
             signal: ctrl.signal,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event: 'sale.created', sale: saleData, payment_method: method, status }),
+            body: JSON.stringify({ event: 'sale.created', sale: saleData, product_id, payment_method: method, status }),
           }).catch((err) => console.error('Erro Webhook:', err))
           clearTimeout(t)
         }
