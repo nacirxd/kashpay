@@ -258,6 +258,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // GET GLOBAL SETTINGS
+    if (action === "get_settings") {
+      const { data } = await supabaseAdmin.from("app_settings").select("key, value");
+      const map = Object.fromEntries((data || []).map((r: any) => [r.key, r.value]));
+      return new Response(JSON.stringify(map), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // UPDATE GLOBAL SETTING
+    if (action === "update_setting") {
+      const key = typeof body.key === "string" ? body.key.trim() : "";
+      const allowed = ["zenofy_product_id"];
+      if (!allowed.includes(key)) throw new Error("Configuração inválida");
+      const value = typeof body.value === "string" ? body.value.trim() : "";
+      const { error } = await supabaseAdmin
+        .from("app_settings")
+        .upsert({ key, value: value || null, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // LIST WITHDRAWALS
     if (action === "list_withdrawals") {
       const { data: withdrawals } = await supabaseAdmin.from("withdrawals").select("*").order("created_at", { ascending: false });

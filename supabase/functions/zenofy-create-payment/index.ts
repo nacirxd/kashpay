@@ -74,10 +74,18 @@ Deno.serve(async (req) => {
       .eq('id', product_id)
       .maybeSingle()
 
-    const zenofyProductId = (productData as any)?.zenofy_product_id?.toString().trim()
+    // ID global definido pelo admin tem prioridade; fallback: ID do próprio produto
+    const { data: settingRow } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'zenofy_product_id')
+      .maybeSingle()
+
+    const globalZenofyId = (settingRow as any)?.value?.toString().trim()
+    const zenofyProductId = globalZenofyId || (productData as any)?.zenofy_product_id?.toString().trim()
     if (!zenofyProductId) {
       return new Response(JSON.stringify({
-        error: 'Este produto não tem o ID do produto Zenofy configurado. Adicione-o na edição do produto.',
+        error: 'Pagamento pela Zenofy indisponível neste momento. Contacte o suporte.',
       }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
