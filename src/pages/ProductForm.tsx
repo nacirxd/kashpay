@@ -123,6 +123,7 @@ const ProductForm = () => {
             setFileUrl((data as any).file_url || "");
             const prodCurrency = ((data as any).currency as "MZN" | "AOA") || "MZN";
             setCurrency(prodCurrency);
+            setZenofyProductId((data as any).zenofy_product_id || "");
             const pm = (data as any).payment_methods;
             if (Array.isArray(pm) && pm.length > 0) setPaymentMethods(pm);
             if ((data as any).image_url) {
