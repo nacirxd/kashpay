@@ -118,6 +118,20 @@ const Checkout = () => {
       if (data) {
         setProduct(data);
 
+        // Oferta extra (order bump)
+        const bumpId = (data as any).order_bump_product_id;
+        if (bumpId) {
+          supabase
+            .from("products")
+            .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
+            .eq("id", bumpId)
+            .maybeSingle()
+            .then(({ data: bp }) => {
+              if (bp) setBumpProduct(bp);
+            });
+        }
+
+
         // 1) Pixel específico do produto (prioridade)
         const productPixelId = (data as any).meta_pixel_id?.trim();
         if (productPixelId) {
