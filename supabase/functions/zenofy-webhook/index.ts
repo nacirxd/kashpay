@@ -146,6 +146,14 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error('[zenofy-webhook] erro emails:', e)
       }
+
+      try {
+        const { data: prod } = await supabase
+          .from('products').select('nome, currency').eq('id', sale.product_id).maybeSingle()
+        await sendUtmifyOrder(supabase, sale, prod as any, 'zenofy')
+      } catch (e) {
+        console.error('[zenofy-webhook] erro utmify:', e)
+      }
     }
 
     return json({ ok: true, status: newStatus })
