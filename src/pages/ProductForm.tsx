@@ -17,6 +17,7 @@ import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
+import zenofyLogo from "@/assets/zenofy.svg";
 
 const CATEGORIAS = [
   "Cursos e Educação",
