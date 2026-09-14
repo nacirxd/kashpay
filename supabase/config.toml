@@ -21,3 +21,8 @@ project_id = "eabvrprjqmpdcxkhwvbf"
     verify_jwt = false
   [functions.kumbify-webhook]
     verify_jwt = false
+  [functions.zenofy-create-payment]
+    verify_jwt = false
+  [functions.zenofy-webhook]
+    verify_jwt = false
+
