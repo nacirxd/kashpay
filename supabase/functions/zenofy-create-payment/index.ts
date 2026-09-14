@@ -154,6 +154,9 @@ Deno.serve(async (req) => {
 
     const payload: Record<string, unknown> = {
       productId: zenofyProductId,
+      locale: 'pt',
+      language: 'pt',
+      lang: 'pt',
       amount: Math.round(amountNumber * 100), // unidades menores
       currency: (productData as any)?.currency || 'MZN',
       reference: saleData.id,
