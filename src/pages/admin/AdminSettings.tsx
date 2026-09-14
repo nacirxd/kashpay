@@ -13,12 +13,15 @@ const AdminSettings = () => {
   const [zenofyId, setZenofyId] = useState("");
   const [zenofyLoading, setZenofyLoading] = useState(true);
   const [zenofySaving, setZenofySaving] = useState(false);
+  const [smsUrl, setSmsUrl] = useState("");
+  const [smsSaving, setSmsSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const data = await adminFetch("get_settings");
         setZenofyId(data?.zenofy_product_id || "");
+        setSmsUrl(data?.sms_webhook_url || "");
       } catch (e: any) {
         toast.error(e.message);
       }
@@ -36,6 +39,22 @@ const AdminSettings = () => {
       toast.error(e.message);
     }
     setZenofySaving(false);
+  };
+
+  const saveSmsUrl = async () => {
+    const value = smsUrl.trim();
+    if (value && !/^https?:\/\//.test(value)) {
+      toast.error("O endereço deve começar por http:// ou https://");
+      return;
+    }
+    setSmsSaving(true);
+    try {
+      await adminFetch("update_setting", { key: "sms_webhook_url", value });
+      toast.success("Endereço do sistema de SMS salvo");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setSmsSaving(false);
   };
 
   const handleGet2FA = async () => {
