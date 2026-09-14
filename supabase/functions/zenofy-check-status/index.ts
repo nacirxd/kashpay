@@ -215,9 +215,17 @@ Deno.serve(async (req) => {
       } else if (remote === 'failed' && sale.status === 'pending') {
         await supabase.from('sales').update({ status: 'failed' }).eq('id', sale.id)
         results.push({ sale_id: sale.id, status: 'failed' })
+      } else if (
+        remote === 'pending' && sale.status === 'pending' &&
+        Date.now() - new Date(sale.created_at).getTime() > 3 * 60 * 60 * 1000
+      ) {
+        // Passadas 3 horas sem pagamento, a venda é considerada falhada
+        await supabase.from('sales').update({ status: 'failed' }).eq('id', sale.id)
+        results.push({ sale_id: sale.id, status: 'failed' })
       } else {
         results.push({ sale_id: sale.id, status: sale.status })
       }
+
     }
 
     if (saleId) {
