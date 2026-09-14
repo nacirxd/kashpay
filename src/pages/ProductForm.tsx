@@ -76,6 +76,11 @@ const ProductForm = () => {
   const [externalUrl, setExternalUrl] = useState("");
   const [upsellUrl, setUpsellUrl] = useState("");
   const [downsellUrl, setDownsellUrl] = useState("");
+  const [bumpProductId, setBumpProductId] = useState<string>("none");
+  const [bumpPrice, setBumpPrice] = useState("");
+  const [bumpTitle, setBumpTitle] = useState("");
+  const [bumpDescription, setBumpDescription] = useState("");
+  const [myProducts, setMyProducts] = useState<any[]>([]);
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
