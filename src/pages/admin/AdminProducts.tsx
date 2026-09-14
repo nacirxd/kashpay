@@ -62,6 +62,8 @@ const AdminProducts = () => {
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [zenofyDraft, setZenofyDraft] = useState("");
+  const [zenofySaving, setZenofySaving] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -106,6 +108,20 @@ const AdminProducts = () => {
     }
     setActionLoading(false);
     setConfirm(null);
+  };
+
+  const handleSaveZenofyId = async () => {
+    if (!viewProduct) return;
+    setZenofySaving(true);
+    try {
+      await adminFetch("update_product_zenofy_id", { product_id: viewProduct.id, zenofy_product_id: zenofyDraft });
+      toast.success("ID Zenofy atualizado");
+      setViewProduct({ ...viewProduct, zenofy_product_id: zenofyDraft || null });
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setZenofySaving(false);
   };
 
   return (
