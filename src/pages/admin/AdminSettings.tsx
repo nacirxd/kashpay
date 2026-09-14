@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdmin } from "@/contexts/AdminContext";
 import { toast } from "sonner";
@@ -10,6 +10,33 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(false);
   const [setup, setSetup] = useState<{ manual_key: string; uri: string } | null>(null);
   const [showSecret, setShowSecret] = useState(false);
+  const [zenofyId, setZenofyId] = useState("");
+  const [zenofyLoading, setZenofyLoading] = useState(true);
+  const [zenofySaving, setZenofySaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await adminFetch("get_settings");
+        setZenofyId(data?.zenofy_product_id || "");
+      } catch (e: any) {
+        toast.error(e.message);
+      }
+      setZenofyLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const saveZenofyId = async () => {
+    setZenofySaving(true);
+    try {
+      await adminFetch("update_setting", { key: "zenofy_product_id", value: zenofyId });
+      toast.success("ID Zenofy global salvo");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setZenofySaving(false);
+  };
 
   const handleGet2FA = async () => {
     setLoading(true);
