@@ -122,6 +122,58 @@ const Checkout = () => {
     });
   }, [id]);
 
+  // Ao voltar da Zenofy: confirma o pagamento diretamente na Zenofy
+  useEffect(() => {
+    if (!product || done) return;
+    const params = new URLSearchParams(window.location.search);
+    let saleId = params.get("zsale");
+    if (!saleId) {
+      try { saleId = localStorage.getItem(`zenofy_sale_${product.id}`); } catch { saleId = null; }
+    }
+    if (!saleId) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const check = async () => {
+      attempts++;
+      try {
+        const { data } = await supabase.functions.invoke("zenofy-check-status", {
+          body: { sale_id: saleId },
+        });
+        if (cancelled) return;
+        if (data?.status === "approved") {
+          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          trackEvent('Purchase', {
+            content_name: product.nome,
+            content_ids: [product.id],
+            value: Number(product.preco),
+            currency: productCurrency,
+          });
+          pushDataLayer('purchase', {
+            item_name: product.nome,
+            item_id: product.id,
+            price: Number(product.preco),
+            currency: productCurrency,
+            transaction_id: product.id,
+          });
+          setDone(true);
+          toast.success("Pagamento confirmado!");
+          return;
+        }
+        if (data?.status === "failed") {
+          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          return;
+        }
+      } catch { /* tenta de novo */ }
+      if (!cancelled && attempts < 40) setTimeout(check, 5000);
+    };
+    check();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product, done]);
+
+
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
