@@ -600,7 +600,7 @@ const Checkout = () => {
                     }`}
                     aria-label="Selecionar Zenofy"
                   >
-                    <Zap className="h-6 w-6" />
+                    <img src={zenofyLogo} alt="Zenofy" className="h-6 w-auto object-contain" />
                     <span className="text-sm font-semibold">Zenofy</span>
                   </button>}
                 </div>
