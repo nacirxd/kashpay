@@ -271,9 +271,13 @@ const AdminUsers = () => {
             <div className="space-y-3 text-sm">
               <InfoRow label="Status" value={
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  viewUser.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                  viewUser.status === "active"
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : viewUser.status === "pending"
+                    ? "bg-amber-500/10 text-amber-400"
+                    : "bg-red-500/10 text-red-400"
                 }`}>
-                  {viewUser.status === "active" ? "Ativo" : "Banido"}
+                  {viewUser.status === "active" ? "Ativo" : viewUser.status === "pending" ? "Aguardando aprovação" : "Banido"}
                 </span>
               } />
               <InfoRow label="Telefone" value={viewUser.telefone || "—"} />
