@@ -41,7 +41,7 @@ const Register = () => {
       if (now - createdAt > 5000) {
         toast.error("Este email já está em uso. Tente fazer login.");
       } else {
-        toast.success("Conta criada! Verifique seu email para confirmar.");
+        toast.success("Conta criada! Verifique seu email e aguarde a aprovação do administrador.");
         navigate("/login");
       }
     }

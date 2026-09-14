@@ -25,12 +25,18 @@ const Login = () => {
       toast.error(error.message);
       return;
     }
-    // Check if user is banned
-    const { data: profile } = await supabase.from("profiles").select("status").eq("user_id", data.user.id).single();
+    // Check account status
+    const { data: profile } = await supabase.from("profiles").select("status").eq("user_id", data.user.id).maybeSingle();
     if (profile?.status === "banned") {
       await supabase.auth.signOut();
       setLoading(false);
       toast.error("Sua conta foi suspensa. Entre em contato com o suporte.");
+      return;
+    }
+    if (profile?.status !== "active") {
+      setLoading(false);
+      toast.info("Sua conta está aguardando aprovação do administrador.");
+      navigate("/dashboard");
       return;
     }
     setLoading(false);
