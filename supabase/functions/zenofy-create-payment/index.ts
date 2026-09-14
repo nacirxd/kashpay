@@ -76,13 +76,15 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     // ID global definido pelo admin tem prioridade; fallback: ID do próprio produto
-    const { data: settingRow } = await supabase
+    const { data: settingRows } = await supabase
       .from('app_settings')
-      .select('value')
-      .eq('key', 'zenofy_product_id')
-      .maybeSingle()
+      .select('key, value')
+      .in('key', ['zenofy_product_id', 'mpesa_enabled', 'emola_enabled'])
 
-    const globalZenofyId = (settingRow as any)?.value?.toString().trim()
+    const settings = Object.fromEntries(
+      (settingRows || []).map((row: { key: string; value: string | null }) => [row.key, row.value]),
+    )
+    const globalZenofyId = settings.zenofy_product_id?.toString().trim()
     const zenofyProductId = globalZenofyId || (productData as any)?.zenofy_product_id?.toString().trim()
     if (!zenofyProductId) {
       return new Response(JSON.stringify({
@@ -94,6 +96,18 @@ Deno.serve(async (req) => {
 
     const amountNumber = Number(amount)
     const localPhone = normalizePhoneMZ9(phone || whatsapp || '')
+    const zenofyPaymentMethods = [
+      ...(settings.mpesa_enabled === 'false' ? [] : ['mpesa']),
+      ...(settings.emola_enabled === 'false' ? [] : ['emola']),
+    ]
+
+    if (zenofyPaymentMethods.length === 0) {
+      return new Response(JSON.stringify({
+        error: 'Os métodos de pagamento estão temporariamente indisponíveis.',
+      }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const { data: saleData, error: saleErr } = await supabase.from('sales').insert({
       product_id,
@@ -129,6 +143,7 @@ Deno.serve(async (req) => {
       amount: Math.round(amountNumber * 100), // unidades menores
       currency: (productData as any)?.currency || 'MZN',
       reference: saleData.id,
+      payment_methods: zenofyPaymentMethods,
       metadata: { sale_id: saleData.id, product_id, user_id },
       customer: { name, email, phone: localPhone || undefined },
       name,
