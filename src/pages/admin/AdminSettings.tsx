@@ -60,6 +60,32 @@ const AdminSettings = () => {
     <AdminLayout>
       <h1 className="text-2xl font-bold mb-6">Configurações</h1>
 
+      <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg mb-6">
+        <h2 className="font-semibold text-gray-100 mb-1">ID do produto na Zenofy (global)</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Todos os checkouts com Zenofy usam este ID. Os clientes não veem nem configuram este campo.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            value={zenofyId}
+            onChange={(e) => setZenofyId(e.target.value)}
+            placeholder={zenofyLoading ? "Carregando..." : "Cole aqui o ID do produto na Zenofy"}
+            disabled={zenofyLoading}
+            className="flex-1 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-100 font-mono outline-none focus:border-emerald-600"
+          />
+          <button
+            onClick={saveZenofyId}
+            disabled={zenofySaving || zenofyLoading}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+          >
+            {zenofySaving ? "..." : "Salvar"}
+          </button>
+        </div>
+        <p className="text-xs text-gray-600 mt-3 break-all font-mono">
+          Webhook Zenofy: https://eabvrprjqmpdcxkhwvbf.supabase.co/functions/v1/zenofy-webhook
+        </p>
+      </div>
+
       <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
