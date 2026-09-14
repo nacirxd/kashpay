@@ -3,6 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { deliverOrderBump } from '../_shared/orderBump.ts'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
@@ -284,6 +285,18 @@ Deno.serve(async (req) => {
           .select('nome, email, telefone, mpesa_telefone')
           .eq('user_id', user_id)
           .maybeSingle()
+
+        // Entrega da oferta extra (order bump)
+        if (status === 'approved' && bump_product_id) {
+          await deliverOrderBump(supabase, {
+            id: saleData?.id,
+            buyer_email: email,
+            buyer_name: name,
+            payment_method: method,
+            bump_product_id,
+            bump_valor: bump_valor != null ? Number(bump_valor) : null,
+          }, method)
+        }
 
         // Send purchase confirmation email
         if (status === 'approved' && email) {
