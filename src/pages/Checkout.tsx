@@ -652,7 +652,7 @@ const Checkout = () => {
                   {paying ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   ) : (
-                    method === "ref" ? "Gerar referência" : method === "zenofy" ? "Pagar com Zenofy" : "Comprar agora"
+                    method === "ref" ? "Gerar referência" : method === "zenofy" ? "Continuar" : "Comprar agora"
                   )}
                 </Button>
               )}
