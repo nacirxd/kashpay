@@ -155,7 +155,11 @@ const AdminWithdrawals = () => {
                       <div className="text-sm font-medium">{w.user_name}</div>
                       <div className="text-xs text-gray-500">{w.user_email}</div>
                     </TableCell>
-                    <TableCell className="font-medium">{formatMZN(w.valor)}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatMZN(w.valor)}
+                      <div className="text-[11px] font-normal text-emerald-400">Pagar: {formatMZN(w.valor * 0.85)}</div>
+                      <div className="text-[11px] font-normal text-gray-500">Taxa 15%: {formatMZN(w.valor * 0.15)}</div>
+                    </TableCell>
                     <TableCell className="text-gray-400 uppercase">{w.metodo}</TableCell>
                     <TableCell className="text-gray-400">{w.conta}</TableCell>
                     <TableCell className="text-gray-400 text-xs">{formatDateTimeMZ(w.created_at)}</TableCell>

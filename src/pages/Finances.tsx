@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+const WITHDRAW_FEE_RATE = 0.15;
+
 const Finances = () => {
   const { user } = useAuth();
   const [sales, setSales] = useState<any[]>([]);
@@ -360,6 +362,24 @@ const Finances = () => {
                       <div className="space-y-2">
                         <Label htmlFor="valor">Valor (MT)</Label>
                         <Input id="valor" type="number" min="1" step="0.01" placeholder="Ex: 5000" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                        {(() => {
+                          const gross = parseFloat(valor);
+                          if (isNaN(gross) || gross <= 0) return null;
+                          const fee = gross * WITHDRAW_FEE_RATE;
+                          const net = gross - fee;
+                          return (
+                            <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs space-y-1">
+                              <div className="flex justify-between text-muted-foreground">
+                                <span>Taxa de saque (15%)</span>
+                                <span>-{formatMZN(fee)}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold text-foreground">
+                                <span>Você recebe</span>
+                                <span>{formatMZN(net)}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="metodo">Método</Label>
@@ -402,7 +422,10 @@ const Finances = () => {
                         <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">Nenhum saque solicitado.</td></tr>
                       ) : withdrawals.map((w) => (
                         <tr key={w.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-6 py-3 font-medium">{formatMZN(Number(w.valor))}</td>
+                          <td className="px-6 py-3 font-medium">
+                            {formatMZN(Number(w.valor))}
+                            <div className="text-[11px] font-normal text-muted-foreground">Recebe: {formatMZN(Number(w.valor) * (1 - WITHDRAW_FEE_RATE))}</div>
+                          </td>
                           <td className="px-6 py-3 capitalize">{w.metodo === "mpesa" ? "M-Pesa" : w.metodo === "emola" ? "e-Mola" : "Banco"}</td>
                           <td className="px-6 py-3 text-muted-foreground">{w.conta}</td>
                           <td className={`px-6 py-3 font-medium ${withdrawStatusColors[w.status] || ""}`}>{withdrawStatusLabels[w.status] || w.status}</td>
