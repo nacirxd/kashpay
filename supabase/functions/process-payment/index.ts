@@ -69,6 +69,29 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
   return false
 }
 
+// Sistema de SMS externo (recebe aviso de venda aprovada e envia o SMS)
+const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
+
+async function notifySmsWebhook(url: string, payload: Record<string, unknown>) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 10000)
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    console.log('SMS webhook response:', resp.status, await resp.text())
+    return resp.ok
+  } catch (err) {
+    console.error('Erro no SMS webhook:', err)
+    return false
+  } finally {
+    clearTimeout(t)
+  }
+}
+
 async function convertMznToBrlCents(amountMzn: number) {
   const fxController = new AbortController()
   const fxTimeout = setTimeout(() => fxController.abort(), 8000)
