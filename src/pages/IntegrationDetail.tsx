@@ -57,18 +57,21 @@ const IntegrationDetail = () => {
   const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([]);
 
-  // Meta Pixel per-product state
+  // Per-product state (Meta Pixel + Webhook)
   const [products, setProducts] = useState<ProductPixelRow[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [productPixelId, setProductPixelId] = useState("");
   const [productAccessToken, setProductAccessToken] = useState("");
+  const [productWebhookUrl, setProductWebhookUrl] = useState("");
   const [savingPixel, setSavingPixel] = useState(false);
+  const [savingWebhook, setSavingWebhook] = useState(false);
+  const perProduct = tipo === "meta" || tipo === "webhook";
 
   const loadProductsForPixel = () => {
     if (!user) return;
     supabase
       .from("products")
-      .select("id, nome, image_url, meta_pixel_id, meta_access_token")
+      .select("id, nome, image_url, meta_pixel_id, meta_access_token, webhook_url")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
@@ -78,7 +81,7 @@ const IntegrationDetail = () => {
 
   useEffect(() => {
     if (!user || !dbTipo) return;
-    if (tipo !== "meta") {
+    if (!perProduct) {
       supabase.from("integrations").select("*").eq("user_id", user.id).eq("tipo", dbTipo).maybeSingle().then(({ data }) => {
         if (data) {
           setExistingId(data.id);
@@ -88,7 +91,7 @@ const IntegrationDetail = () => {
       });
     }
 
-    if (tipo === "meta") {
+    if (perProduct) {
       loadProductsForPixel();
     }
 
@@ -103,17 +106,19 @@ const IntegrationDetail = () => {
         setSmsLogs((data as SmsLog[]) || []);
       });
     }
-  }, [user, dbTipo, tipo]);
+  }, [user, dbTipo, tipo, perProduct]);
 
   useEffect(() => {
     if (!selectedProductId) {
       setProductPixelId("");
       setProductAccessToken("");
+      setProductWebhookUrl("");
       return;
     }
     const p = products.find((x) => x.id === selectedProductId);
     setProductPixelId(p?.meta_pixel_id || "");
     setProductAccessToken(p?.meta_access_token || "");
+    setProductWebhookUrl(p?.webhook_url || "");
   }, [selectedProductId, products]);
 
   const handleSavePixel = async () => {
@@ -138,6 +143,32 @@ const IntegrationDetail = () => {
     }
     setSavingPixel(false);
   };
+
+  const handleSaveWebhook = async () => {
+    if (!user || !selectedProductId) {
+      toast.error("Selecione um produto.");
+      return;
+    }
+    const url = productWebhookUrl.trim();
+    if (url && !/^https?:\/\/.+/i.test(url)) {
+      toast.error("Informe uma URL válida iniciando por https://");
+      return;
+    }
+    setSavingWebhook(true);
+    const { error } = await supabase
+      .from("products")
+      .update({ webhook_url: url || null } as any)
+      .eq("id", selectedProductId)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Webhook salvo no produto!");
+      loadProductsForPixel();
+    }
+    setSavingWebhook(false);
+  };
+
 
   const handleSave = async () => {
     if (!user || !dbTipo) return;
