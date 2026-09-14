@@ -371,13 +371,13 @@ const Checkout = () => {
     trackEvent('InitiateCheckout', {
       content_name: product.nome,
       content_ids: [product.id],
-      value: Number(product.preco),
+      value: totalPrice,
       currency: productCurrency,
     });
     pushDataLayer('begin_checkout', {
       item_name: product.nome,
       item_id: product.id,
-      price: Number(product.preco),
+      price: totalPrice,
       currency: productCurrency,
       payment_method: method,
     });
@@ -386,13 +386,13 @@ const Checkout = () => {
       trackEvent('Purchase', {
         content_name: product.nome,
         content_ids: [product.id],
-        value: Number(product.preco),
+        value: totalPrice,
         currency: productCurrency,
       });
       pushDataLayer('purchase', {
         item_name: product.nome,
         item_id: product.id,
-        price: Number(product.preco),
+        price: totalPrice,
         currency: productCurrency,
         transaction_id: product.id,
       });
@@ -429,8 +429,10 @@ const Checkout = () => {
             email,
             phone: payPhone || whatsapp || undefined,
             whatsapp: whatsapp || undefined,
-            amount: Number(product.preco),
+            amount: totalPrice,
             product_id: product.id,
+            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
+            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
             user_id: product.user_id,
             return_url: `${window.location.origin}${window.location.pathname}`,
             ...utms,
@@ -464,8 +466,10 @@ const Checkout = () => {
             name,
             email,
             whatsapp: whatsapp || undefined,
-            amount: Number(product.preco),
+            amount: totalPrice,
             product_id: product.id,
+            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
+            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
             user_id: product.user_id,
             ...utms,
           },
@@ -497,8 +501,10 @@ const Checkout = () => {
             name,
             email,
             whatsapp: whatsapp || undefined,
-            amount: product.preco,
+            amount: totalPrice,
             reference: "moonpay",
+            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
+            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
             product_id: product.id,
             user_id: product.user_id,
             ...utms,
