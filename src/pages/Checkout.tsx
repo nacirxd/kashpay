@@ -615,6 +615,23 @@ const Checkout = () => {
               </p>
             </div>
           )}
+
+          {bumpAccepted && bumpProduct && (
+            <div className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
+              <p className="text-sm font-semibold mb-2">Oferta extra: {bumpProduct.nome}</p>
+              {bumpProduct.delivery_type === "link" && bumpProduct.external_url ? (
+                <Button asChild variant="outline" size="sm" className="gap-2">
+                  <a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" /> Acessar conteúdo extra
+                  </a>
+                </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Enviámos o acesso para o seu email.
+                </p>
+              )}
+            </div>
+          )}
             </>
           )}
         </motion.div>
