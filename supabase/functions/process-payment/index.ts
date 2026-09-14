@@ -129,6 +129,24 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Global on/off switch for mpesa / emola
+    if (method === 'mpesa' || method === 'emola') {
+      try {
+        const flagClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+        const { data: flag } = await flagClient
+          .from('app_settings')
+          .select('value')
+          .eq('key', `${method}_enabled`)
+          .maybeSingle()
+        if (flag && flag.value === 'false') {
+          return new Response(JSON.stringify({ error: `${method === 'mpesa' ? 'M-Pesa' : 'e-Mola'} temporariamente indisponível` }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+      } catch (_e) { /* ignore flag errors */ }
+    }
+
     // Get OAuth token with timeout
     const tokenController = new AbortController()
     const tokenTimeout = setTimeout(() => tokenController.abort(), 15000)

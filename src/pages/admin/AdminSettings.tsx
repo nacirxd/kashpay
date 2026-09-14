@@ -15,6 +15,9 @@ const AdminSettings = () => {
   const [zenofySaving, setZenofySaving] = useState(false);
   const [smsUrl, setSmsUrl] = useState("");
   const [smsSaving, setSmsSaving] = useState(false);
+  const [mpesaOn, setMpesaOn] = useState(true);
+  const [emolaOn, setEmolaOn] = useState(true);
+  const [togglingMethod, setTogglingMethod] = useState<"mpesa" | "emola" | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -22,6 +25,8 @@ const AdminSettings = () => {
         const data = await adminFetch("get_settings");
         setZenofyId(data?.zenofy_product_id || "");
         setSmsUrl(data?.sms_webhook_url || "");
+        setMpesaOn(data?.mpesa_enabled !== "false");
+        setEmolaOn(data?.emola_enabled !== "false");
       } catch (e: any) {
         toast.error(e.message);
       }
@@ -29,6 +34,20 @@ const AdminSettings = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const toggleMethod = async (m: "mpesa" | "emola", next: boolean) => {
+    setTogglingMethod(m);
+    const prev = m === "mpesa" ? mpesaOn : emolaOn;
+    if (m === "mpesa") setMpesaOn(next); else setEmolaOn(next);
+    try {
+      await adminFetch("update_setting", { key: `${m}_enabled`, value: next ? "true" : "false" });
+      toast.success(`${m === "mpesa" ? "M-Pesa" : "e-Mola"} ${next ? "ativado" : "desativado"}`);
+    } catch (e: any) {
+      if (m === "mpesa") setMpesaOn(prev); else setEmolaOn(prev);
+      toast.error(e.message);
+    }
+    setTogglingMethod(null);
+  };
 
   const saveZenofyId = async () => {
     setZenofySaving(true);
@@ -131,7 +150,33 @@ const AdminSettings = () => {
         </p>
       </div>
 
-
+      <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg mb-6">
+        <h2 className="font-semibold text-gray-100 mb-1">Métodos de pagamento (Moçambique)</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Desative para esconder o método em todos os checkouts. Os pagamentos já iniciados não são afetados.
+        </p>
+        <div className="space-y-3">
+          {([
+            { key: "mpesa" as const, label: "M-Pesa", on: mpesaOn },
+            { key: "emola" as const, label: "e-Mola", on: emolaOn },
+          ]).map((m) => (
+            <div key={m.key} className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/40 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-gray-100">{m.label}</p>
+                <p className="text-xs text-gray-500">{m.on ? "Ativo no checkout" : "Desativado"}</p>
+              </div>
+              <button
+                onClick={() => toggleMethod(m.key, !m.on)}
+                disabled={zenofyLoading || togglingMethod === m.key}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${m.on ? "bg-emerald-600" : "bg-gray-600"}`}
+                aria-label={`${m.on ? "Desativar" : "Ativar"} ${m.label}`}
+              >
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${m.on ? "left-[22px]" : "left-0.5"}`} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg">
         <div className="flex items-center gap-3 mb-4">
