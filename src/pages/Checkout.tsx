@@ -612,7 +612,7 @@ const Checkout = () => {
                     className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground"
                   >
                     <div className="flex items-center gap-2 font-semibold">
-                      <Zap className="h-4 w-4 text-primary" />
+                      <img src={zenofyLogo} alt="Zenofy" className="h-4 w-auto object-contain" />
                       Zenofy selecionado
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
