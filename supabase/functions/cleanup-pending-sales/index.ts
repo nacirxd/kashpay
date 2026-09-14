@@ -19,12 +19,16 @@ Deno.serve(async (req) => {
 
     const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString()
 
+    // Vendas Zenofy são reconciliadas pela função zenofy-check-status (podem
+    // demorar mais tempo a confirmar), por isso não são tocadas aqui.
     const { data, error } = await supabase
       .from('sales')
       .update({ status: 'failed' })
       .eq('status', 'pending')
       .lt('created_at', cutoff)
+      .or('gateway.is.null,gateway.neq.zenofy')
       .select('id')
+
 
     if (error) throw error
 
