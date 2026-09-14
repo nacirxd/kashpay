@@ -165,7 +165,7 @@ async function approveSale(supabase: Supa, sale: any) {
   }
 }
 
-const COLS = 'id, status, user_id, valor, product_id, buyer_email, buyer_name, buyer_whatsapp, payment_phone, zenofy_checkout_id, created_at'
+const COLS = 'id, status, user_id, valor, product_id, buyer_email, buyer_name, buyer_whatsapp, payment_phone, zenofy_checkout_id, created_at, utm_source, utm_medium, utm_campaign, utm_content'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
