@@ -313,10 +313,11 @@ const Checkout = () => {
           return;
         } else {
           toast.info("Pagamento criado na Zenofy. Aguardando confirmação...");
-          const ok = await pollSale();
+          const ok = await pollZenofySale(data.sale_id, 20);
           if (ok) fireSuccess();
           else toast.info("Vai receber email assim que o pagamento for confirmado.");
         }
+
       } else if (method === "mcx" || method === "ref") {
         // Fluxo Kumbify (Angola)
         const { data, error } = await supabase.functions.invoke("kumbify-create-payment", {
