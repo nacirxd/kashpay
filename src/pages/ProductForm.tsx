@@ -296,6 +296,12 @@ const ProductForm = () => {
       }
     }
 
+    const hasBump = bumpProductId !== "none" && !!bumpProductId;
+    if (hasBump && bumpPrice.trim() && (isNaN(parseFloat(bumpPrice)) || parseFloat(bumpPrice) < 0)) {
+      toast.error("Preço da oferta extra inválido.");
+      return;
+    }
+
     setLoading(true);
     const payload = {
       nome,
