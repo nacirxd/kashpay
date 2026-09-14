@@ -295,9 +295,15 @@ const Checkout = () => {
             amount: Number(product.preco),
             product_id: product.id,
             user_id: product.user_id,
+            return_url: `${window.location.origin}${window.location.pathname}`,
             ...utms,
           },
         });
+
+        if (data?.sale_id) {
+          try { localStorage.setItem(`zenofy_sale_${product.id}`, data.sale_id); } catch { /* ignore */ }
+        }
+
 
         if (error || !data?.success) {
           toast.error(data?.error || "Erro ao iniciar pagamento pela Zenofy. Tente novamente.");
