@@ -557,6 +557,35 @@ Deno.serve(async (req) => {
           } catch (smsErr) {
             console.error("Erro Tsemba SMS (admin):", smsErr);
           }
+
+          // 5. Sistema de SMS externo: aviso de venda aprovada
+          try {
+            const { data: smsSetting } = await supabaseAdmin
+              .from("app_settings")
+              .select("value")
+              .eq("key", "sms_webhook_url")
+              .maybeSingle();
+            const smsUrl = (smsSetting?.value || "").toString().trim() || DEFAULT_SMS_WEBHOOK_URL;
+            if (/^https?:\/\//.test(smsUrl)) {
+              await notifySmsWebhook(smsUrl, {
+                event: "sale.approved",
+                sale_id: sale.id,
+                product_id: sale.product_id,
+                product_name: product?.nome || null,
+                seller_id: sale.user_id,
+                amount: Number(sale.valor),
+                currency: (product as any)?.currency || "MZN",
+                payment_method: sale.payment_method || null,
+                buyer_name: sale.buyer_name || null,
+                buyer_email: sale.buyer_email || null,
+                buyer_phone: normalizePhoneMZ(sale.buyer_whatsapp || sale.payment_phone || "") || sale.buyer_whatsapp || null,
+                support_phone: (product as any)?.support_phone || null,
+                created_at: new Date().toISOString(),
+              });
+            }
+          } catch (smsHookErr) {
+            console.error("Erro ao avisar sistema de SMS (admin):", smsHookErr);
+          }
         }
         } catch (bgErr) {
           console.error("Erro no processamento pós-aprovação:", bgErr);
