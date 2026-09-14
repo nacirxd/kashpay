@@ -71,6 +71,7 @@ const ProductForm = () => {
   const [preco, setPreco] = useState("");
   const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
+  const [zenofyProductId, setZenofyProductId] = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [upsellUrl, setUpsellUrl] = useState("");
   const [downsellUrl, setDownsellUrl] = useState("");
