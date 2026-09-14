@@ -10,8 +10,14 @@ const ZENOFY_BASE = 'https://api.zenofy.io'
 function normalizePhoneMZ9(raw: string): string | null {
   if (!raw) return null
   const digits = String(raw).replace(/\D/g, '')
-  const local = digits.startsWith('258') && digits.length === 12 ? digits.slice(3) : digits
+  let local = digits.startsWith('258') ? digits.slice(3) : digits
+  if (local.length > 9) local = local.slice(0, 9)
   return /^8[2-7]\d{7}$/.test(local) ? local : null
+}
+
+// Zenofy exige E.164: +258XXXXXXXXX
+function toE164MZ(local: string | null): string | null {
+  return local ? `+258${local}` : null
 }
 
 function pickUrl(obj: any): string | null {
@@ -101,6 +107,14 @@ Deno.serve(async (req) => {
       ...(settings.emola_enabled === 'false' ? [] : ['emola']),
     ]
 
+    if (!localPhone) {
+      return new Response(JSON.stringify({
+        error: 'Número de WhatsApp inválido. Use o formato 8X XXX XXXX (9 dígitos).',
+      }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (zenofyPaymentMethods.length === 0) {
       return new Response(JSON.stringify({
         error: 'Os métodos de pagamento estão temporariamente indisponíveis.',
@@ -145,10 +159,10 @@ Deno.serve(async (req) => {
       reference: saleData.id,
       payment_methods: zenofyPaymentMethods,
       metadata: { sale_id: saleData.id, product_id, user_id },
-      customer: { name, email, phone: localPhone || undefined },
+      customer: { name, email, phone: toE164MZ(localPhone) },
       name,
       email,
-      phone: localPhone || undefined,
+      phone: toE164MZ(localPhone),
       success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}` : undefined,
       cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zcancel=1` : undefined,
     }
