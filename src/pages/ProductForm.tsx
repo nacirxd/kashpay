@@ -709,6 +709,73 @@ const ProductForm = () => {
           </motion.div>
         )}
 
+        {/* Order bump */}
+        <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Oferta extra no checkout <span className="text-muted-foreground font-normal">(order bump)</span></h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Escolha outro dos seus produtos para ser oferecido no checkout, antes do botão de pagamento. Se o cliente aceitar, o valor é somado ao mesmo pagamento.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Produto oferecido</Label>
+            <Select value={bumpProductId} onValueChange={setBumpProductId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sem oferta extra" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem oferta extra</SelectItem>
+                {myProducts
+                  .filter((p) => p.id !== id && (p.currency || "MZN") === currency)
+                  .map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nome} — {formatCurrency(Number(p.preco), currency)}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Só aparecem produtos com a mesma moeda deste produto.</p>
+          </div>
+
+          {bumpProductId !== "none" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="bumpPrice">Preço promocional da oferta <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                <Input
+                  id="bumpPrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={bumpPrice}
+                  onChange={(e) => setBumpPrice(e.target.value)}
+                  placeholder={currency === "AOA" ? "2500.00" : "500.00"}
+                />
+                <p className="text-xs text-muted-foreground">Se ficar vazio, usa o preço normal do produto escolhido.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bumpTitle">Título da oferta <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                <Input
+                  id="bumpTitle"
+                  value={bumpTitle}
+                  onChange={(e) => setBumpTitle(e.target.value)}
+                  placeholder="Sim! Quero adicionar este bónus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bumpDescription">Descrição da oferta <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                <Textarea
+                  id="bumpDescription"
+                  rows={2}
+                  value={bumpDescription}
+                  onChange={(e) => setBumpDescription(e.target.value)}
+                  placeholder="Aproveite este extra com desconto exclusivo."
+                />
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Upsell / Downsell */}
         <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
           <div>
