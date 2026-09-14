@@ -34,6 +34,7 @@ interface Product {
   seller_name: string;
   seller_email: string;
   created_at: string;
+  zenofy_product_id: string | null;
 }
 
 const statusMap: Record<string, { label: string; classes: string }> = {
