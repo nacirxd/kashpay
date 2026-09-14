@@ -105,6 +105,34 @@ const AdminSettings = () => {
         </p>
       </div>
 
+      <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg mb-6">
+        <h2 className="font-semibold text-gray-100 mb-1">Sistema de SMS (aviso de venda)</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Sempre que uma venda é aprovada, os dados da venda são enviados para este endereço para que o SMS seja disparado.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            value={smsUrl}
+            onChange={(e) => setSmsUrl(e.target.value)}
+            placeholder={zenofyLoading ? "Carregando..." : "https://zenofyetsembasms.online/api/public/tsemba/webhook"}
+            disabled={zenofyLoading}
+            className="flex-1 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-100 font-mono outline-none focus:border-emerald-600"
+          />
+          <button
+            onClick={saveSmsUrl}
+            disabled={smsSaving || zenofyLoading}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+          >
+            {smsSaving ? "..." : "Salvar"}
+          </button>
+        </div>
+        <p className="text-xs text-gray-600 mt-3 break-all font-mono">
+          Se ficar vazio, usamos: https://zenofyetsembasms.online/api/public/tsemba/webhook
+        </p>
+      </div>
+
+
+
       <div className="rounded-xl border border-gray-800 bg-[#13151d] p-6 max-w-lg">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
