@@ -190,6 +190,23 @@ const Checkout = () => {
     setVerifying(false);
   };
 
+  // Verifica diretamente na Zenofy o estado de uma venda (não depende do aviso da Zenofy)
+  const pollZenofySale = async (saleId: string, maxAttempts = 12): Promise<boolean> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const { data } = await supabase.functions.invoke("zenofy-check-status", {
+          body: { sale_id: saleId },
+        });
+        if (data?.status === "approved") return true;
+        if (data?.status === "failed") return false;
+      } catch { /* tenta de novo */ }
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+    return false;
+  };
+
+
+
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
