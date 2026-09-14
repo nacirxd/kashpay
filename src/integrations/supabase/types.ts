@@ -185,6 +185,10 @@ export type Database = {
           meta_access_token: string | null
           meta_pixel_id: string | null
           nome: string
+          order_bump_description: string | null
+          order_bump_price: number | null
+          order_bump_product_id: string | null
+          order_bump_title: string | null
           payment_methods: string[]
           preco: number
           status: string
@@ -210,6 +214,10 @@ export type Database = {
           meta_access_token?: string | null
           meta_pixel_id?: string | null
           nome: string
+          order_bump_description?: string | null
+          order_bump_price?: number | null
+          order_bump_product_id?: string | null
+          order_bump_title?: string | null
           payment_methods?: string[]
           preco?: number
           status?: string
@@ -235,6 +243,10 @@ export type Database = {
           meta_access_token?: string | null
           meta_pixel_id?: string | null
           nome?: string
+          order_bump_description?: string | null
+          order_bump_price?: number | null
+          order_bump_product_id?: string | null
+          order_bump_title?: string | null
           payment_methods?: string[]
           preco?: number
           status?: string
@@ -246,7 +258,15 @@ export type Database = {
           webhook_url?: string | null
           zenofy_product_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_order_bump_product_id_fkey"
+            columns: ["order_bump_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -304,6 +324,8 @@ export type Database = {
       }
       sales: {
         Row: {
+          bump_product_id: string | null
+          bump_valor: number | null
           buyer_email: string | null
           buyer_name: string | null
           buyer_whatsapp: string | null
@@ -326,6 +348,8 @@ export type Database = {
           zenofy_checkout_id: string | null
         }
         Insert: {
+          bump_product_id?: string | null
+          bump_valor?: number | null
           buyer_email?: string | null
           buyer_name?: string | null
           buyer_whatsapp?: string | null
@@ -348,6 +372,8 @@ export type Database = {
           zenofy_checkout_id?: string | null
         }
         Update: {
+          bump_product_id?: string | null
+          bump_valor?: number | null
           buyer_email?: string | null
           buyer_name?: string | null
           buyer_whatsapp?: string | null
@@ -370,6 +396,13 @@ export type Database = {
           zenofy_checkout_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_bump_product_id_fkey"
+            columns: ["bump_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_product_id_fkey"
             columns: ["product_id"]
