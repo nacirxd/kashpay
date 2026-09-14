@@ -35,6 +35,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
