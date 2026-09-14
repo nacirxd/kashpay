@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
     const { data: productData } = await supabase
       .from('products')
-      .select('id, nome, delivery_type, external_url, file_url, support_phone, support_email, meta_pixel_id, meta_access_token')
+      .select('id, nome, delivery_type, external_url, file_url, support_phone, support_email, meta_pixel_id, meta_access_token, webhook_url')
       .eq('id', product_id)
       .maybeSingle()
 
