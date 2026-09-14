@@ -7,10 +7,10 @@ import { motion } from "framer-motion";
 import { Facebook, BarChart3, Webhook, Tag, MessageSquare } from "lucide-react";
 
 const integrationTypes = [
-  { tipo: "meta_ads", label: "Meta Ads", desc: "Facebook Pixel & Conversion API", icon: Facebook, path: "/integracoes/meta" },
+  { tipo: "meta_ads", label: "Meta Ads", desc: "Pixel por produto (Facebook & Conversion API)", icon: Facebook, path: "/integracoes/meta" },
   { tipo: "gtm", label: "Google Tag Manager", desc: "Tags e eventos centralizados", icon: Tag, path: "/integracoes/gtm" },
   { tipo: "utmify", label: "UTMify", desc: "Rastreamento de UTMs e campanhas", icon: BarChart3, path: "/integracoes/utmify" },
-  { tipo: "webhook", label: "Webhook", desc: "Envie eventos para URLs externas", icon: Webhook, path: "/integracoes/webhook" },
+  { tipo: "webhook", label: "Webhook", desc: "URL por produto para eventos de venda", icon: Webhook, path: "/integracoes/webhook" },
   { tipo: "tsemba_sms", label: "Tsemba SMS", desc: "SMS automático ao comprador na venda", icon: MessageSquare, path: "/integracoes/tsemba" },
 ];
 
