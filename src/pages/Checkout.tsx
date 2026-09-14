@@ -793,9 +793,72 @@ const Checkout = () => {
                 </motion.div>
               )}
 
-              <div className="flex items-center justify-between py-3 border-t border-border/50 mt-2">
-                <span className="text-sm font-medium text-muted-foreground">{product.nome}</span>
-                <span className="text-sm font-bold">{formatCurrency(Number(product.preco), productCurrency)}</span>
+              {bumpProduct && (
+                <motion.button
+                  type="button"
+                  onClick={() => setBumpAccepted((v) => !v)}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`w-full text-left rounded-xl border-2 border-dashed p-3 transition-all ${
+                    bumpAccepted
+                      ? "border-primary bg-primary/5"
+                      : "border-primary/40 bg-primary/[0.03] hover:border-primary/70"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${
+                        bumpAccepted ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {bumpAccepted && <CheckCircle className="h-3.5 w-3.5" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold leading-snug">
+                        {product.order_bump_title || `Sim! Quero adicionar ${bumpProduct.nome}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {product.order_bump_description || bumpProduct.descricao || "Adicione este extra à sua compra."}
+                      </p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="text-sm font-bold text-primary">
+                          + {formatCurrency(bumpPrice, productCurrency)}
+                        </span>
+                        {bumpPrice < Number(bumpProduct.preco) && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatCurrency(Number(bumpProduct.preco), productCurrency)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {bumpProduct.image_url && (
+                      <img
+                        src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
+                        alt={bumpProduct.nome}
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                      />
+                    )}
+                  </div>
+                </motion.button>
+              )}
+
+              <div className="border-t border-border/50 mt-2 pt-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground truncate">{product.nome}</span>
+                  <span className="text-sm font-bold">{formatCurrency(basePrice, productCurrency)}</span>
+                </div>
+                {bumpAccepted && bumpProduct && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground truncate">{bumpProduct.nome}</span>
+                    <span className="text-sm font-bold">{formatCurrency(bumpPrice, productCurrency)}</span>
+                  </div>
+                )}
+                {bumpAccepted && bumpProduct && (
+                  <div className="flex items-center justify-between border-t border-border/50 pt-1.5">
+                    <span className="text-sm font-bold">Total</span>
+                    <span className="text-base font-bold text-primary">{formatCurrency(totalPrice, productCurrency)}</span>
+                  </div>
+                )}
               </div>
 
               {method && (
