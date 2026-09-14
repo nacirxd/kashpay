@@ -10,7 +10,7 @@ import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X } from "lucide-react";
+import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X, Zap } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
@@ -27,7 +27,7 @@ const Checkout = () => {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [payPhone, setPayPhone] = useState("");
-  type PayMethod = "mpesa" | "emola" | "mcx" | "ref";
+  type PayMethod = "mpesa" | "emola" | "mcx" | "ref" | "zenofy";
   const [method, setMethod] = useState<PayMethod | null>(null);
   const [countdown, setCountdown] = useState(10 * 60);
   const [refResult, setRefResult] = useState<{ entity: string; reference: string } | null>(null);
@@ -38,7 +38,7 @@ const Checkout = () => {
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
 
-  const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola"];
+  const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola", "zenofy"];
   const enabledMethods: PayMethod[] = (() => {
     const pm = product?.payment_methods;
     if (Array.isArray(pm) && pm.length > 0) {
@@ -204,8 +204,8 @@ const Checkout = () => {
       return;
     }
 
-    // REF (Referência Multicaixa) não pede telefone
-    if (method !== "ref") {
+    // REF (Referência Multicaixa) e Zenofy não pedem telefone aqui
+    if (method !== "ref" && method !== "zenofy") {
       if (!payPhone) {
         toast.error("Informe o número de pagamento.");
         return;
@@ -284,7 +284,34 @@ const Checkout = () => {
     };
 
     try {
-      if (method === "mcx" || method === "ref") {
+      if (method === "zenofy") {
+        // Fluxo Zenofy (Moçambique)
+        const { data, error } = await supabase.functions.invoke("zenofy-create-payment", {
+          body: {
+            name,
+            email,
+            phone: payPhone || whatsapp || undefined,
+            whatsapp: whatsapp || undefined,
+            amount: Number(product.preco),
+            product_id: product.id,
+            user_id: product.user_id,
+            ...utms,
+          },
+        });
+
+        if (error || !data?.success) {
+          toast.error(data?.error || "Erro ao iniciar pagamento pela Zenofy. Tente novamente.");
+        } else if (data.checkout_url) {
+          toast.success("A abrir o pagamento seguro Zenofy...");
+          window.location.href = data.checkout_url;
+          return;
+        } else {
+          toast.info("Pagamento criado na Zenofy. Aguardando confirmação...");
+          const ok = await pollSale();
+          if (ok) fireSuccess();
+          else toast.info("Vai receber email assim que o pagamento for confirmado.");
+        }
+      } else if (method === "mcx" || method === "ref") {
         // Fluxo Kumbify (Angola)
         const { data, error } = await supabase.functions.invoke("kumbify-create-payment", {
           body: {
@@ -562,10 +589,23 @@ const Checkout = () => {
                     <img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" />
                     <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
                   </button>}
+                  {enabledMethods.includes("zenofy") && <button
+                    type="button"
+                    onClick={() => { setMethod("zenofy"); setPayPhone(""); }}
+                    className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                      method === "zenofy"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                    }`}
+                    aria-label="Selecionar Zenofy"
+                  >
+                    <Zap className="h-6 w-6" />
+                    <span className="text-sm font-semibold">Zenofy</span>
+                  </button>}
                 </div>
               </div>
 
-              {method && method !== "ref" && (
+              {method && method !== "ref" && method !== "zenofy" && (
                 <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
                   <Label className="text-sm">Número de pagamento</Label>
                   <Input
@@ -596,7 +636,7 @@ const Checkout = () => {
                   {paying ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   ) : (
-                    method === "ref" ? "Gerar referência" : "Comprar agora"
+                    method === "ref" ? "Gerar referência" : method === "zenofy" ? "Pagar com Zenofy" : "Comprar agora"
                   )}
                 </Button>
               )}
