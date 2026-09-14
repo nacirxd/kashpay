@@ -34,6 +34,7 @@ interface Product {
   seller_name: string;
   seller_email: string;
   created_at: string;
+  zenofy_product_id: string | null;
 }
 
 const statusMap: Record<string, { label: string; classes: string }> = {
@@ -61,6 +62,8 @@ const AdminProducts = () => {
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [zenofyDraft, setZenofyDraft] = useState("");
+  const [zenofySaving, setZenofySaving] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -105,6 +108,20 @@ const AdminProducts = () => {
     }
     setActionLoading(false);
     setConfirm(null);
+  };
+
+  const handleSaveZenofyId = async () => {
+    if (!viewProduct) return;
+    setZenofySaving(true);
+    try {
+      await adminFetch("update_product_zenofy_id", { product_id: viewProduct.id, zenofy_product_id: zenofyDraft });
+      toast.success("ID Zenofy atualizado");
+      setViewProduct({ ...viewProduct, zenofy_product_id: zenofyDraft || null });
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setZenofySaving(false);
   };
 
   return (
@@ -168,7 +185,7 @@ const AdminProducts = () => {
                     <TableRow key={p.id} className="border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : p.id)}>
                       <TableCell className="pr-0">
                         <button
-                          onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
+                          onClick={(e) => { e.stopPropagation(); setZenofyDraft(p.zenofy_product_id || ""); setViewProduct(p); }}
                           className="rounded-lg p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-gray-800 transition-colors"
                           title="Ver material"
                         >
@@ -272,6 +289,26 @@ const AdminProducts = () => {
               <div className="flex justify-between"><span className="text-gray-500">Tipo</span><span className="capitalize">{viewProduct.tipo}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Entrega</span><span className="capitalize">{viewProduct.delivery_type}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Vendedor</span><span>{viewProduct.seller_name}</span></div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-4 mb-5">
+              <p className="text-xs text-gray-500 font-medium mb-2">ID do produto na Zenofy</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={zenofyDraft}
+                  onChange={(e) => setZenofyDraft(e.target.value)}
+                  placeholder="Ex: 6aa81323ce0a54a1d60b0f37"
+                  className="flex-1 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
+                />
+                <button
+                  onClick={handleSaveZenofyId}
+                  disabled={zenofySaving}
+                  className="rounded-lg bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                >
+                  {zenofySaving ? "..." : "Salvar"}
+                </button>
+              </div>
             </div>
 
             <div className="border-t border-gray-800 pt-4 space-y-3">
