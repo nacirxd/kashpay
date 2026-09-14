@@ -119,6 +119,11 @@ Deno.serve(async (req) => {
       })
     }
 
+    const baseReturn = typeof return_url === 'string' && /^https?:\/\//.test(return_url)
+      ? return_url
+      : null
+    const sep = baseReturn && baseReturn.includes('?') ? '&' : '?'
+
     const payload: Record<string, unknown> = {
       productId: zenofyProductId,
       amount: Math.round(amountNumber * 100), // unidades menores
@@ -129,7 +134,10 @@ Deno.serve(async (req) => {
       name,
       email,
       phone: localPhone || undefined,
+      success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}` : undefined,
+      cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zcancel=1` : undefined,
     }
+
 
     const ctrl = new AbortController()
     const t = setTimeout(() => ctrl.abort(), 30000)
