@@ -4,6 +4,7 @@ const corsHeaders = {
 }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { sendUtmifyOrder } from '../_shared/utmify.ts'
 
 const ZENOFY_BASE = 'https://api.zenofy.io'
 const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
