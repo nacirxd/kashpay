@@ -248,6 +248,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // UPDATE PRODUCT ZENOFY ID
+    if (action === "update_product_zenofy_id") {
+      const zenofyId = typeof body.zenofy_product_id === "string" ? body.zenofy_product_id.trim() : "";
+      const { error } = await supabaseAdmin.from("products").update({ zenofy_product_id: zenofyId || null }).eq("id", body.product_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // LIST WITHDRAWALS
     if (action === "list_withdrawals") {
       const { data: withdrawals } = await supabaseAdmin.from("withdrawals").select("*").order("created_at", { ascending: false });
