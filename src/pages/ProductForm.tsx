@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { formatMZN } from "@/lib/currency";
+import { formatMZN, formatCurrency } from "@/lib/currency";
 import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
