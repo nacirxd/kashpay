@@ -24,9 +24,19 @@ const Integrations = () => {
     supabase.from("integrations").select("tipo, ativo").eq("user_id", user.id).then(({ data }) => {
       const map: Record<string, boolean> = {};
       (data || []).forEach((d) => { map[d.tipo] = d.ativo; });
-      setActiveMap(map);
+      setActiveMap((prev) => ({ ...prev, ...map }));
+    });
+
+    supabase.from("products").select("meta_pixel_id, webhook_url").eq("user_id", user.id).then(({ data }) => {
+      const rows = (data as { meta_pixel_id: string | null; webhook_url: string | null }[]) || [];
+      setActiveMap((prev) => ({
+        ...prev,
+        meta_ads: rows.some((r) => !!r.meta_pixel_id?.trim()),
+        webhook: rows.some((r) => !!r.webhook_url?.trim()),
+      }));
     });
   }, [user]);
+
 
   return (
     <DashboardLayout>
