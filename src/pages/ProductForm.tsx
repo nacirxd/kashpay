@@ -134,6 +134,10 @@ const ProductForm = () => {
             setExternalUrl((data as any).external_url || "");
             setUpsellUrl((data as any).upsell_url || "");
             setDownsellUrl((data as any).downsell_url || "");
+            setBumpProductId((data as any).order_bump_product_id || "none");
+            setBumpPrice((data as any).order_bump_price != null ? String((data as any).order_bump_price) : "");
+            setBumpTitle((data as any).order_bump_title || "");
+            setBumpDescription((data as any).order_bump_description || "");
             setFileUrl((data as any).file_url || "");
             const prodCurrency = ((data as any).currency as "MZN" | "AOA") || "MZN";
             setCurrency(prodCurrency);
