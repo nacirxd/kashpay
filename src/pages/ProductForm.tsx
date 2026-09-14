@@ -17,6 +17,7 @@ import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
+import zenofyLogo from "@/assets/zenofy.svg";
 
 const CATEGORIAS = [
   "Cursos e Educação",
@@ -572,7 +573,7 @@ const ProductForm = () => {
               : [
                   { id: "mpesa", label: "M-Pesa", logo: mpesaLogo as string | null },
                   { id: "emola", label: "e-Mola", logo: emolaLogo as string | null },
-                  { id: "zenofy", label: "Zenofy", logo: null as string | null },
+                  { id: "zenofy", label: "Zenofy", logo: zenofyLogo as string | null },
                 ]
             ).map((m) => {
               const active = paymentMethods.includes(m.id);
@@ -594,7 +595,7 @@ const ProductForm = () => {
                   {m.logo ? (
                     <img src={m.logo} alt={m.label} className="h-7 w-7 object-contain" />
                   ) : (
-                    <span className="text-lg">{m.id === "mcx" ? "📱" : m.id === "zenofy" ? "⚡" : "🧾"}</span>
+                    <span className="text-lg">{m.id === "mcx" ? "📱" : "🧾"}</span>
                   )}
                   <span className="text-sm font-semibold">{m.label}</span>
                 </button>

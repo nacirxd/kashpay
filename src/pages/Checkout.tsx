@@ -10,12 +10,13 @@ import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X, Zap } from "lucide-react";
+import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
+import zenofyLogo from "@/assets/zenofy.svg";
 
 const Checkout = () => {
   const { id } = useParams();
@@ -599,7 +600,7 @@ const Checkout = () => {
                     }`}
                     aria-label="Selecionar Zenofy"
                   >
-                    <Zap className="h-6 w-6" />
+                    <img src={zenofyLogo} alt="Zenofy" className="h-6 w-auto object-contain" />
                     <span className="text-sm font-semibold">Zenofy</span>
                   </button>}
                 </div>
@@ -611,7 +612,7 @@ const Checkout = () => {
                     className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground"
                   >
                     <div className="flex items-center gap-2 font-semibold">
-                      <Zap className="h-4 w-4 text-primary" />
+                      <img src={zenofyLogo} alt="Zenofy" className="h-4 w-auto object-contain" />
                       Zenofy selecionado
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
