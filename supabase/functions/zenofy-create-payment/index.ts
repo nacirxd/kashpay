@@ -107,6 +107,14 @@ Deno.serve(async (req) => {
       ...(settings.emola_enabled === 'false' ? [] : ['emola']),
     ]
 
+    if (!localPhone) {
+      return new Response(JSON.stringify({
+        error: 'Número de WhatsApp inválido. Use o formato 8X XXX XXXX (9 dígitos).',
+      }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (zenofyPaymentMethods.length === 0) {
       return new Response(JSON.stringify({
         error: 'Os métodos de pagamento estão temporariamente indisponíveis.',
