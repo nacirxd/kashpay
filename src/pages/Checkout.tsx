@@ -590,7 +590,7 @@ const Checkout = () => {
                     <img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" />
                     <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
                   </button>}
-                  {enabledMethods.includes("zenofy") && <button
+                  {enabledMethods.includes("zenofy") && enabledMethods.length > 1 && <button
                     type="button"
                     onClick={() => { setMethod("zenofy"); setPayPhone(""); }}
                     className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
@@ -600,20 +600,18 @@ const Checkout = () => {
                     }`}
                     aria-label="Selecionar Zenofy"
                   >
-                    <img src={zenofyLogo} alt="Zenofy" className="h-6 w-auto object-contain" />
                     <span className="text-sm font-semibold">Zenofy</span>
                   </button>}
                 </div>
 
-                {method === "zenofy" && (
+                {method === "zenofy" && enabledMethods.length > 1 && (
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground"
                   >
                     <div className="flex items-center gap-2 font-semibold">
-                      <img src={zenofyLogo} alt="Zenofy" className="h-4 w-auto object-contain" />
-                      Zenofy selecionado
+                      <span>Zenofy selecionado</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Será redirecionado para o pagamento seguro da Zenofy.
