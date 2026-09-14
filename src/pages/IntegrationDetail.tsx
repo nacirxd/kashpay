@@ -187,11 +187,11 @@ const IntegrationDetail = () => {
     setTestResult(null);
     if (tipo === "meta" && config.pixel_id) {
       setTestResult("✅ Pixel ID validado. Eventos serão enviados: PageView, AddToCart, InitiateCheckout, Purchase.");
-    } else if (tipo === "webhook" && config.url) {
+    } else if (tipo === "webhook" && productWebhookUrl.trim()) {
       try {
         setTestResult("⏳ Enviando teste...");
         await new Promise((r) => setTimeout(r, 1000));
-        const logEntry = `[${new Date().toLocaleTimeString("pt-MZ", { timeZone: "Africa/Maputo" })}] POST ${config.url} → 200 OK (teste)`;
+        const logEntry = `[${new Date().toLocaleTimeString("pt-MZ", { timeZone: "Africa/Maputo" })}] POST ${productWebhookUrl.trim()} → 200 OK (teste)`;
         setWebhookLogs((prev) => [logEntry, ...prev].slice(0, 10));
         setTestResult("✅ Webhook testado com sucesso!");
       } catch {
