@@ -15,6 +15,9 @@ const AdminSettings = () => {
   const [zenofySaving, setZenofySaving] = useState(false);
   const [smsUrl, setSmsUrl] = useState("");
   const [smsSaving, setSmsSaving] = useState(false);
+  const [mpesaOn, setMpesaOn] = useState(true);
+  const [emolaOn, setEmolaOn] = useState(true);
+  const [togglingMethod, setTogglingMethod] = useState<"mpesa" | "emola" | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -22,6 +25,8 @@ const AdminSettings = () => {
         const data = await adminFetch("get_settings");
         setZenofyId(data?.zenofy_product_id || "");
         setSmsUrl(data?.sms_webhook_url || "");
+        setMpesaOn(data?.mpesa_enabled !== "false");
+        setEmolaOn(data?.emola_enabled !== "false");
       } catch (e: any) {
         toast.error(e.message);
       }
@@ -29,6 +34,20 @@ const AdminSettings = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const toggleMethod = async (m: "mpesa" | "emola", next: boolean) => {
+    setTogglingMethod(m);
+    const prev = m === "mpesa" ? mpesaOn : emolaOn;
+    if (m === "mpesa") setMpesaOn(next); else setEmolaOn(next);
+    try {
+      await adminFetch("update_setting", { key: `${m}_enabled`, value: next ? "true" : "false" });
+      toast.success(`${m === "mpesa" ? "M-Pesa" : "e-Mola"} ${next ? "ativado" : "desativado"}`);
+    } catch (e: any) {
+      if (m === "mpesa") setMpesaOn(prev); else setEmolaOn(prev);
+      toast.error(e.message);
+    }
+    setTogglingMethod(null);
+  };
 
   const saveZenofyId = async () => {
     setZenofySaving(true);
