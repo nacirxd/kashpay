@@ -18,7 +18,9 @@ type ProductPixelRow = {
   image_url: string | null;
   meta_pixel_id: string | null;
   meta_access_token: string | null;
+  webhook_url: string | null;
 };
+
 
 type SmsLog = {
   id: string;
