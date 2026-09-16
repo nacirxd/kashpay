@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { TOTP, Secret } from "https://esm.sh/otpauth@9.3.6";
+import { sendAppEmail } from '../_shared/sendAppEmail.ts'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN';
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send';
@@ -328,20 +329,16 @@ Deno.serve(async (req) => {
           if (withdrawal) {
             const { data: profile } = await supabaseAdmin.from("profiles").select("nome, email").eq("user_id", withdrawal.user_id).maybeSingle();
             if (profile?.email) {
-              await supabaseAdmin.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "withdrawal-notification",
-                  recipientEmail: profile.email,
-                  idempotencyKey: `withdrawal-notify-${body.withdrawal_id}-${body.status}`,
-                  templateData: {
+              await sendAppEmail(supabaseAdmin, "withdrawal-notification", profile.email, {
+            templateData: {
                     sellerName: profile.nome || undefined,
                     amount: `${Number(withdrawal.valor).toLocaleString("pt-MZ")} MT`,
                     method: withdrawal.metodo,
                     account: withdrawal.conta,
                     status: body.status,
                   },
-                },
-              });
+            idempotencyKey: `withdrawal-notify-${body.withdrawal_id}-${body.status}`,
+          });
               console.log("Notificação de saque enviada para:", profile.email);
             }
           }
@@ -401,12 +398,8 @@ Deno.serve(async (req) => {
           // 1. Send purchase confirmation email
           if (sale.buyer_email) {
             try {
-              await supabaseAdmin.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "purchase-confirmation",
-                  recipientEmail: sale.buyer_email,
-                  idempotencyKey: `purchase-confirm-admin-${sale.id}`,
-                  templateData: {
+              await sendAppEmail(supabaseAdmin, "purchase-confirmation", sale.buyer_email, {
+            templateData: {
                     buyerName: sale.buyer_name || undefined,
                     productName: product?.nome || "Produto",
                     amount: `${Number(sale.valor).toLocaleString("pt-MZ")} MT`,
@@ -417,8 +410,8 @@ Deno.serve(async (req) => {
                     sellerEmail: sellerProfile?.email || undefined,
                     sellerWhatsapp: sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
                   },
-                },
-              });
+            idempotencyKey: `purchase-confirm-admin-${sale.id}`,
+          });
               console.log("Email de compra enviado para:", sale.buyer_email);
             } catch (emailErr) {
               console.error("Erro ao enviar email de compra:", emailErr);
@@ -428,12 +421,8 @@ Deno.serve(async (req) => {
           // 2. Send sale notification to seller
           if (sellerProfile?.email) {
             try {
-              await supabaseAdmin.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "sale-notification",
-                  recipientEmail: sellerProfile.email,
-                  idempotencyKey: `sale-notify-admin-${sale.id}`,
-                  templateData: {
+              await sendAppEmail(supabaseAdmin, "sale-notification", sellerProfile.email, {
+            templateData: {
                     sellerName: sellerProfile.nome || undefined,
                     productName: product?.nome || "Produto",
                     amount: `${Number(sale.valor).toLocaleString("pt-MZ")} MT`,
@@ -441,8 +430,8 @@ Deno.serve(async (req) => {
                     buyerEmail: sale.buyer_email || undefined,
                     paymentMethod: sale.payment_method || undefined,
                   },
-                },
-              });
+            idempotencyKey: `sale-notify-admin-${sale.id}`,
+          });
               console.log("Notificação de venda enviada para vendedor:", sellerProfile.email);
             } catch (sellerErr) {
               console.error("Erro ao notificar vendedor:", sellerErr);

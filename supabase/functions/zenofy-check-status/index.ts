@@ -7,6 +7,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendUtmifyOrder } from '../_shared/utmify.ts'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
+import { sendAppEmail } from '../_shared/sendAppEmail.ts'
 
 const ZENOFY_BASE = 'https://api.zenofy.io'
 const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
@@ -80,12 +81,8 @@ async function approveSale(supabase: Supa, sale: any) {
 
   try {
     if (sale.buyer_email) {
-      await supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'purchase-confirmation',
-          recipientEmail: sale.buyer_email,
-          idempotencyKey: `purchase-confirm-${sale.id}`,
-          templateData: {
+      await sendAppEmail(supabase, 'purchase-confirmation', sale.buyer_email, {
+            templateData: {
             buyerName: sale.buyer_name,
             productName: (product as any)?.nome || 'Produto',
             amount: amountStr,
@@ -96,17 +93,13 @@ async function approveSale(supabase: Supa, sale: any) {
             sellerEmail: (product as any)?.support_email || (seller as any)?.email || undefined,
             sellerWhatsapp: (product as any)?.support_phone || (seller as any)?.telefone || undefined,
           },
-        },
-      })
+            idempotencyKey: `purchase-confirm-${sale.id}`,
+          })
     }
 
     if ((seller as any)?.email) {
-      await supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'sale-notification',
-          recipientEmail: (seller as any).email,
-          idempotencyKey: `sale-notify-${sale.id}`,
-          templateData: {
+      await sendAppEmail(supabase, 'sale-notification', (seller as any).email, {
+            templateData: {
             sellerName: (seller as any)?.nome || undefined,
             productName: (product as any)?.nome || 'Produto',
             amount: amountStr,
@@ -114,8 +107,8 @@ async function approveSale(supabase: Supa, sale: any) {
             buyerEmail: sale.buyer_email || undefined,
             paymentMethod: 'zenofy',
           },
-        },
-      })
+            idempotencyKey: `sale-notify-${sale.id}`,
+          })
     }
   } catch (e) {
     console.error('[zenofy-status] erro emails:', e)
