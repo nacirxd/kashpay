@@ -6,6 +6,7 @@ const corsHeaders = {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendUtmifyOrder } from '../_shared/utmify.ts'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
+import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 
 const ZENOFY_BASE = 'https://api.zenofy.io'
 const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
@@ -64,7 +65,7 @@ async function approveSale(supabase: Supa, sale: any) {
 
   const { data: product } = await supabase
     .from('products')
-    .select('nome, delivery_type, external_url, support_phone, support_email, currency, webhook_url')
+    .select('nome, delivery_type, external_url, file_url, support_phone, support_email, currency, webhook_url')
     .eq('id', sale.product_id)
     .maybeSingle()
 
@@ -89,7 +90,7 @@ async function approveSale(supabase: Supa, sale: any) {
             productName: (product as any)?.nome || 'Produto',
             amount: amountStr,
             paymentMethod: 'zenofy',
-            accessUrl: (product as any)?.delivery_type === 'link' ? (product as any)?.external_url : undefined,
+            accessUrl: await resolveAccessUrl(supabase, product),
             accessType: (product as any)?.delivery_type,
             sellerName: (seller as any)?.nome || undefined,
             sellerEmail: (product as any)?.support_email || (seller as any)?.email || undefined,
