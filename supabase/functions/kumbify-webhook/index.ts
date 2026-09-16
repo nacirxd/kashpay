@@ -6,6 +6,7 @@ const corsHeaders = {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
+import { sendAppEmail } from '../_shared/sendAppEmail.ts'
 
 /**
  * Webhook chamado pela Kumbify quando o status do pagamento muda.
@@ -91,12 +92,8 @@ Deno.serve(async (req) => {
         const amountStr = `${Number(sale.valor).toLocaleString('pt-PT')} ${currency === 'AOA' ? 'Kz' : 'MT'}`
 
         if (sale.buyer_email) {
-          await supabase.functions.invoke('send-transactional-email', {
-            body: {
-              templateName: 'purchase-confirmation',
-              recipientEmail: sale.buyer_email,
-              idempotencyKey: `purchase-confirm-${sale.id}`,
-              templateData: {
+          await sendAppEmail(supabase, 'purchase-confirmation', sale.buyer_email, {
+            templateData: {
                 buyerName: sale.buyer_name,
                 productName: productData?.nome || 'Produto',
                 amount: amountStr,
@@ -107,17 +104,13 @@ Deno.serve(async (req) => {
                 sellerEmail: productData?.support_email || sellerProfile?.email || undefined,
                 sellerWhatsapp: productData?.support_phone || sellerProfile?.telefone || undefined,
               },
-            },
+            idempotencyKey: `purchase-confirm-${sale.id}`,
           })
         }
 
         if (sellerProfile?.email) {
-          await supabase.functions.invoke('send-transactional-email', {
-            body: {
-              templateName: 'sale-notification',
-              recipientEmail: sellerProfile.email,
-              idempotencyKey: `sale-notify-${sale.id}`,
-              templateData: {
+          await sendAppEmail(supabase, 'sale-notification', sellerProfile.email, {
+            templateData: {
                 sellerName: sellerProfile.nome || undefined,
                 productName: productData?.nome || 'Produto',
                 amount: amountStr,
@@ -125,7 +118,7 @@ Deno.serve(async (req) => {
                 buyerEmail: sale.buyer_email || undefined,
                 paymentMethod: sale.payment_method,
               },
-            },
+            idempotencyKey: `sale-notify-${sale.id}`,
           })
         }
       } catch (e) {

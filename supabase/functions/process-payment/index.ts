@@ -5,6 +5,7 @@ const corsHeaders = {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
+import { sendAppEmail } from '../_shared/sendAppEmail.ts'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
@@ -302,12 +303,8 @@ Deno.serve(async (req) => {
         // Send purchase confirmation email
         if (status === 'approved' && email) {
           try {
-            await supabase.functions.invoke('send-transactional-email', {
-              body: {
-                templateName: 'purchase-confirmation',
-                recipientEmail: email,
-                idempotencyKey: `purchase-confirm-${saleData?.id || product_id}-${Date.now()}`,
-                templateData: {
+            await sendAppEmail(supabase, 'purchase-confirmation', email, {
+            templateData: {
                   buyerName: name,
                   productName: productData?.nome || 'Produto',
                   amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
@@ -319,8 +316,8 @@ Deno.serve(async (req) => {
                   sellerEmail: productData?.support_email || sellerProfile?.email || undefined,
                   sellerWhatsapp: productData?.support_phone || sellerProfile?.telefone || sellerProfile?.mpesa_telefone || undefined,
                 },
-              },
-            })
+            idempotencyKey: `purchase-confirm-${saleData?.id || product_id}-${Date.now()}`,
+          })
             console.log('Email de compra enviado para:', email)
           } catch (emailErr) {
             console.error('Erro ao enviar email de compra:', emailErr)
@@ -329,12 +326,8 @@ Deno.serve(async (req) => {
           // Send sale notification to seller
           if (sellerProfile?.email) {
             try {
-              await supabase.functions.invoke('send-transactional-email', {
-                body: {
-                  templateName: 'sale-notification',
-                  recipientEmail: sellerProfile.email,
-                  idempotencyKey: `sale-notify-${saleData?.id || product_id}-${Date.now()}`,
-                  templateData: {
+              await sendAppEmail(supabase, 'sale-notification', sellerProfile.email, {
+            templateData: {
                     sellerName: sellerProfile.nome || undefined,
                     productName: productData?.nome || 'Produto',
                     amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
@@ -342,8 +335,8 @@ Deno.serve(async (req) => {
                     buyerEmail: email || undefined,
                     paymentMethod: method,
                   },
-                },
-              })
+            idempotencyKey: `sale-notify-${saleData?.id || product_id}-${Date.now()}`,
+          })
               console.log('Notificação de venda enviada para vendedor:', sellerProfile.email)
             } catch (sellerEmailErr) {
               console.error('Erro ao notificar vendedor:', sellerEmailErr)
