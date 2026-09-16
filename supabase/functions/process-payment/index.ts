@@ -4,6 +4,7 @@ const corsHeaders = {
 }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
+import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
@@ -311,7 +312,7 @@ Deno.serve(async (req) => {
                   productName: productData?.nome || 'Produto',
                   amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
                   paymentMethod: method,
-                  accessUrl: productData?.delivery_type === 'link' ? productData?.external_url : undefined,
+                  accessUrl: await resolveAccessUrl(supabase, productData),
                   accessType: productData?.delivery_type,
                   sellerName: sellerProfile?.nome || undefined,
                   // Suporte do PRODUTO (preferido) com fallback para vendedor

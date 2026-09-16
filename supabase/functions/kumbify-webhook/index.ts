@@ -5,6 +5,7 @@ const corsHeaders = {
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
+import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 
 /**
  * Webhook chamado pela Kumbify quando o status do pagamento muda.
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
       try {
         const { data: productData } = await supabase
           .from('products')
-          .select('nome, delivery_type, external_url, support_phone, support_email, currency')
+          .select('nome, delivery_type, external_url, file_url, support_phone, support_email, currency')
           .eq('id', sale.product_id)
           .maybeSingle()
 
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
                 productName: productData?.nome || 'Produto',
                 amount: amountStr,
                 paymentMethod: sale.payment_method,
-                accessUrl: productData?.delivery_type === 'link' ? productData?.external_url : undefined,
+                accessUrl: await resolveAccessUrl(supabase, productData),
                 accessType: productData?.delivery_type,
                 sellerName: sellerProfile?.nome || undefined,
                 sellerEmail: productData?.support_email || sellerProfile?.email || undefined,

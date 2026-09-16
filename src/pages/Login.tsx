@@ -15,6 +15,27 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!email) {
+      toast.error("Escreva o seu email primeiro.");
+      return;
+    }
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (error) {
+      toast.error("Não foi possível reenviar o email agora. Tente novamente em alguns minutos.");
+      return;
+    }
+    toast.success("Email de confirmação reenviado. Verifique a sua caixa de entrada e o spam.");
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +43,21 @@ const Login = () => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
+      const code = (error as { code?: string }).code;
+      const msg = error.message?.toLowerCase() || "";
+      if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
+        setNeedsConfirm(true);
+        toast.error("Confirme o seu email antes de entrar. Enviámos um link para a sua caixa de entrada.");
+        return;
+      }
+      if (code === "invalid_credentials" || msg.includes("invalid login credentials")) {
+        toast.error("Email ou senha incorretos.");
+        return;
+      }
       toast.error(error.message);
       return;
     }
+    setNeedsConfirm(false);
     // Check account status
     const { data: profile } = await supabase.from("profiles").select("status").eq("user_id", data.user.id).maybeSingle();
     if (profile?.status === "banned") {
@@ -78,6 +111,24 @@ const Login = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><LogIn className="mr-2 h-4 w-4" /> Entrar</>}
           </Button>
+
+          {needsConfirm && (
+            <div className="rounded-lg border border-border bg-muted/40 p-4 text-left">
+              <p className="text-sm font-medium">Email ainda não confirmado</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abra o link que enviámos para <strong>{email}</strong> para activar a sua conta. Verifique também a pasta de spam.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full"
+                onClick={handleResend}
+                disabled={resending}
+              >
+                {resending ? "A reenviar..." : "Reenviar email de confirmação"}
+              </Button>
+            </div>
+          )}
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
