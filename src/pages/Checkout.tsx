@@ -135,7 +135,8 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
+    supabase.rpc("get_checkout_product", { p_id: id }).then(({ data: rows }) => {
+      const data: any = Array.isArray(rows) ? rows[0] : rows;
       if (data) {
         setProduct(data);
 
@@ -143,11 +144,9 @@ const Checkout = () => {
         const bumpId = (data as any).order_bump_product_id;
         if (bumpId) {
           supabase
-            .from("products")
-            .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
-            .eq("id", bumpId)
-            .maybeSingle()
-            .then(({ data: bp }) => {
+            .rpc("get_checkout_product", { p_id: bumpId })
+            .then(({ data: bRows }) => {
+              const bp: any = Array.isArray(bRows) ? bRows[0] : bRows;
               if (bp) setBumpProduct(bp);
             });
         }
@@ -167,29 +166,22 @@ const Checkout = () => {
         }
 
         // 2) GTM do vendedor (continua global por conta)
-        supabase.from("integrations")
-          .select("tipo, config")
-          .eq("user_id", data.user_id)
-          .eq("ativo", true)
-          .eq("tipo", "gtm")
-          .then(({ data: integrations }) => {
-            integrations?.forEach((int) => {
-              const cfg = int.config as any;
-              if (cfg?.container_id) {
-                loadGTM(cfg.container_id);
-                pushDataLayer('view_item', {
-                  item_name: data.nome,
-                  item_id: data.id,
-                  price: Number(data.preco),
-                  currency: 'MZN',
-                });
-              }
+        supabase.rpc("get_checkout_gtm", { p_user_id: data.user_id }).then(({ data: containerId }) => {
+          if (containerId) {
+            loadGTM(containerId as string);
+            pushDataLayer('view_item', {
+              item_name: data.nome,
+              item_id: data.id,
+              price: Number(data.preco),
+              currency: 'MZN',
             });
-          });
+          }
+        });
       }
       setLoading(false);
     });
   }, [id]);
+
 
   // Ao voltar da Zenofy: confirma o pagamento diretamente na Zenofy
   useEffect(() => {
