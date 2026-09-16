@@ -96,13 +96,15 @@ const Checkout = () => {
   // Downsell: se o cliente tentar voltar/sair do checkout sem concluir,
   // redireciona para o link de downsell configurado no produto.
   useEffect(() => {
-    const downsellUrl: string | undefined = product?.downsell_url || undefined;
-    if (!downsellUrl || done) return;
+    const downsellUrl: string | undefined = product?.downsell_url?.trim() || undefined;
+    if (!downsellUrl || done || guardPushedRef.current) return;
 
-    // Empilha um estado para podermos detectar o "voltar" do navegador
+    guardPushedRef.current = true;
     window.history.pushState({ checkoutGuard: true }, "");
 
     const onPopState = () => {
+      if (leavingRef.current) return;
+      leavingRef.current = true;
       window.location.href = downsellUrl;
     };
 
@@ -111,6 +113,19 @@ const Checkout = () => {
       window.removeEventListener("popstate", onPopState);
     };
   }, [product, done]);
+
+  // Upsell: após o pagamento aprovado, leva o comprador ao link de upsell
+  useEffect(() => {
+    const upsellUrl: string | undefined = product?.upsell_url?.trim() || undefined;
+    if (!done || !upsellUrl || upsellFiredRef.current) return;
+    upsellFiredRef.current = true;
+    const t = setTimeout(() => {
+      leavingRef.current = true;
+      window.location.href = upsellUrl;
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [done, product]);
+
 
   useEffect(() => {
     if (!id) return;
