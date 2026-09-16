@@ -469,7 +469,9 @@ const Checkout = () => {
           toast.error(data?.error || "Erro ao iniciar pagamento pela Zenofy. Tente novamente.");
         } else if (data.checkout_url) {
           toast.success("A abrir o pagamento seguro Zenofy...");
+          leavingRef.current = true;
           window.location.href = data.checkout_url;
+
           return;
         } else {
           toast.info("Pagamento criado na Zenofy. Aguardando confirmação...");
