@@ -513,7 +513,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_checkout_gtm: { Args: { p_user_id: string }; Returns: string }
+      get_checkout_product: {
+        Args: { p_id: string }
+        Returns: {
+          categoria: string
+          currency: string
+          delivery_type: string
+          descricao: string
+          downsell_url: string
+          id: string
+          image_url: string
+          meta_pixel_id: string
+          nome: string
+          order_bump_description: string
+          order_bump_price: number
+          order_bump_product_id: string
+          order_bump_title: string
+          payment_methods: string[]
+          preco: number
+          status: string
+          support_phone: string
+          tipo: string
+          upsell_url: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
