@@ -36,6 +36,9 @@ const Checkout = () => {
   const [verifying, setVerifying] = useState(false);
   const [bumpProduct, setBumpProduct] = useState<any>(null);
   const [bumpAccepted, setBumpAccepted] = useState(false);
+  const [accessUrl, setAccessUrl] = useState<string | null>(null);
+  const [bumpAccessUrl, setBumpAccessUrl] = useState<string | null>(null);
+
 
   // Controlo de saída/redirecionamentos (upsell / downsell)
   const leavingRef = useRef(false);
@@ -132,10 +135,26 @@ const Checkout = () => {
     return () => clearTimeout(t);
   }, [done, product]);
 
+  // Acesso ao produto: só é entregue após confirmação da venda (verificado no servidor)
+  useEffect(() => {
+    if (!done || !product?.id || !email) return;
+    let cancelled = false;
+    supabase.functions
+      .invoke("get-delivery-access", { body: { product_id: product.id, email } })
+      .then(({ data }) => {
+        if (cancelled || !data?.authorized) return;
+        setAccessUrl(data.access_url ?? null);
+        setBumpAccessUrl(data.bump_access_url ?? null);
+      })
+      .catch(() => { /* ignora */ });
+    return () => { cancelled = true; };
+  }, [done, product, email]);
+
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
+    supabase.rpc("get_checkout_product", { p_id: id }).then(({ data: rows }) => {
+      const data: any = Array.isArray(rows) ? rows[0] : rows;
       if (data) {
         setProduct(data);
 
@@ -143,11 +162,9 @@ const Checkout = () => {
         const bumpId = (data as any).order_bump_product_id;
         if (bumpId) {
           supabase
-            .from("products")
-            .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
-            .eq("id", bumpId)
-            .maybeSingle()
-            .then(({ data: bp }) => {
+            .rpc("get_checkout_product", { p_id: bumpId })
+            .then(({ data: bRows }) => {
+              const bp: any = Array.isArray(bRows) ? bRows[0] : bRows;
               if (bp) setBumpProduct(bp);
             });
         }
@@ -167,29 +184,22 @@ const Checkout = () => {
         }
 
         // 2) GTM do vendedor (continua global por conta)
-        supabase.from("integrations")
-          .select("tipo, config")
-          .eq("user_id", data.user_id)
-          .eq("ativo", true)
-          .eq("tipo", "gtm")
-          .then(({ data: integrations }) => {
-            integrations?.forEach((int) => {
-              const cfg = int.config as any;
-              if (cfg?.container_id) {
-                loadGTM(cfg.container_id);
-                pushDataLayer('view_item', {
-                  item_name: data.nome,
-                  item_id: data.id,
-                  price: Number(data.preco),
-                  currency: 'MZN',
-                });
-              }
+        supabase.rpc("get_checkout_gtm", { p_user_id: data.user_id }).then(({ data: containerId }) => {
+          if (containerId) {
+            loadGTM(containerId as string);
+            pushDataLayer('view_item', {
+              item_name: data.nome,
+              item_id: data.id,
+              price: Number(data.preco),
+              currency: 'MZN',
             });
-          });
+          }
+        });
       }
       setLoading(false);
     });
   }, [id]);
+
 
   // Ao voltar da Zenofy: confirma o pagamento diretamente na Zenofy
   useEffect(() => {
@@ -577,14 +587,11 @@ const Checkout = () => {
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
 
-    const handleDownload = async () => {
-      if (!product.file_url) return;
-      const { data } = await supabase.storage
-        .from("product-files")
-        .createSignedUrl(product.file_url, 3600);
-      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-      else toast.error("Erro ao gerar link de download.");
+    const handleDownload = () => {
+      if (accessUrl) window.open(accessUrl, "_blank");
+      else toast.info("Estamos a preparar o seu acesso. Enviámos também por email.");
     };
+
 
     return (
       <div className="min-h-screen bg-background">
@@ -625,10 +632,11 @@ const Checkout = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {deliveryType === "file" && product.file_url && <Button onClick={handleDownload} size="lg" className="h-12 w-full gap-2 font-bold"><Download className="h-5 w-5" /> Baixar produto</Button>}
-                    {deliveryType === "link" && product.external_url && <Button asChild size="lg" className="h-12 w-full gap-2 font-bold"><a href={product.external_url} target="_blank" rel="noopener noreferrer">Acessar produto <ArrowRight className="h-4 w-4" /></a></Button>}
+                    {deliveryType === "file" && <Button onClick={handleDownload} size="lg" className="h-12 w-full gap-2 font-bold"><Download className="h-5 w-5" /> Baixar produto</Button>}
+                    {deliveryType === "link" && accessUrl && <Button asChild size="lg" className="h-12 w-full gap-2 font-bold"><a href={accessUrl} target="_blank" rel="noopener noreferrer">Acessar produto <ArrowRight className="h-4 w-4" /></a></Button>}
                     {deliveryType === "members" && <div className="rounded-md border border-border bg-muted/30 p-4"><div className="mb-2 flex items-center gap-2 font-semibold"><Lock className="h-4 w-4 text-primary" /> Área de Membros</div><p className="text-sm text-muted-foreground">Consulte o seu email para entrar.</p></div>}
-                    {bumpAccepted && bumpProduct && <div className="rounded-md border border-border p-4"><p className="mb-2 text-sm font-semibold">Extra: {bumpProduct.nome}</p>{bumpProduct.delivery_type === "link" && bumpProduct.external_url ? <Button asChild variant="outline" size="sm" className="w-full"><a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">Acessar conteúdo extra</a></Button> : <p className="text-xs text-muted-foreground">O acesso foi enviado por email.</p>}</div>}
+                    {bumpAccepted && bumpProduct && <div className="rounded-md border border-border p-4"><p className="mb-2 text-sm font-semibold">Extra: {bumpProduct.nome}</p>{bumpAccessUrl ? <Button asChild variant="outline" size="sm" className="w-full"><a href={bumpAccessUrl} target="_blank" rel="noopener noreferrer">Acessar conteúdo extra</a></Button> : <p className="text-xs text-muted-foreground">O acesso foi enviado por email.</p>}</div>}
+
                   </div>
                 )}
               </div>

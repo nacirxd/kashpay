@@ -513,30 +513,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
+      get_checkout_gtm: { Args: { p_user_id: string }; Returns: string }
+      get_checkout_product: {
+        Args: { p_id: string }
         Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
+          categoria: string
+          currency: string
+          delivery_type: string
+          descricao: string
+          downsell_url: string
+          id: string
+          image_url: string
+          meta_pixel_id: string
+          nome: string
+          order_bump_description: string
+          order_bump_price: number
+          order_bump_product_id: string
+          order_bump_title: string
+          payment_methods: string[]
+          preco: number
+          status: string
+          support_phone: string
+          tipo: string
+          upsell_url: string
+          user_id: string
         }[]
       }
     }
