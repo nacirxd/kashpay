@@ -632,10 +632,11 @@ const Checkout = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {deliveryType === "file" && product.file_url && <Button onClick={handleDownload} size="lg" className="h-12 w-full gap-2 font-bold"><Download className="h-5 w-5" /> Baixar produto</Button>}
-                    {deliveryType === "link" && product.external_url && <Button asChild size="lg" className="h-12 w-full gap-2 font-bold"><a href={product.external_url} target="_blank" rel="noopener noreferrer">Acessar produto <ArrowRight className="h-4 w-4" /></a></Button>}
+                    {deliveryType === "file" && <Button onClick={handleDownload} size="lg" className="h-12 w-full gap-2 font-bold"><Download className="h-5 w-5" /> Baixar produto</Button>}
+                    {deliveryType === "link" && accessUrl && <Button asChild size="lg" className="h-12 w-full gap-2 font-bold"><a href={accessUrl} target="_blank" rel="noopener noreferrer">Acessar produto <ArrowRight className="h-4 w-4" /></a></Button>}
                     {deliveryType === "members" && <div className="rounded-md border border-border bg-muted/30 p-4"><div className="mb-2 flex items-center gap-2 font-semibold"><Lock className="h-4 w-4 text-primary" /> Área de Membros</div><p className="text-sm text-muted-foreground">Consulte o seu email para entrar.</p></div>}
-                    {bumpAccepted && bumpProduct && <div className="rounded-md border border-border p-4"><p className="mb-2 text-sm font-semibold">Extra: {bumpProduct.nome}</p>{bumpProduct.delivery_type === "link" && bumpProduct.external_url ? <Button asChild variant="outline" size="sm" className="w-full"><a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">Acessar conteúdo extra</a></Button> : <p className="text-xs text-muted-foreground">O acesso foi enviado por email.</p>}</div>}
+                    {bumpAccepted && bumpProduct && <div className="rounded-md border border-border p-4"><p className="mb-2 text-sm font-semibold">Extra: {bumpProduct.nome}</p>{bumpAccessUrl ? <Button asChild variant="outline" size="sm" className="w-full"><a href={bumpAccessUrl} target="_blank" rel="noopener noreferrer">Acessar conteúdo extra</a></Button> : <p className="text-xs text-muted-foreground">O acesso foi enviado por email.</p>}</div>}
+
                   </div>
                 )}
               </div>
