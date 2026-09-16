@@ -550,14 +550,9 @@ const Checkout = () => {
 
   if (done) {
     const deliveryType = product.delivery_type || "link";
-    const upsellUrl: string | undefined = product.upsell_url || undefined;
+    const upsellUrl: string | undefined = product.upsell_url?.trim() || undefined;
+    const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
-    // Se houver link de upsell, redireciona automaticamente após a aprovação
-    if (upsellUrl) {
-      setTimeout(() => {
-        window.location.href = upsellUrl;
-      }, 1500);
-    }
 
     const handleDownload = async () => {
       if (!product.file_url) return;
