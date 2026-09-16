@@ -153,8 +153,9 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!id) return;
-    supabase.rpc("get_checkout_product", { p_id: id }).then(({ data: rows }) => {
-      const data: any = Array.isArray(rows) ? rows[0] : rows;
+    const CHECKOUT_COLS =
+      "id, user_id, nome, descricao, preco, currency, image_url, delivery_type, status, categoria, tipo, payment_methods, meta_pixel_id, support_phone, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description";
+    supabase.from("products").select(CHECKOUT_COLS).eq("id", id).maybeSingle().then(({ data }) => {
       if (data) {
         setProduct(data);
 
@@ -162,9 +163,11 @@ const Checkout = () => {
         const bumpId = (data as any).order_bump_product_id;
         if (bumpId) {
           supabase
-            .rpc("get_checkout_product", { p_id: bumpId })
-            .then(({ data: bRows }) => {
-              const bp: any = Array.isArray(bRows) ? bRows[0] : bRows;
+            .from("products")
+            .select(CHECKOUT_COLS)
+            .eq("id", bumpId)
+            .maybeSingle()
+            .then(({ data: bp }) => {
               if (bp) setBumpProduct(bp);
             });
         }
@@ -184,20 +187,29 @@ const Checkout = () => {
         }
 
         // 2) GTM do vendedor (continua global por conta)
-        supabase.rpc("get_checkout_gtm", { p_user_id: data.user_id }).then(({ data: containerId }) => {
-          if (containerId) {
-            loadGTM(containerId as string);
-            pushDataLayer('view_item', {
-              item_name: data.nome,
-              item_id: data.id,
-              price: Number(data.preco),
-              currency: 'MZN',
-            });
-          }
-        });
+        supabase
+          .from("integrations")
+          .select("config")
+          .eq("user_id", (data as any).user_id)
+          .eq("tipo", "gtm")
+          .eq("ativo", true)
+          .maybeSingle()
+          .then(({ data: gtm }) => {
+            const containerId = (gtm?.config as any)?.container_id;
+            if (containerId) {
+              loadGTM(containerId as string);
+              pushDataLayer('view_item', {
+                item_name: data.nome,
+                item_id: data.id,
+                price: Number(data.preco),
+                currency: 'MZN',
+              });
+            }
+          });
       }
       setLoading(false);
     });
+
   }, [id]);
 
 
