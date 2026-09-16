@@ -135,6 +135,21 @@ const Checkout = () => {
     return () => clearTimeout(t);
   }, [done, product]);
 
+  // Acesso ao produto: só é entregue após confirmação da venda (verificado no servidor)
+  useEffect(() => {
+    if (!done || !product?.id || !email) return;
+    let cancelled = false;
+    supabase.functions
+      .invoke("get-delivery-access", { body: { product_id: product.id, email } })
+      .then(({ data }) => {
+        if (cancelled || !data?.authorized) return;
+        setAccessUrl(data.access_url ?? null);
+        setBumpAccessUrl(data.bump_access_url ?? null);
+      })
+      .catch(() => { /* ignora */ });
+    return () => { cancelled = true; };
+  }, [done, product, email]);
+
 
   useEffect(() => {
     if (!id) return;
