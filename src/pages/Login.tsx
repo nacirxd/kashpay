@@ -111,6 +111,24 @@ const Login = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><LogIn className="mr-2 h-4 w-4" /> Entrar</>}
           </Button>
+
+          {needsConfirm && (
+            <div className="rounded-lg border border-border bg-muted/40 p-4 text-left">
+              <p className="text-sm font-medium">Email ainda não confirmado</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abra o link que enviámos para <strong>{email}</strong> para activar a sua conta. Verifique também a pasta de spam.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full"
+                onClick={handleResend}
+                disabled={resending}
+              >
+                {resending ? "A reenviar..." : "Reenviar email de confirmação"}
+              </Button>
+            </div>
+          )}
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
