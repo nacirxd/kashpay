@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,12 @@ const Checkout = () => {
   const [verifying, setVerifying] = useState(false);
   const [bumpProduct, setBumpProduct] = useState<any>(null);
   const [bumpAccepted, setBumpAccepted] = useState(false);
+
+  // Controlo de saída/redirecionamentos (upsell / downsell)
+  const leavingRef = useRef(false);
+  const upsellFiredRef = useRef(false);
+  const guardPushedRef = useRef(false);
+
 
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
@@ -96,13 +102,15 @@ const Checkout = () => {
   // Downsell: se o cliente tentar voltar/sair do checkout sem concluir,
   // redireciona para o link de downsell configurado no produto.
   useEffect(() => {
-    const downsellUrl: string | undefined = product?.downsell_url || undefined;
-    if (!downsellUrl || done) return;
+    const downsellUrl: string | undefined = product?.downsell_url?.trim() || undefined;
+    if (!downsellUrl || done || guardPushedRef.current) return;
 
-    // Empilha um estado para podermos detectar o "voltar" do navegador
+    guardPushedRef.current = true;
     window.history.pushState({ checkoutGuard: true }, "");
 
     const onPopState = () => {
+      if (leavingRef.current) return;
+      leavingRef.current = true;
       window.location.href = downsellUrl;
     };
 
@@ -111,6 +119,19 @@ const Checkout = () => {
       window.removeEventListener("popstate", onPopState);
     };
   }, [product, done]);
+
+  // Upsell: após o pagamento aprovado, leva o comprador ao link de upsell
+  useEffect(() => {
+    const upsellUrl: string | undefined = product?.upsell_url?.trim() || undefined;
+    if (!done || !upsellUrl || upsellFiredRef.current) return;
+    upsellFiredRef.current = true;
+    const t = setTimeout(() => {
+      leavingRef.current = true;
+      window.location.href = upsellUrl;
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [done, product]);
+
 
   useEffect(() => {
     if (!id) return;
@@ -448,7 +469,9 @@ const Checkout = () => {
           toast.error(data?.error || "Erro ao iniciar pagamento pela Zenofy. Tente novamente.");
         } else if (data.checkout_url) {
           toast.success("A abrir o pagamento seguro Zenofy...");
+          leavingRef.current = true;
           window.location.href = data.checkout_url;
+
           return;
         } else {
           toast.info("Pagamento criado na Zenofy. Aguardando confirmação...");
@@ -550,14 +573,9 @@ const Checkout = () => {
 
   if (done) {
     const deliveryType = product.delivery_type || "link";
-    const upsellUrl: string | undefined = product.upsell_url || undefined;
+    const upsellUrl: string | undefined = product.upsell_url?.trim() || undefined;
+    const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
-    // Se houver link de upsell, redireciona automaticamente após a aprovação
-    if (upsellUrl) {
-      setTimeout(() => {
-        window.location.href = upsellUrl;
-      }, 1500);
-    }
 
     const handleDownload = async () => {
       if (!product.file_url) return;
@@ -581,14 +599,27 @@ const Checkout = () => {
 
           {upsellUrl ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">A redirecionar para a próxima oferta...</p>
-              <Button asChild size="lg" className="gap-2">
-                <a href={upsellUrl}>
-                  <ExternalLink className="h-5 w-5" /> Continuar
-                </a>
+              <p className="text-sm text-muted-foreground">A levar para a próxima oferta...</p>
+              <Button
+                size="lg"
+                className="gap-2 w-full"
+                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
+              >
+                <ExternalLink className="h-5 w-5" /> Continuar
               </Button>
+              {downsellUrl && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}
+                >
+                  Não, obrigado
+                </Button>
+              )}
             </div>
           ) : (
+
             <>
           {deliveryType === "file" && product.file_url && (
             <Button onClick={handleDownload} size="lg" className="gap-2">
