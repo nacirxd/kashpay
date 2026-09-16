@@ -576,14 +576,27 @@ const Checkout = () => {
 
           {upsellUrl ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">A redirecionar para a próxima oferta...</p>
-              <Button asChild size="lg" className="gap-2">
-                <a href={upsellUrl}>
-                  <ExternalLink className="h-5 w-5" /> Continuar
-                </a>
+              <p className="text-sm text-muted-foreground">A levar para a próxima oferta...</p>
+              <Button
+                size="lg"
+                className="gap-2 w-full"
+                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
+              >
+                <ExternalLink className="h-5 w-5" /> Continuar
               </Button>
+              {downsellUrl && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}
+                >
+                  Não, obrigado
+                </Button>
+              )}
             </div>
           ) : (
+
             <>
           {deliveryType === "file" && product.file_url && (
             <Button onClick={handleDownload} size="lg" className="gap-2">
