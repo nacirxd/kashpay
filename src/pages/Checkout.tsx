@@ -587,14 +587,11 @@ const Checkout = () => {
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
 
-    const handleDownload = async () => {
-      if (!product.file_url) return;
-      const { data } = await supabase.storage
-        .from("product-files")
-        .createSignedUrl(product.file_url, 3600);
-      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-      else toast.error("Erro ao gerar link de download.");
+    const handleDownload = () => {
+      if (accessUrl) window.open(accessUrl, "_blank");
+      else toast.info("Estamos a preparar o seu acesso. Enviámos também por email.");
     };
+
 
     return (
       <div className="min-h-screen bg-background">
