@@ -36,6 +36,9 @@ const Checkout = () => {
   const [verifying, setVerifying] = useState(false);
   const [bumpProduct, setBumpProduct] = useState<any>(null);
   const [bumpAccepted, setBumpAccepted] = useState(false);
+  const [accessUrl, setAccessUrl] = useState<string | null>(null);
+  const [bumpAccessUrl, setBumpAccessUrl] = useState<string | null>(null);
+
 
   // Controlo de saída/redirecionamentos (upsell / downsell)
   const leavingRef = useRef(false);
