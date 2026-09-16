@@ -37,6 +37,12 @@ const Checkout = () => {
   const [bumpProduct, setBumpProduct] = useState<any>(null);
   const [bumpAccepted, setBumpAccepted] = useState(false);
 
+  // Controlo de saída/redirecionamentos (upsell / downsell)
+  const leavingRef = useRef(false);
+  const upsellFiredRef = useRef(false);
+  const guardPushedRef = useRef(false);
+
+
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
 
