@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, amount, reference, product_id, user_id, name, email, whatsapp, bump_product_id, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
+    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
     if (!method || !phone || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -357,8 +357,8 @@ Deno.serve(async (req) => {
         }
 
         const [utmifyResult, webhookResult] = await Promise.all([
-          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
-          supabase.from('integrations').select('config, ativo').eq('user_id', user_id).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', priced.sellerId).eq('tipo', 'utmify').eq('ativo', true).maybeSingle(),
+          supabase.from('integrations').select('config, ativo').eq('user_id', priced.sellerId).eq('tipo', 'webhook').eq('ativo', true).maybeSingle(),
         ])
 
         // Tsemba SMS GLOBAL (controlado pelo admin via secrets) - dispara em todas as vendas aprovadas
@@ -377,7 +377,7 @@ Deno.serve(async (req) => {
             await new Promise((resolve) => setTimeout(resolve, 3000))
             const sent = await sendTsembaSMS(apiKey, senderId, normalized, message)
             await supabase.from('sms_logs').insert({
-              user_id,
+              user_id: priced.sellerId,
               sale_id: saleData?.id || null,
               provider: 'tsemba',
               recipient_phone: normalized,
@@ -391,7 +391,7 @@ Deno.serve(async (req) => {
             const reason = !apiKey ? 'TSEMBA_API_KEY nao configurado no admin' : 'Faltam telefone valido ou nome do comprador'
             console.log('Tsemba SMS ignorado:', reason)
             await supabase.from('sms_logs').insert({
-              user_id,
+              user_id: priced.sellerId,
               sale_id: saleData?.id || null,
               provider: 'tsemba',
               recipient_phone: normalized || buyerPhone || 'indisponivel',
@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
                 sale_id: saleData?.id || null,
                 product_id,
                 product_name: productData?.nome || null,
-                seller_id: user_id,
+                seller_id: priced.sellerId,
                 amount: amountNumber,
                 currency: productData?.currency || 'MZN',
                 payment_method: method,
