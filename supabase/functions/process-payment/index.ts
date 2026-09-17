@@ -297,18 +297,18 @@ Deno.serve(async (req) => {
         const { data: sellerProfile } = await supabase
           .from('profiles')
           .select('nome, email, telefone, mpesa_telefone')
-          .eq('user_id', user_id)
+          .eq('user_id', priced.sellerId)
           .maybeSingle()
 
         // Entrega da oferta extra (order bump)
-        if (status === 'approved' && bump_product_id) {
+        if (status === 'approved' && priced.bumpProductId) {
           await deliverOrderBump(supabase, {
             id: saleData?.id,
             buyer_email: email,
             buyer_name: name,
             payment_method: method,
-            bump_product_id,
-            bump_valor: bump_valor != null ? Number(bump_valor) : null,
+            bump_product_id: priced.bumpProductId,
+            bump_valor: priced.bumpValor,
           }, method)
         }
 
