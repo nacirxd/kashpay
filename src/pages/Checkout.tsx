@@ -135,7 +135,14 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
+    supabase
+      .from("products")
+      .select(
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
+      )
+      .eq("id", id)
+      .single()
+      .then(({ data }) => {
       if (data) {
         setProduct(data);
 
