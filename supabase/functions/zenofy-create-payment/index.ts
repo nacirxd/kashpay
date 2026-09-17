@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
 
     const { data: saleData, error: saleErr } = await supabase.from('sales').insert({
       product_id,
-      user_id,
+      user_id: priced.sellerId,
       valor: amountNumber,
       status: 'pending',
       buyer_name: name || null,
@@ -153,8 +153,8 @@ Deno.serve(async (req) => {
       payment_method: 'zenofy',
       payment_phone: localPhone,
       gateway: 'zenofy',
-      bump_product_id: bump_product_id || null,
-      bump_valor: bump_valor != null ? Number(bump_valor) : null,
+      bump_product_id: priced.bumpProductId,
+      bump_valor: priced.bumpValor,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
