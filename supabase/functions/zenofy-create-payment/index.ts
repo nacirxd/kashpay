@@ -4,6 +4,7 @@ const corsHeaders = {
 }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { resolvePrice } from '../_shared/pricing.ts'
 
 const ZENOFY_BASE = 'https://api.zenofy.io'
 
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
     } = body
 
 
-    if (!amount || !product_id || !user_id || !name || !email) {
+    if (!product_id || !name || !email) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -111,7 +112,14 @@ Deno.serve(async (req) => {
       })
     }
 
-    const amountNumber = Number(amount)
+    // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
+    const priced = await resolvePrice(supabase, product_id, bump_product_id)
+    if (priced.error) {
+      return new Response(JSON.stringify({ error: priced.error }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const amountNumber = priced.total
     const localPhone = normalizePhoneMZ9(phone || whatsapp || '')
     const zenofyPaymentMethods = [
       ...(settings.mpesa_enabled === 'false' ? [] : ['mpesa']),
