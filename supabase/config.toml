@@ -21,5 +21,3 @@ project_id = "eabvrprjqmpdcxkhwvbf"
     verify_jwt = false
   [functions.handle-email-events]
     verify_jwt = false
-  [functions.get-delivery-access]
-    verify_jwt = false

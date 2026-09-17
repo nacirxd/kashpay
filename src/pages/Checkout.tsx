@@ -10,7 +10,7 @@ import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, ArrowRight, Mail, PackageCheck } from "lucide-react";
+import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
@@ -36,9 +36,6 @@ const Checkout = () => {
   const [verifying, setVerifying] = useState(false);
   const [bumpProduct, setBumpProduct] = useState<any>(null);
   const [bumpAccepted, setBumpAccepted] = useState(false);
-  const [accessUrl, setAccessUrl] = useState<string | null>(null);
-  const [bumpAccessUrl, setBumpAccessUrl] = useState<string | null>(null);
-
 
   // Controlo de saída/redirecionamentos (upsell / downsell)
   const leavingRef = useRef(false);
@@ -135,27 +132,10 @@ const Checkout = () => {
     return () => clearTimeout(t);
   }, [done, product]);
 
-  // Acesso ao produto: só é entregue após confirmação da venda (verificado no servidor)
-  useEffect(() => {
-    if (!done || !product?.id || !email) return;
-    let cancelled = false;
-    supabase.functions
-      .invoke("get-delivery-access", { body: { product_id: product.id, email } })
-      .then(({ data }) => {
-        if (cancelled || !data?.authorized) return;
-        setAccessUrl(data.access_url ?? null);
-        setBumpAccessUrl(data.bump_access_url ?? null);
-      })
-      .catch(() => { /* ignora */ });
-    return () => { cancelled = true; };
-  }, [done, product, email]);
-
 
   useEffect(() => {
     if (!id) return;
-    const CHECKOUT_COLS =
-      "id, user_id, nome, descricao, preco, currency, image_url, delivery_type, status, categoria, tipo, payment_methods, meta_pixel_id, support_phone, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description";
-    supabase.from("products").select(CHECKOUT_COLS).eq("id", id).maybeSingle().then(({ data }) => {
+    supabase.from("products").select("*").eq("id", id).single().then(({ data }) => {
       if (data) {
         setProduct(data);
 
@@ -164,7 +144,7 @@ const Checkout = () => {
         if (bumpId) {
           supabase
             .from("products")
-            .select(CHECKOUT_COLS)
+            .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
             .eq("id", bumpId)
             .maybeSingle()
             .then(({ data: bp }) => {
@@ -187,31 +167,29 @@ const Checkout = () => {
         }
 
         // 2) GTM do vendedor (continua global por conta)
-        supabase
-          .from("integrations")
-          .select("config")
-          .eq("user_id", (data as any).user_id)
-          .eq("tipo", "gtm")
+        supabase.from("integrations")
+          .select("tipo, config")
+          .eq("user_id", data.user_id)
           .eq("ativo", true)
-          .maybeSingle()
-          .then(({ data: gtm }) => {
-            const containerId = (gtm?.config as any)?.container_id;
-            if (containerId) {
-              loadGTM(containerId as string);
-              pushDataLayer('view_item', {
-                item_name: data.nome,
-                item_id: data.id,
-                price: Number(data.preco),
-                currency: 'MZN',
-              });
-            }
+          .eq("tipo", "gtm")
+          .then(({ data: integrations }) => {
+            integrations?.forEach((int) => {
+              const cfg = int.config as any;
+              if (cfg?.container_id) {
+                loadGTM(cfg.container_id);
+                pushDataLayer('view_item', {
+                  item_name: data.nome,
+                  item_id: data.id,
+                  price: Number(data.preco),
+                  currency: 'MZN',
+                });
+              }
+            });
           });
       }
       setLoading(false);
     });
-
   }, [id]);
-
 
   // Ao voltar da Zenofy: confirma o pagamento diretamente na Zenofy
   useEffect(() => {
@@ -599,145 +577,356 @@ const Checkout = () => {
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
 
-    const handleDownload = () => {
-      if (accessUrl) window.open(accessUrl, "_blank");
-      else toast.info("Estamos a preparar o seu acesso. Enviámos também por email.");
+    const handleDownload = async () => {
+      if (!product.file_url) return;
+      const { data } = await supabase.storage
+        .from("product-files")
+        .createSignedUrl(product.file_url, 3600);
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+      else toast.error("Erro ao gerar link de download.");
     };
 
-
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border bg-card">
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-            <span className="text-lg font-extrabold text-foreground">Aureon <span className="text-primary">Pay</span></span>
-            <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Ambiente seguro</span>
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+        <motion.div className="max-w-md text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <CheckCircle className="h-8 w-8 text-primary" />
           </div>
-        </header>
-        <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl items-center justify-center px-5 py-10 sm:px-8 sm:py-16">
-          <motion.section className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-elevated" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="border-b border-border px-6 py-8 text-center sm:px-10 sm:py-10">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-8 ring-primary/5">
-                <CheckCircle className="h-9 w-9 text-primary" />
-              </div>
-              <p className="mb-2 text-xs font-bold uppercase text-primary">Pagamento confirmado</p>
-              <h1 className="text-2xl font-extrabold text-foreground sm:text-3xl">A sua compra foi concluída</h1>
-              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted-foreground">Obrigado, <strong className="text-foreground">{name || "cliente"}</strong>. O acesso a <strong className="text-foreground">{product.nome}</strong> já está disponível.</p>
+          <h1 className="text-2xl font-bold mb-2">Compra realizada!</h1>
+          <p className="text-muted-foreground mb-6">
+            Obrigado pela sua compra de <strong>{product.nome}</strong>.
+          </p>
+
+          {upsellUrl ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">A levar para a próxima oferta...</p>
+              <Button
+                size="lg"
+                className="gap-2 w-full"
+                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
+              >
+                <ExternalLink className="h-5 w-5" /> Continuar
+              </Button>
+              {downsellUrl && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}
+                >
+                  Não, obrigado
+                </Button>
+              )}
             </div>
+          ) : (
 
-            <div className="grid gap-6 px-6 py-7 sm:px-10 md:grid-cols-[1fr_0.8fr]">
-              <div>
-                <p className="mb-3 text-xs font-bold uppercase text-muted-foreground">Resumo da compra</p>
-                <div className="flex items-center gap-4 rounded-md border border-border bg-muted/30 p-4">
-                  {product.image_url ? <img src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${product.image_url}`} alt={product.nome} className="h-16 w-16 rounded-md object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-md bg-primary/10"><PackageCheck className="h-7 w-7 text-primary" /></div>}
-                  <div className="min-w-0 flex-1"><p className="truncate font-bold text-foreground">{product.nome}</p><p className="mt-1 text-sm text-muted-foreground">Pagamento aprovado</p></div>
-                  <p className="font-extrabold text-foreground">{formatCurrency(totalPrice, productCurrency)}</p>
-                </div>
-                <div className="mt-4 flex items-start gap-3 text-sm text-muted-foreground"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p>Também enviámos a confirmação e os dados de acesso para <strong className="text-foreground">{email || "o seu email"}</strong>.</p></div>
+            <>
+          {deliveryType === "file" && product.file_url && (
+            <Button onClick={handleDownload} size="lg" className="gap-2">
+              <Download className="h-5 w-5" /> Baixar arquivo
+            </Button>
+          )}
+
+          {deliveryType === "link" && product.external_url && (
+            <Button asChild size="lg" className="gap-2">
+              <a href={product.external_url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-5 w-5" /> Acessar conteúdo
+              </a>
+            </Button>
+          )}
+
+          {deliveryType === "members" && (
+            <div className="rounded-lg border border-border bg-card p-4 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <Lock className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm">Área de Membros</span>
               </div>
-
-              <div className="flex flex-col justify-center border-t border-border pt-6 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-                {upsellUrl ? (
-                  <div className="space-y-3">
-                    <p className="text-sm font-semibold text-foreground">A sua próxima oferta está pronta.</p>
-                    <Button size="lg" className="h-12 w-full gap-2 font-bold" onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}>Continuar <ArrowRight className="h-4 w-4" /></Button>
-                    {downsellUrl && <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}>Não, obrigado</Button>}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {deliveryType === "file" && <Button onClick={handleDownload} size="lg" className="h-12 w-full gap-2 font-bold"><Download className="h-5 w-5" /> Baixar produto</Button>}
-                    {deliveryType === "link" && accessUrl && <Button asChild size="lg" className="h-12 w-full gap-2 font-bold"><a href={accessUrl} target="_blank" rel="noopener noreferrer">Acessar produto <ArrowRight className="h-4 w-4" /></a></Button>}
-                    {deliveryType === "members" && <div className="rounded-md border border-border bg-muted/30 p-4"><div className="mb-2 flex items-center gap-2 font-semibold"><Lock className="h-4 w-4 text-primary" /> Área de Membros</div><p className="text-sm text-muted-foreground">Consulte o seu email para entrar.</p></div>}
-                    {bumpAccepted && bumpProduct && <div className="rounded-md border border-border p-4"><p className="mb-2 text-sm font-semibold">Extra: {bumpProduct.nome}</p>{bumpAccessUrl ? <Button asChild variant="outline" size="sm" className="w-full"><a href={bumpAccessUrl} target="_blank" rel="noopener noreferrer">Acessar conteúdo extra</a></Button> : <p className="text-xs text-muted-foreground">O acesso foi enviado por email.</p>}</div>}
-
-                  </div>
-                )}
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Seu acesso foi liberado. Verifique seu email para instruções.
+              </p>
             </div>
-            <div className="border-t border-border bg-muted/30 px-6 py-4 text-center text-xs text-muted-foreground">Compra protegida pela Aureon Pay</div>
-          </motion.section>
-        </main>
+          )}
+
+          {bumpAccepted && bumpProduct && (
+            <div className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
+              <p className="text-sm font-semibold mb-2">Oferta extra: {bumpProduct.nome}</p>
+              {bumpProduct.delivery_type === "link" && bumpProduct.external_url ? (
+                <Button asChild variant="outline" size="sm" className="gap-2">
+                  <a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" /> Acessar conteúdo extra
+                  </a>
+                </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Enviámos o acesso para o seu email.
+                </p>
+              )}
+            </div>
+          )}
+            </>
+          )}
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-destructive py-2.5 text-center text-xs font-bold text-destructive-foreground sm:text-sm">
-        Condição especial reservada por <span className="font-mono">{formatTime(countdown)}</span>
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-destructive text-destructive-foreground text-center py-2.5 text-sm font-bold tracking-wide">
+        Oferta expira em <span className="font-mono">{formatTime(countdown)}</span>
       </div>
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-          <span className="text-lg font-extrabold text-foreground">Aureon <span className="text-primary">Pay</span></span>
-          <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground sm:text-sm"><ShieldCheck className="h-4 w-4 text-primary" /> Compra 100% segura</span>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
-        <motion.div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-14" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <section className="order-2 lg:order-1">
-            <div className="mb-7">
-              <p className="mb-2 text-xs font-bold uppercase text-primary">Finalize a sua compra</p>
-              <h1 className="text-2xl font-extrabold text-foreground sm:text-3xl">Dados para entrega e pagamento</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Preencha os dados abaixo para receber o seu acesso.</p>
+      <div className="flex justify-center px-4 py-8">
+        <motion.div className="w-full max-w-[420px]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="rounded-xl border border-border/50 bg-card shadow-card overflow-hidden">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <span className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Compra segura
+              </span>
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <img
+                  src={isAOA ? "https://flagcdn.com/w40/ao.png" : "https://flagcdn.com/w40/mz.png"}
+                  alt={isAOA ? "AO" : "MZ"}
+                  className="h-3.5 w-5 rounded-sm object-cover"
+                />
+                {isAOA ? "Angola" : "Moçambique"}
+              </span>
             </div>
-            <div className="rounded-lg border border-border bg-card shadow-card">
-              <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-7">
-                <div className="flex items-center gap-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span><span className="font-bold text-foreground">Informações pessoais</span></div>
-                <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex"><Lock className="h-3.5 w-3.5" /> Dados protegidos</span>
+
+            <div className="flex items-center gap-3 px-5 pb-4 border-b border-border/50">
+              {product.image_url ? (
+                <img
+                  src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${product.image_url}`}
+                  alt={product.nome}
+                  className="h-14 w-14 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Smartphone className="h-6 w-6 text-primary" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-bold text-base truncate">{product.nome}</p>
+                {product.descricao && <p className="text-xs text-muted-foreground truncate">{product.descricao}</p>}
+                <p className="text-lg font-bold text-primary mt-0.5">{formatCurrency(Number(product.preco), productCurrency)}</p>
               </div>
-              <form onSubmit={handlePurchase} className="space-y-5 p-5 sm:p-7">
-               <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label className="text-sm font-semibold">Nome completo</Label>
-                  <Input className="h-12" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Como devemos chamar você?" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Email</Label>
-                  <Input className="h-12" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="voce@exemplo.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Número do WhatsApp</Label>
-                  <Input className="h-12" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required placeholder={productCurrency === "AOA" ? "9XX XXX XXX" : "8X XXX XXXX"} />
-                </div>
-               </div>
+            </div>
+
+            <form onSubmit={handlePurchase} className="p-5 space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-sm">Nome completo</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Seu nome" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Email</Label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm">Número do WhatsApp</Label>
+                <Input
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  required
+                  placeholder={productCurrency === "AOA" ? "9XX XXX XXX" : "8X XXX XXXX"}
+                />
+              </div>
 
               {!(enabledMethods.length === 1 && enabledMethods[0] === "zenofy") && (
-                <div className="space-y-3 border-t border-border pt-5">
-                  <div className="flex items-center gap-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span><Label className="font-bold">Forma de pagamento</Label></div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Método de pagamento</Label>
                   <div className={`grid gap-2 ${enabledMethods.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                    {enabledMethods.includes("mpesa") && method !== "zenofy" && <button type="button" onClick={() => { setMethod("mpesa"); setPayPhone(""); }} className={`flex min-h-14 items-center justify-center gap-2 rounded-md border px-3 py-3 transition-colors ${method === "mpesa" ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary" : "border-border bg-background text-muted-foreground hover:border-primary/50"}`} aria-label="Selecionar M-Pesa"><img src={mpesaLogo} alt="M-Pesa" className="h-8 w-8 object-contain" /><span className="text-sm font-semibold">M-Pesa</span></button>}
-                    {enabledMethods.includes("emola") && method !== "zenofy" && <button type="button" onClick={() => { setMethod("emola"); setPayPhone(""); }} className={`flex min-h-14 items-center justify-center gap-2 rounded-md border px-3 py-3 transition-colors ${method === "emola" ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary" : "border-border bg-background text-muted-foreground hover:border-primary/50"}`} aria-label="Selecionar e-Mola"><img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" /><span className="text-sm font-semibold">e-Mola</span></button>}
-                    {enabledMethods.includes("mcx") && method !== "zenofy" && <button type="button" onClick={() => { setMethod("mcx"); setPayPhone(""); }} className={`flex min-h-16 items-center justify-center gap-2 rounded-md border px-3 py-3 transition-colors ${method === "mcx" ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary" : "border-border bg-background text-muted-foreground hover:border-primary/50"}`} aria-label="Selecionar Multicaixa Express"><img src={mcxLogo} alt="Multicaixa Express" className="h-8 w-8 object-contain" /><span className="text-xs font-semibold">Multicaixa Express</span></button>}
-                    {enabledMethods.includes("ref") && method !== "zenofy" && <button type="button" onClick={() => { setMethod("ref"); setPayPhone(""); }} className={`flex min-h-16 items-center justify-center gap-2 rounded-md border px-3 py-3 transition-colors ${method === "ref" ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary" : "border-border bg-background text-muted-foreground hover:border-primary/50"}`} aria-label="Selecionar Referência"><img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" /><span className="text-xs font-semibold">Referência MCX</span></button>}
-                    {enabledMethods.includes("zenofy") && enabledMethods.length > 1 && <button type="button" onClick={() => { setMethod("zenofy"); setPayPhone(""); }} className={`flex min-h-14 items-center justify-center rounded-md border px-3 py-3 transition-colors ${method === "zenofy" ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary" : "border-border bg-background text-muted-foreground hover:border-primary/50"}`} aria-label="Selecionar Zenofy"><span className="text-sm font-semibold">Zenofy</span></button>}
+                    {enabledMethods.includes("mpesa") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("mpesa"); setPayPhone(""); }}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "mpesa"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar M-Pesa"
+                    >
+                      <img src={mpesaLogo} alt="M-Pesa" className="h-8 w-8 object-contain" />
+                      <span className="text-sm font-semibold">M-Pesa</span>
+                    </button>}
+                    {enabledMethods.includes("emola") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("emola"); setPayPhone(""); }}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "emola"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar e-Mola"
+                    >
+                      <img src={emolaLogo} alt="e-Mola" className="h-8 w-8 object-contain" />
+                      <span className="text-sm font-semibold">e-Mola</span>
+                    </button>}
+                    {enabledMethods.includes("mcx") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("mcx"); setPayPhone(""); }}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "mcx"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar Multicaixa Express"
+                    >
+                      <img src={mcxLogo} alt="Multicaixa Express" className="h-8 w-8 object-contain" />
+                      <span className="text-xs font-semibold leading-tight text-center">Multicaixa Express</span>
+                    </button>}
+                    {enabledMethods.includes("ref") && method !== "zenofy" && <button
+                      type="button"
+                      onClick={() => { setMethod("ref"); setPayPhone(""); }}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "ref"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar Referência"
+                    >
+                      <img src={refLogo} alt="Referência MCX" className="h-8 w-8 object-contain" />
+                      <span className="text-xs font-semibold leading-tight text-center">Referência MCX</span>
+                    </button>}
+                    {enabledMethods.includes("zenofy") && enabledMethods.length > 1 && <button
+                      type="button"
+                      onClick={() => { setMethod("zenofy"); setPayPhone(""); }}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
+                        method === "zenofy"
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      }`}
+                      aria-label="Selecionar Zenofy"
+                    >
+                      <span className="text-sm font-semibold">Zenofy</span>
+                    </button>}
                   </div>
+
+                  {method === "zenofy" && enabledMethods.length > 1 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground"
+                    >
+                      <div className="flex items-center gap-2 font-semibold">
+                        <span>Zenofy selecionado</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Será redirecionado para o pagamento seguro da Zenofy.
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
               )}
 
-              {method && method !== "ref" && method !== "zenofy" && <motion.div className="space-y-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><Label className="text-sm font-semibold">Número de pagamento</Label><Input className="h-12" value={payPhone} onChange={(e) => setPayPhone(e.target.value)} required placeholder={method === "mpesa" ? "84/85xxxxxxx" : method === "emola" ? "86/87xxxxxxx" : "9XXXXXXXX"} />{method === "mcx" && <p className="text-xs text-muted-foreground">Receberá uma notificação no Multicaixa Express para confirmar.</p>}</motion.div>}
+              {method && method !== "ref" && method !== "zenofy" && (
+                <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
+                  <Label className="text-sm">Número de pagamento</Label>
+                  <Input
+                    value={payPhone}
+                    onChange={(e) => setPayPhone(e.target.value)}
+                    required
+                    placeholder={
+                      method === "mpesa" ? "84/85xxxxxxx"
+                      : method === "emola" ? "86/87xxxxxxx"
+                      : "9XXXXXXXX"
+                    }
+                  />
+                  {method === "mcx" && (
+                    <p className="text-xs text-muted-foreground">
+                      Vai receber uma notificação push no app Multicaixa Express para confirmar.
+                    </p>
+                  )}
+                </motion.div>
+              )}
 
-              {bumpProduct && <motion.button type="button" onClick={() => setBumpAccepted((v) => !v)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`w-full rounded-md border p-4 text-left transition-colors ${bumpAccepted ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-muted/30 hover:border-primary/50"}`}><div className="flex items-start gap-3"><span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${bumpAccepted ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40 bg-background"}`}>{bumpAccepted && <CheckCircle className="h-3.5 w-3.5" />}</span><div className="min-w-0 flex-1"><p className="text-sm font-bold">{product.order_bump_title || `Sim! Quero adicionar ${bumpProduct.nome}`}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{product.order_bump_description || bumpProduct.descricao || "Adicione este extra à sua compra."}</p><span className="mt-2 block text-sm font-extrabold text-primary">+ {formatCurrency(bumpPrice, productCurrency)}</span></div>{bumpProduct.image_url && <img src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`} alt={bumpProduct.nome} className="h-14 w-14 shrink-0 rounded-md object-cover" />}</div></motion.button>}
+              {bumpProduct && (
+                <motion.button
+                  type="button"
+                  onClick={() => setBumpAccepted((v) => !v)}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`w-full text-left rounded-xl border-2 border-dashed p-3 transition-all ${
+                    bumpAccepted
+                      ? "border-primary bg-primary/5"
+                      : "border-primary/40 bg-primary/[0.03] hover:border-primary/70"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${
+                        bumpAccepted ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {bumpAccepted && <CheckCircle className="h-3.5 w-3.5" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold leading-snug">
+                        {product.order_bump_title || `Sim! Quero adicionar ${bumpProduct.nome}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {product.order_bump_description || bumpProduct.descricao || "Adicione este extra à sua compra."}
+                      </p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="text-sm font-bold text-primary">
+                          + {formatCurrency(bumpPrice, productCurrency)}
+                        </span>
+                        {bumpPrice < Number(bumpProduct.preco) && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatCurrency(Number(bumpProduct.preco), productCurrency)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {bumpProduct.image_url && (
+                      <img
+                        src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
+                        alt={bumpProduct.nome}
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                      />
+                    )}
+                  </div>
+                </motion.button>
+              )}
 
-              {method && <Button type="submit" className="h-14 w-full gap-2 text-base font-bold" disabled={paying}>{paying ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <>{method === "ref" ? "Gerar referência" : method === "zenofy" ? "Continuar para pagamento" : "Finalizar compra"}<ArrowRight className="h-4 w-4" /></>}</Button>}
-              <div className="flex items-center justify-center gap-5 pt-1 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Pagamento seguro</span><span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Dados protegidos</span></div>
-              </form>
-            </div>
-          </section>
-
-          <aside className="order-1 lg:order-2 lg:sticky lg:top-8">
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
-              {product.image_url ? <div className="aspect-[16/10] overflow-hidden bg-muted"><img src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${product.image_url}`} alt={product.nome} className="h-full w-full object-cover" /></div> : <div className="flex aspect-[16/8] items-center justify-center bg-primary/5"><Smartphone className="h-12 w-12 text-primary" /></div>}
-              <div className="p-5 sm:p-6">
-                <div className="mb-4 flex items-center justify-between"><span className="text-xs font-bold uppercase text-muted-foreground">Resumo do pedido</span><span className="text-xs font-medium text-muted-foreground">{isAOA ? "Angola · AOA" : "Moçambique · MZN"}</span></div>
-                <h2 className="text-xl font-extrabold text-foreground">{product.nome}</h2>
-                {product.descricao && <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{product.descricao}</p>}
-                <div className="mt-6 space-y-3 border-t border-border pt-5"><div className="flex justify-between gap-4 text-sm"><span className="text-muted-foreground">Produto</span><span className="font-semibold">{formatCurrency(basePrice, productCurrency)}</span></div>{bumpAccepted && bumpProduct && <div className="flex justify-between gap-4 text-sm"><span className="truncate text-muted-foreground">{bumpProduct.nome}</span><span className="font-semibold">{formatCurrency(bumpPrice, productCurrency)}</span></div>}<div className="flex items-end justify-between gap-4 border-t border-border pt-4"><span className="font-bold">Total</span><span className="text-2xl font-extrabold text-primary">{formatCurrency(totalPrice, productCurrency)}</span></div></div>
+              <div className="border-t border-border/50 mt-2 pt-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground truncate">{product.nome}</span>
+                  <span className="text-sm font-bold">{formatCurrency(basePrice, productCurrency)}</span>
+                </div>
+                {bumpAccepted && bumpProduct && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground truncate">{bumpProduct.nome}</span>
+                    <span className="text-sm font-bold">{formatCurrency(bumpPrice, productCurrency)}</span>
+                  </div>
+                )}
+                {bumpAccepted && bumpProduct && (
+                  <div className="flex items-center justify-between border-t border-border/50 pt-1.5">
+                    <span className="text-sm font-bold">Total</span>
+                    <span className="text-base font-bold text-primary">{formatCurrency(totalPrice, productCurrency)}</span>
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="mt-4 flex items-start gap-3 px-1 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><p>Transação processada num ambiente seguro. Os seus dados não são partilhados com terceiros.</p></div>
-          </aside>
+
+              {method && (
+                <Button type="submit" className="w-full h-12 text-base font-bold" disabled={paying}>
+                  {paying ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  ) : (
+                    method === "ref" ? "Gerar referência" : method === "zenofy" ? "Continuar" : "Comprar agora"
+                  )}
+                </Button>
+              )}
+
+              <p className="text-center text-xs text-muted-foreground pt-1">
+                🔒 Pagamento seguro e criptografado
+              </p>
+            </form>
+          </div>
         </motion.div>
-      </main>
+      </div>
+
       <Dialog open={refOpen} onOpenChange={setRefOpen}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-full max-w-md p-0 gap-0 overflow-hidden max-h-[90vh] sm:max-h-[85vh] rounded-2xl">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[90vh] sm:max-h-[85vh]">
