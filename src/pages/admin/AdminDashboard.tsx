@@ -122,7 +122,7 @@ const AdminDashboard = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(productChannel);
+      window.clearInterval(statsInterval);
       supabase.removeChannel(withdrawalChannel);
     };
   }, []);
