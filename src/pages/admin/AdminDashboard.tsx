@@ -103,19 +103,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadStats();
 
-    const productChannel = supabase
-      .channel("admin-products")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "products" }, (payload) => {
-        const p = payload.new as any;
-        const notif: Notification = {
-          id: crypto.randomUUID(), type: "product",
-          message: `Novo produto criado: "${p.nome}"`, time: new Date().toISOString(),
-        };
-        setNotifications((prev) => [notif, ...prev].slice(0, 20));
-        toast.info(`📦 Novo produto: ${p.nome}`, { duration: 5000 });
-        loadStats();
-      })
-      .subscribe();
+    // Produtos não são transmitidos em tempo real (contêm dados sensíveis do vendedor):
+    // atualizamos os números periodicamente.
+    const statsInterval = window.setInterval(() => loadStats(), 60000);
 
     const withdrawalChannel = supabase
       .channel("admin-withdrawals")
