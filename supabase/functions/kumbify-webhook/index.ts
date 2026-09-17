@@ -22,6 +22,21 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
+    // Autenticação do webhook: segredo compartilhado (header ou query ?secret=)
+    const expectedSecret = Deno.env.get('KUMBIFY_WEBHOOK_SECRET') || ''
+    const url = new URL(req.url)
+    const providedSecret =
+      req.headers.get('x-webhook-secret') ||
+      req.headers.get('x-kumbify-secret') ||
+      url.searchParams.get('secret') ||
+      ''
+    if (!expectedSecret || providedSecret !== expectedSecret) {
+      console.warn('[kumbify-webhook] pedido rejeitado: segredo inválido')
+      return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const body = await req.json().catch(() => ({} as any))
     console.log('[kumbify-webhook] payload:', JSON.stringify(body))
 

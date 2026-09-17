@@ -4,6 +4,7 @@ const corsHeaders = {
 }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { resolvePrice } from '../_shared/pricing.ts'
 
 const KUMBIFY_BASE = 'https://kumbify-payment-api-production.up.railway.app/api'
 
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const { method, phone, amount, product_id, user_id, name, email, whatsapp, bump_product_id, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = body
 
-    if (!method || !amount || !product_id || !user_id) {
+    if (!method || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -84,12 +85,20 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-    const amountNumber = Number(amount)
+
+    // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
+    const priced = await resolvePrice(supabase, product_id, bump_product_id)
+    if (priced.error) {
+      return new Response(JSON.stringify({ error: priced.error }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const amountNumber = priced.total
 
     // 1) Cria venda como pending
     const { data: saleData, error: saleErr } = await supabase.from('sales').insert({
       product_id,
-      user_id,
+      user_id: priced.sellerId,
       valor: amountNumber,
       status: 'pending',
       buyer_name: name || null,
@@ -98,8 +107,8 @@ Deno.serve(async (req) => {
       payment_method: method,
       payment_phone: phoneAo || null,
       gateway: 'kumbify',
-      bump_product_id: bump_product_id || null,
-      bump_valor: bump_valor != null ? Number(bump_valor) : null,
+      bump_product_id: priced.bumpProductId,
+      bump_valor: priced.bumpValor,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
