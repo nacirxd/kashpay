@@ -6,6 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 import { sendAppEmail } from '../_shared/sendAppEmail.ts'
+import { resolvePrice } from '../_shared/pricing.ts'
 
 const EXCHANGE_RATE_URL = 'https://open.er-api.com/v6/latest/MZN'
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
@@ -73,6 +74,9 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
 }
 
 // Sistema de SMS externo (recebe aviso de venda aprovada e envia o SMS)
+const E2PAY_CLIENT_ID = Deno.env.get('E2PAY_CLIENT_ID') ?? ''
+const E2PAY_CLIENT_SECRET = Deno.env.get('E2PAY_CLIENT_SECRET') ?? ''
+
 const DEFAULT_SMS_WEBHOOK_URL = 'https://zenofyetsembasms.online/api/public/tsemba/webhook'
 
 async function notifySmsWebhook(url: string, payload: Record<string, unknown>) {
@@ -125,7 +129,7 @@ Deno.serve(async (req) => {
   try {
     const { method, phone, amount, reference, product_id, user_id, name, email, whatsapp, bump_product_id, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
-    if (!method || !phone || !amount || !product_id || !user_id) {
+    if (!method || !phone || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -160,8 +164,8 @@ Deno.serve(async (req) => {
       signal: tokenController.signal,
       body: new URLSearchParams({
         grant_type: "client_credentials",
-        client_id: "9ec6e1b3-f7ba-42ce-a580-a781788989ed",
-        client_secret: "OukiSHefGsaydwOTRRlLdIY88s4NegQfSjgBofAH",
+        client_id: E2PAY_CLIENT_ID,
+        client_secret: E2PAY_CLIENT_SECRET,
       }),
     })
     clearTimeout(tokenTimeout)
@@ -181,11 +185,19 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const amountNumber = Number(amount)
+    // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
+    const priced = await resolvePrice(supabase, product_id, bump_product_id)
+    if (priced.error) {
+      return new Response(JSON.stringify({ error: priced.error }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const amountNumber = priced.total
 
     const { data: saleData } = await supabase.from('sales').insert({
       product_id,
-      user_id,
+      user_id: priced.sellerId,
       valor: amountNumber,
       status: 'pending',
       buyer_name: name || null,
@@ -193,8 +205,8 @@ Deno.serve(async (req) => {
       buyer_whatsapp: whatsapp || null,
       payment_method: method || null,
       payment_phone: phone || null,
-      bump_product_id: bump_product_id || null,
-      bump_valor: bump_valor != null ? Number(bump_valor) : null,
+      bump_product_id: priced.bumpProductId,
+      bump_valor: priced.bumpValor,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
@@ -243,8 +255,8 @@ Deno.serve(async (req) => {
           'X-Requested-With': 'XMLHttpRequest',
         },
         body: new URLSearchParams({
-          client_id: "9ec6e1b3-f7ba-42ce-a580-a781788989ed",
-          amount: String(amount),
+          client_id: E2PAY_CLIENT_ID,
+          amount: String(amountNumber),
           reference: reference || "moonpay",
           phone: e2payPhone,
         }),
@@ -307,7 +319,7 @@ Deno.serve(async (req) => {
             templateData: {
                   buyerName: name,
                   productName: productData?.nome || 'Produto',
-                  amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
+                  amount: `${amountNumber.toLocaleString('pt-MZ')} MT`,
                   paymentMethod: method,
                   accessUrl: await resolveAccessUrl(supabase, productData),
                   accessType: productData?.delivery_type,
@@ -330,7 +342,7 @@ Deno.serve(async (req) => {
             templateData: {
                     sellerName: sellerProfile.nome || undefined,
                     productName: productData?.nome || 'Produto',
-                    amount: `${Number(amount).toLocaleString('pt-MZ')} MT`,
+                    amount: `${amountNumber.toLocaleString('pt-MZ')} MT`,
                     buyerName: name || undefined,
                     buyerEmail: email || undefined,
                     paymentMethod: method,
@@ -356,7 +368,7 @@ Deno.serve(async (req) => {
           const buyerPhone = phone
           const normalized = normalizePhoneMZ(buyerPhone || '')
           const firstName = String(name || '').split(' ')[0]
-          const valorFormatado = `${Number(amount).toLocaleString('pt-MZ')} MT`
+          const valorFormatado = `${amountNumber.toLocaleString('pt-MZ')} MT`
           const supportContact = (productData?.support_phone || '').toString().trim() || '864381528'
           const message = `Ola ${firstName}, confirmamos sua compra de ${valorFormatado}. Duvidas? Fale conosco no WhatsApp: ${supportContact}`
 
