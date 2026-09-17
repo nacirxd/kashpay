@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
       ? 'https://e2payments.explicador.co.mz/v1/c2b/mpesa-payment/993700'
       : 'https://e2payments.explicador.co.mz/v1/c2b/emola-payment/993699'
 
-    console.log(`[e2pay] ${method} request → phone=${e2payPhone} amount=${amount} sale=${saleData?.id}`)
+    console.log(`[e2pay] ${method} request → phone=${e2payPhone} amount=${amountNumber} sale=${saleData?.id}`)
 
     let payResp: Response | null = null
     let payData: any = {}
