@@ -887,11 +887,11 @@ const Checkout = () => {
                       <img
                         src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
                         alt={bumpProduct.nome}
-                        className="h-[72px] w-[72px] shrink-0 rounded-xl object-cover"
+                        className="h-14 w-14 shrink-0 rounded-lg object-cover"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="h-[72px] w-[72px] shrink-0 rounded-xl bg-muted" />
+                      <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />
                     )}
 
                     <div className="min-w-0 flex-1">
