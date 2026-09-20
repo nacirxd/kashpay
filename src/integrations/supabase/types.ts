@@ -189,6 +189,7 @@ export type Database = {
           order_bump_price: number | null
           order_bump_product_id: string | null
           order_bump_title: string | null
+          order_bumps: Json
           payment_methods: string[]
           preco: number
           status: string
@@ -219,6 +220,7 @@ export type Database = {
           order_bump_price?: number | null
           order_bump_product_id?: string | null
           order_bump_title?: string | null
+          order_bumps?: Json
           payment_methods?: string[]
           preco?: number
           status?: string
@@ -249,6 +251,7 @@ export type Database = {
           order_bump_price?: number | null
           order_bump_product_id?: string | null
           order_bump_title?: string | null
+          order_bumps?: Json
           payment_methods?: string[]
           preco?: number
           status?: string
@@ -329,6 +332,7 @@ export type Database = {
         Row: {
           bump_product_id: string | null
           bump_valor: number | null
+          bumps: Json
           buyer_email: string | null
           buyer_name: string | null
           buyer_whatsapp: string | null
@@ -353,6 +357,7 @@ export type Database = {
         Insert: {
           bump_product_id?: string | null
           bump_valor?: number | null
+          bumps?: Json
           buyer_email?: string | null
           buyer_name?: string | null
           buyer_whatsapp?: string | null
@@ -377,6 +382,7 @@ export type Database = {
         Update: {
           bump_product_id?: string | null
           bump_valor?: number | null
+          bumps?: Json
           buyer_email?: string | null
           buyer_name?: string | null
           buyer_whatsapp?: string | null
