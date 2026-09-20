@@ -649,7 +649,7 @@ const Checkout = () => {
               <Button
                 size="lg"
                 className="gap-2 w-full"
-                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
+                onClick={() => goToOffer(upsellUrl, "upsell")}
               >
                 <ExternalLink className="h-5 w-5" /> Continuar
               </Button>
