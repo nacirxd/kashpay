@@ -139,7 +139,7 @@ const Checkout = () => {
     supabase
       .from("products")
       .select(
-        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description, order_bumps"
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, payment_methods, meta_pixel_id, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description, order_bumps"
       )
       .eq("id", id)
       .single()
@@ -168,7 +168,7 @@ const Checkout = () => {
         if (bumpCfgs.length) {
           supabase
             .from("products")
-            .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
+            .select("id, nome, descricao, preco, currency, image_url, delivery_type")
             .in("id", bumpCfgs.map((b) => b.id))
             .then(({ data: rows }) => {
               const byId = new Map((rows || []).map((r: any) => [r.id, r]));
