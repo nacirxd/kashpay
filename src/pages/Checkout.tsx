@@ -855,8 +855,10 @@ const Checkout = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}
-                  className={`w-full text-left rounded-xl bg-card p-3 transition-colors ${
-                    bumpAccepted ? "border border-primary/50" : "border border-transparent hover:border-border"
+                  className={`w-full text-left rounded-xl p-3 transition-colors border-2 border-dashed ${
+                    bumpAccepted
+                      ? "border-primary/60 bg-primary/5"
+                      : "border-emerald-600/40 bg-emerald-500/[0.04] hover:border-emerald-600/60"
                   }`}
                 >
                   <div className="flex items-stretch gap-2">
@@ -864,18 +866,18 @@ const Checkout = () => {
                       <img
                         src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
                         alt={bumpProduct.nome}
-                        className="h-14 w-14 shrink-0 rounded-lg border border-border object-cover"
+                        className="h-14 w-14 shrink-0 rounded-lg object-cover"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="h-14 w-14 shrink-0 rounded-lg border border-border bg-muted" />
+                      <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />
                     )}
 
-                    <div className="min-w-0 flex-1 rounded-lg border border-border px-3 py-1.5 flex flex-col justify-center">
+                    <div className="min-w-0 flex-1 flex flex-col justify-center">
                       <p className="truncate text-sm font-bold uppercase leading-snug tracking-tight">
                         {product.order_bump_title || bumpProduct.nome}
                       </p>
-                      <p className="mt-0.5 text-sm font-bold text-primary">
+                      <p className="mt-0.5 text-sm font-bold text-emerald-600">
                         {formatCurrency(bumpPrice, productCurrency)}
                       </p>
                     </div>
