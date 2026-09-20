@@ -892,7 +892,7 @@ const Checkout = () => {
                         }
                         className="flex"
                       >
-                        <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={2.5} />
+                        <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={3.5} />
                       </motion.span>
                       <span
                         className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
