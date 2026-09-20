@@ -10,13 +10,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [statusLoading, setStatusLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       setStatus(null);
       setStatusLoading(false);
       return;
     }
     let cancelled = false;
-    setStatusLoading(true);
     supabase
       .from("profiles")
       .select("status")
@@ -28,9 +27,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         setStatusLoading(false);
       });
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user?.id]);
 
-  if (loading || (user && statusLoading)) {
+  if (loading || (user && statusLoading && status === null)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
