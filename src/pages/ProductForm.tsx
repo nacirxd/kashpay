@@ -74,7 +74,6 @@ const ProductForm = () => {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   
   const [externalUrl, setExternalUrl] = useState("");
-  const [upsellUrl, setUpsellUrl] = useState("");
   const [upsells, setUpsells] = useState<{ title: string; url: string }[]>([]);
   const [downsellUrl, setDownsellUrl] = useState("");
   const [bumpProductId, setBumpProductId] = useState<string>("none");
@@ -133,7 +132,6 @@ const ProductForm = () => {
             setMetaAccessToken((data as any).meta_access_token || "");
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
-            setUpsellUrl((data as any).upsell_url || "");
             setDownsellUrl((data as any).downsell_url || "");
             const rawUpsells = (data as any).upsell_urls;
             if (Array.isArray(rawUpsells) && rawUpsells.length) {
