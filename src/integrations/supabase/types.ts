@@ -196,6 +196,7 @@ export type Database = {
           support_phone: string | null
           tipo: string
           upsell_url: string | null
+          upsell_urls: Json
           user_id: string
           webhook_url: string | null
           zenofy_product_id: string | null
@@ -225,6 +226,7 @@ export type Database = {
           support_phone?: string | null
           tipo?: string
           upsell_url?: string | null
+          upsell_urls?: Json
           user_id: string
           webhook_url?: string | null
           zenofy_product_id?: string | null
@@ -254,6 +256,7 @@ export type Database = {
           support_phone?: string | null
           tipo?: string
           upsell_url?: string | null
+          upsell_urls?: Json
           user_id?: string
           webhook_url?: string | null
           zenofy_product_id?: string | null
