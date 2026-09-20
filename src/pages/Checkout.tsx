@@ -17,6 +17,17 @@ import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
 
+// Lista de upsells do produto (vários links ou fallback para o link único antigo)
+const getUpsells = (p: any): { title: string; url: string }[] => {
+  const arr = Array.isArray(p?.upsell_urls) ? p.upsell_urls : [];
+  const list = arr
+    .filter((u: any) => u && typeof u.url === "string" && u.url.trim())
+    .map((u: any) => ({ title: String(u.title || "").trim(), url: String(u.url).trim() }));
+  if (list.length) return list;
+  const single = p?.upsell_url?.trim();
+  return single ? [{ title: "", url: single }] : [];
+};
+
 const Checkout = () => {
   const { id } = useParams();
   const [product, setProduct] = useState<any>(null);
@@ -121,13 +132,14 @@ const Checkout = () => {
   }, [product, done]);
 
   // Upsell: após o pagamento aprovado, leva o comprador ao link de upsell
+  // (redirecionamento automático apenas quando há um único upsell)
   useEffect(() => {
-    const upsellUrl: string | undefined = product?.upsell_url?.trim() || undefined;
-    if (!done || !upsellUrl || upsellFiredRef.current) return;
+    const upsells = getUpsells(product);
+    if (!done || upsells.length !== 1 || upsellFiredRef.current) return;
     upsellFiredRef.current = true;
     const t = setTimeout(() => {
       leavingRef.current = true;
-      window.location.href = upsellUrl;
+      window.location.href = upsells[0].url;
     }, 2500);
     return () => clearTimeout(t);
   }, [done, product]);
@@ -138,7 +150,7 @@ const Checkout = () => {
     supabase
       .from("products")
       .select(
-        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, upsell_urls, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
       )
       .eq("id", id)
       .single()
@@ -580,7 +592,7 @@ const Checkout = () => {
 
   if (done) {
     const deliveryType = product.delivery_type || "link";
-    const upsellUrl: string | undefined = product.upsell_url?.trim() || undefined;
+    const upsells = getUpsells(product);
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
 
@@ -604,19 +616,25 @@ const Checkout = () => {
             Obrigado pela sua compra de <strong>{product.nome}</strong>.
           </p>
 
-          {upsellUrl ? (
+          {upsells.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">A levar para a próxima oferta...</p>
-              <Button
-                size="lg"
-                className="gap-2 w-full"
-                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
-              >
-                <ExternalLink className="h-5 w-5" /> Continuar
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                {upsells.length === 1 ? "A levar para a próxima oferta..." : "Ofertas especiais para si:"}
+              </p>
+              {upsells.map((u, i) => (
+                <Button
+                  key={i}
+                  size="lg"
+                  className="gap-2 w-full"
+                  variant={i === 0 ? "default" : "outline"}
+                  onClick={() => { leavingRef.current = true; window.location.href = u.url; }}
+                >
+                  <ExternalLink className="h-5 w-5" /> {u.title || (upsells.length === 1 ? "Continuar" : `Ver oferta ${i + 1}`)}
+                </Button>
+              ))}
               {downsellUrl && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="lg"
                   className="w-full"
                   onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}

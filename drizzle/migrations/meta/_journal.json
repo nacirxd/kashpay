@@ -15,6 +15,13 @@
       "when": 1789913369780,
       "tag": "0001_restore_anon_checkout_select_products",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789918619745,
+      "tag": "0002_add_multiple_upsells",
+      "breakpoints": true
     }
   ]
 }
