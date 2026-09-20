@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { method, phone, amount, product_id, user_id, name, email, whatsapp, bump_product_id, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = body
+    const { method, phone, amount, product_id, user_id, name, email, whatsapp, bump_product_id, bump_product_ids, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = body
 
     if (!method || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -87,7 +87,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
     // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
-    const priced = await resolvePrice(supabase, product_id, bump_product_id)
+    const priced = await resolvePrice(supabase, product_id,
+      Array.isArray(bump_product_ids) && bump_product_ids.length ? bump_product_ids : bump_product_id)
     if (priced.error) {
       return new Response(JSON.stringify({ error: priced.error }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -109,6 +110,7 @@ Deno.serve(async (req) => {
       gateway: 'kumbify',
       bump_product_id: priced.bumpProductId,
       bump_valor: priced.bumpValor,
+      bumps: priced.bumps,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
