@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
-import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
+import { loadMetaPixel, trackEvent, trackCustom, withMetaTracking } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X, ArrowDown } from "lucide-react";
