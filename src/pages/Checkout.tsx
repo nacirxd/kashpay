@@ -581,7 +581,7 @@ const Checkout = () => {
 
   if (done) {
     const deliveryType = product.delivery_type || "link";
-    const upsells = getUpsells(product);
+    const upsellUrl: string | undefined = product.upsell_url?.trim() || undefined;
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
 
@@ -605,22 +605,16 @@ const Checkout = () => {
             Obrigado pela sua compra de <strong>{product.nome}</strong>.
           </p>
 
-          {upsells.length > 0 ? (
+          {upsellUrl ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                {upsells.length === 1 ? "A levar para a próxima oferta..." : "Ofertas especiais para si:"}
-              </p>
-              {upsells.map((u, i) => (
-                <Button
-                  key={i}
-                  size="lg"
-                  className="gap-2 w-full"
-                  variant={i === 0 ? "default" : "outline"}
-                  onClick={() => { leavingRef.current = true; window.location.href = u.url; }}
-                >
-                  <ExternalLink className="h-5 w-5" /> {u.title || (upsells.length === 1 ? "Continuar" : `Ver oferta ${i + 1}`)}
-                </Button>
-              ))}
+              <p className="text-sm text-muted-foreground">A levar para a próxima oferta...</p>
+              <Button
+                size="lg"
+                className="gap-2 w-full"
+                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
+              >
+                <ExternalLink className="h-5 w-5" /> Continuar
+              </Button>
               {downsellUrl && (
                 <Button
                   variant="ghost"
