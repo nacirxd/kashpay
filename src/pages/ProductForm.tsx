@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatMZN, formatCurrency } from "@/lib/currency";
-import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
@@ -788,42 +788,15 @@ const ProductForm = () => {
             </p>
           </div>
           <div className="space-y-2">
-            <Label>Links de upsell</Label>
-            {upsells.map((u, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Input
-                  value={u.title}
-                  onChange={(e) => setUpsells(upsells.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
-                  placeholder="Nome da oferta (opcional)"
-                  className="w-2/5"
-                />
-                <Input
-                  type="url"
-                  value={u.url}
-                  onChange={(e) => setUpsells(upsells.map((x, j) => j === i ? { ...x, url: e.target.value } : x))}
-                  placeholder="https://..."
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setUpsells(upsells.filter((_, j) => j !== i))}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={() => setUpsells([...upsells, { title: "", url: "" }])}
-            >
-              <Plus className="h-4 w-4" /> Adicionar upsell
-            </Button>
-            <p className="text-xs text-muted-foreground">Ofertas extras apresentadas após a compra aprovada. Com um só link, o cliente é levado automaticamente; com vários, ele escolhe.</p>
+            <Label htmlFor="upsellUrl">Link de upsell</Label>
+            <Input
+              id="upsellUrl"
+              type="url"
+              value={upsellUrl}
+              onChange={(e) => setUpsellUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Após a compra aprovada, o cliente é levado automaticamente para este link.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="downsellUrl">Link de downsell</Label>
