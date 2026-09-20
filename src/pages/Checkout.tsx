@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import { getStoredUTMs, captureUTMs } from "@/lib/utm";
-import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
+import { loadMetaPixel, trackEvent, trackCustom, withMetaTracking } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X, ArrowDown } from "lucide-react";
@@ -43,6 +43,33 @@ const Checkout = () => {
   const upsellFiredRef = useRef(false);
   const guardPushedRef = useRef(false);
 
+
+  // Envia o evento ao Meta e leva o cliente à oferta (upsell / downsell),
+  // reencaminhando os identificadores do anúncio para que a venda dessa
+  // oferta também seja atribuída à mesma campanha.
+  const goToOffer = (url: string, kind: "upsell" | "downsell") => {
+    const pixelId = (product as any)?.meta_pixel_id?.trim() || undefined;
+    trackCustom(kind === "upsell" ? "UpsellClick" : "DownsellClick", {
+      content_name: product?.nome,
+      content_ids: product?.id ? [product.id] : undefined,
+      currency: (product?.currency as string) || "MZN",
+    });
+    pushDataLayer(kind === "upsell" ? "upsell_click" : "downsell_click", {
+      item_name: product?.nome,
+      item_id: product?.id,
+    });
+    leavingRef.current = true;
+    window.location.href = withMetaTracking(url, {
+      pixelId,
+      extra: {
+        offer: kind,
+        src_product_id: product?.id,
+        email: email || undefined,
+        name: name || undefined,
+        phone: whatsapp || undefined,
+      },
+    });
+  };
 
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
@@ -111,8 +138,7 @@ const Checkout = () => {
 
     const onPopState = () => {
       if (leavingRef.current) return;
-      leavingRef.current = true;
-      window.location.href = downsellUrl;
+      goToOffer(downsellUrl, "downsell");
     };
 
     window.addEventListener("popstate", onPopState);
@@ -127,8 +153,7 @@ const Checkout = () => {
     if (!done || !upsellUrl || upsellFiredRef.current) return;
     upsellFiredRef.current = true;
     const t = setTimeout(() => {
-      leavingRef.current = true;
-      window.location.href = upsellUrl;
+      goToOffer(upsellUrl, "upsell");
     }, 2500);
     return () => clearTimeout(t);
   }, [done, product]);
@@ -624,7 +649,7 @@ const Checkout = () => {
               <Button
                 size="lg"
                 className="gap-2 w-full"
-                onClick={() => { leavingRef.current = true; window.location.href = upsellUrl; }}
+                onClick={() => goToOffer(upsellUrl, "upsell")}
               >
                 <ExternalLink className="h-5 w-5" /> Continuar
               </Button>
@@ -633,7 +658,7 @@ const Checkout = () => {
                   variant="ghost"
                   size="lg"
                   className="w-full"
-                  onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}
+                  onClick={() => { upsellFiredRef.current = true; goToOffer(downsellUrl, "downsell"); }}
                 >
                   Não, obrigado
                 </Button>
