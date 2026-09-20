@@ -168,7 +168,10 @@ const ProductForm = () => {
           setProductSales(data || []);
         });
     }
-  }, [id, user]);
+    // Depende só do id do utilizador: ao voltar à aba o token é renovado e o
+    // objeto `user` muda de identidade — sem isto o formulário recarregava sozinho.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.id]);
 
   const productStats = useMemo(() => {
     const approved = productSales.filter((s) => s.status === "approved");
