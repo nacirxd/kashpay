@@ -861,7 +861,17 @@ const Checkout = () => {
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex flex-col items-center gap-2.5 pt-0.5">
-                      <ArrowDown className="h-4 w-4 text-destructive" />
+                      <motion.span
+                        animate={bumpAccepted ? { y: 0 } : { y: [-3, 3, -3] }}
+                        transition={
+                          bumpAccepted
+                            ? { duration: 0.2 }
+                            : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
+                        }
+                        className="flex"
+                      >
+                        <ArrowDown className="h-4 w-4 text-destructive" />
+                      </motion.span>
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                           bumpAccepted
