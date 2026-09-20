@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatMZN, formatCurrency } from "@/lib/currency";
-import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X } from "lucide-react";
+import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X, Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
@@ -735,71 +735,91 @@ const ProductForm = () => {
           </motion.div>
         )}
 
-        {/* Order bump */}
+        {/* Order bumps */}
         <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
           <div>
-            <h3 className="text-sm font-semibold">Oferta extra no checkout <span className="text-muted-foreground font-normal">(order bump)</span></h3>
+            <h3 className="text-sm font-semibold">Ofertas extra no checkout <span className="text-muted-foreground font-normal">(order bump)</span></h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Escolha outro dos seus produtos para ser oferecido no checkout, antes do botão de pagamento. Se o cliente aceitar, o valor é somado ao mesmo pagamento.
+              Escolha outros produtos seus para oferecer no checkout, antes do botão de pagamento. O cliente pode marcar uma ou mais ofertas e o valor é somado ao mesmo pagamento.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label>Produto oferecido</Label>
-            <Select value={bumpProductId} onValueChange={setBumpProductId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sem oferta extra" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem oferta extra</SelectItem>
-                {myProducts
-                  .filter((p) => p.id !== id && (p.currency || "MZN") === currency)
-                  .map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome} — {formatCurrency(Number(p.preco), currency)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Só aparecem produtos com a mesma moeda deste produto.</p>
-          </div>
-
-          {bumpProductId !== "none" && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="bumpPrice">Preço promocional da oferta <span className="text-muted-foreground font-normal">(opcional)</span></Label>
-                <Input
-                  id="bumpPrice"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={bumpPrice}
-                  onChange={(e) => setBumpPrice(e.target.value)}
-                  placeholder={currency === "AOA" ? "2500.00" : "500.00"}
-                />
-                <p className="text-xs text-muted-foreground">Se ficar vazio, usa o preço normal do produto escolhido.</p>
+          {bumps.map((bump, i) => (
+            <div key={i} className="space-y-3 rounded-lg border border-border bg-background p-3">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 space-y-1">
+                  <Label>Produto oferecido</Label>
+                  <Select
+                    value={bump.productId}
+                    onValueChange={(v) => setBumps(bumps.map((x, j) => j === i ? { ...x, productId: v } : x))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Escolha um produto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {myProducts
+                        .filter((p) => p.id !== id && (p.currency || "MZN") === currency && !bumps.some((x, j) => j !== i && x.productId === p.id))
+                        .map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome} — {formatCurrency(Number(p.preco), currency)}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="mt-5"
+                  onClick={() => setBumps(bumps.filter((_, j) => j !== i))}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="bumpTitle">Título da oferta <span className="text-muted-foreground font-normal">(opcional)</span></Label>
-                <Input
-                  id="bumpTitle"
-                  value={bumpTitle}
-                  onChange={(e) => setBumpTitle(e.target.value)}
-                  placeholder="Sim! Quero adicionar este bónus"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label>Preço promocional <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={bump.price}
+                    onChange={(e) => setBumps(bumps.map((x, j) => j === i ? { ...x, price: e.target.value } : x))}
+                    placeholder={currency === "AOA" ? "2500.00" : "500.00"}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Título <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                  <Input
+                    value={bump.title}
+                    onChange={(e) => setBumps(bumps.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                    placeholder="Sim! Quero adicionar"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="bumpDescription">Descrição da oferta <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <div className="space-y-1">
+                <Label>Descrição <span className="text-muted-foreground font-normal">(opcional)</span></Label>
                 <Textarea
-                  id="bumpDescription"
                   rows={2}
-                  value={bumpDescription}
-                  onChange={(e) => setBumpDescription(e.target.value)}
+                  value={bump.description}
+                  onChange={(e) => setBumps(bumps.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
                   placeholder="Aproveite este extra com desconto exclusivo."
                 />
               </div>
-            </>
-          )}
+            </div>
+          ))}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setBumps([...bumps, { productId: "", price: "", title: "", description: "" }])}
+          >
+            <Plus className="h-4 w-4" /> Adicionar oferta extra
+          </Button>
+          <p className="text-xs text-muted-foreground">Só aparecem produtos com a mesma moeda deste produto. Se o preço ficar vazio, usa o preço normal do produto escolhido.</p>
         </div>
 
         {/* Upsell / Downsell */}
