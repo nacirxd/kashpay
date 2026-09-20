@@ -678,12 +678,12 @@ const Checkout = () => {
             </div>
           )}
 
-          {bumpAccepted && bumpProduct && (
-            <div className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
-              <p className="text-sm font-semibold mb-2">Oferta extra: {bumpProduct.nome}</p>
-              {bumpProduct.delivery_type === "link" && bumpProduct.external_url ? (
+          {acceptedBumps.map((b) => (
+            <div key={b.id} className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
+              <p className="text-sm font-semibold mb-2">Oferta extra: {b.product.nome}</p>
+              {b.product.delivery_type === "link" && b.product.external_url ? (
                 <Button asChild variant="outline" size="sm" className="gap-2">
-                  <a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">
+                  <a href={b.product.external_url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" /> Acessar conteúdo extra
                   </a>
                 </Button>
@@ -693,7 +693,7 @@ const Checkout = () => {
                 </p>
               )}
             </div>
-          )}
+          ))}
             </>
           )}
         </motion.div>
@@ -872,83 +872,91 @@ const Checkout = () => {
                 </motion.div>
               )}
 
-              {bumpProduct && (
-                <motion.button
-                  type="button"
-                  onClick={() => setBumpAccepted((v) => !v)}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className={`w-full text-left rounded-xl px-2.5 py-2 transition-colors border-2 border-dashed ${
-                    bumpAccepted
-                      ? "border-primary/70 bg-primary/10"
-                      : "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {bumpProduct.image_url ? (
-                      <img
-                        src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
-                        alt={bumpProduct.nome}
-                        className="h-11 w-11 shrink-0 rounded-lg object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="h-11 w-11 shrink-0 rounded-lg bg-muted" />
-                    )}
-
-                    <div className="min-w-0 flex-1 flex flex-col justify-center">
-                      <p className="truncate text-xs font-bold uppercase leading-snug tracking-tight">
-                        {product.order_bump_title || bumpProduct.nome}
-                      </p>
-                      <p className="mt-0.5 text-xs font-bold text-primary">
-                        {formatCurrency(bumpPrice, productCurrency)}
-                      </p>
-                      {(product.order_bump_description || bumpProduct.descricao) && (
-                        <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground leading-snug">
-                          {product.order_bump_description || bumpProduct.descricao}
-                        </p>
+              {bumpOffers.map((bump) => {
+                const accepted = bumpAcceptedIds.includes(bump.id);
+                return (
+                  <motion.button
+                    key={bump.id}
+                    type="button"
+                    onClick={() =>
+                      setBumpAcceptedIds((ids) =>
+                        accepted ? ids.filter((x) => x !== bump.id) : [...ids, bump.id]
+                      )
+                    }
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className={`w-full text-left rounded-xl px-2.5 py-2 transition-colors border-2 border-dashed ${
+                      accepted
+                        ? "border-primary/70 bg-primary/10"
+                        : "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {bump.product.image_url ? (
+                        <img
+                          src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bump.product.image_url}`}
+                          alt={bump.product.nome}
+                          className="h-11 w-11 shrink-0 rounded-lg object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-11 w-11 shrink-0 rounded-lg bg-muted" />
                       )}
-                    </div>
 
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <motion.span
-                        animate={bumpAccepted ? { y: 0 } : { y: [-2.5, 2.5, -2.5] }}
-                        transition={
-                          bumpAccepted
-                            ? { duration: 0.2 }
-                            : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
-                        }
-                        className="flex"
-                      >
-                        <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={3.5} />
-                      </motion.span>
-                      <span
-                        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
-                          bumpAccepted
-                            ? "border-primary bg-primary"
-                            : "border-muted-foreground/30 bg-background"
-                        }`}
-                      >
-                        {bumpAccepted && <CheckCircle className="h-3 w-3 text-primary-foreground" />}
-                      </span>
+                      <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <p className="truncate text-xs font-bold uppercase leading-snug tracking-tight">
+                          {bump.title || bump.product.nome}
+                        </p>
+                        <p className="mt-0.5 text-xs font-bold text-primary">
+                          {formatCurrency(bump.price, productCurrency)}
+                        </p>
+                        {(bump.description || bump.product.descricao) && (
+                          <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground leading-snug">
+                            {bump.description || bump.product.descricao}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <motion.span
+                          animate={accepted ? { y: 0 } : { y: [-2.5, 2.5, -2.5] }}
+                          transition={
+                            accepted
+                              ? { duration: 0.2 }
+                              : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
+                          }
+                          className="flex"
+                        >
+                          <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={3.5} />
+                        </motion.span>
+                        <span
+                          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
+                            accepted
+                              ? "border-primary bg-primary"
+                              : "border-muted-foreground/30 bg-background"
+                          }`}
+                        >
+                          {accepted && <CheckCircle className="h-3 w-3 text-primary-foreground" />}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </motion.button>
-              )}
+                  </motion.button>
+                );
+              })}
 
               <div className="border-t border-border/50 mt-2 pt-3 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground truncate">{product.nome}</span>
                   <span className="text-sm font-bold">{formatCurrency(basePrice, productCurrency)}</span>
                 </div>
-                {bumpAccepted && bumpProduct && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground truncate">{bumpProduct.nome}</span>
-                    <span className="text-sm font-bold">{formatCurrency(bumpPrice, productCurrency)}</span>
+                {acceptedBumps.map((b) => (
+                  <div key={b.id} className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground truncate">{b.product.nome}</span>
+                    <span className="text-sm font-bold">{formatCurrency(b.price, productCurrency)}</span>
                   </div>
-                )}
-                {bumpAccepted && bumpProduct && (
+                ))}
+                {acceptedBumps.length > 0 && (
                   <div className="flex items-center justify-between border-t border-border/50 pt-1.5">
                     <span className="text-sm font-bold">Total</span>
                     <span className="text-base font-bold text-primary">{formatCurrency(totalPrice, productCurrency)}</span>
