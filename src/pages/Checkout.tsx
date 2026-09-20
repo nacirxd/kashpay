@@ -17,16 +17,6 @@ import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
 
-// Lista de upsells do produto (vários links ou fallback para o link único antigo)
-const getUpsells = (p: any): { title: string; url: string }[] => {
-  const arr = Array.isArray(p?.upsell_urls) ? p.upsell_urls : [];
-  const list = arr
-    .filter((u: any) => u && typeof u.url === "string" && u.url.trim())
-    .map((u: any) => ({ title: String(u.title || "").trim(), url: String(u.url).trim() }));
-  if (list.length) return list;
-  const single = p?.upsell_url?.trim();
-  return single ? [{ title: "", url: single }] : [];
-};
 
 const Checkout = () => {
   const { id } = useParams();
@@ -132,14 +122,13 @@ const Checkout = () => {
   }, [product, done]);
 
   // Upsell: após o pagamento aprovado, leva o comprador ao link de upsell
-  // (redirecionamento automático apenas quando há um único upsell)
   useEffect(() => {
-    const upsells = getUpsells(product);
-    if (!done || upsells.length !== 1 || upsellFiredRef.current) return;
+    const upsellUrl = product?.upsell_url?.trim();
+    if (!done || !upsellUrl || upsellFiredRef.current) return;
     upsellFiredRef.current = true;
     const t = setTimeout(() => {
       leavingRef.current = true;
-      window.location.href = upsells[0].url;
+      window.location.href = upsellUrl;
     }, 2500);
     return () => clearTimeout(t);
   }, [done, product]);
@@ -150,7 +139,7 @@ const Checkout = () => {
     supabase
       .from("products")
       .select(
-        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, upsell_urls, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
       )
       .eq("id", id)
       .single()
