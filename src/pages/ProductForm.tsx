@@ -74,7 +74,7 @@ const ProductForm = () => {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   
   const [externalUrl, setExternalUrl] = useState("");
-  const [upsells, setUpsells] = useState<{ title: string; url: string }[]>([]);
+  const [upsellUrl, setUpsellUrl] = useState("");
   const [downsellUrl, setDownsellUrl] = useState("");
   const [bumpProductId, setBumpProductId] = useState<string>("none");
   const [bumpPrice, setBumpPrice] = useState("");
@@ -133,16 +133,7 @@ const ProductForm = () => {
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setDownsellUrl((data as any).downsell_url || "");
-            const rawUpsells = (data as any).upsell_urls;
-            if (Array.isArray(rawUpsells) && rawUpsells.length) {
-              setUpsells(rawUpsells
-                .filter((u: any) => u && typeof u.url === "string" && u.url.trim())
-                .map((u: any) => ({ title: String(u.title || ""), url: String(u.url) })));
-            } else if ((data as any).upsell_url) {
-              setUpsells([{ title: "", url: (data as any).upsell_url }]);
-            } else {
-              setUpsells([]);
-            }
+            setUpsellUrl((data as any).upsell_url || "");
             setBumpProductId((data as any).order_bump_product_id || "none");
             setBumpPrice((data as any).order_bump_price != null ? String((data as any).order_bump_price) : "");
             setBumpTitle((data as any).order_bump_title || "");
@@ -295,11 +286,8 @@ const ProductForm = () => {
         return;
       }
     }
-    const validUpsells = upsells
-      .map((u) => ({ title: u.title.trim(), url: u.url.trim() }))
-      .filter((u) => u.url);
-    for (const u of validUpsells) {
-      try { new URL(u.url); } catch {
+    if (upsellUrl.trim()) {
+      try { new URL(upsellUrl.trim()); } catch {
         toast.error("Link de upsell inválido.");
         return;
       }
@@ -333,8 +321,7 @@ const ProductForm = () => {
       
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
-      upsell_url: validUpsells[0]?.url || null,
-      upsell_urls: validUpsells,
+      upsell_url: upsellUrl.trim() || null,
       downsell_url: downsellUrl.trim() || null,
       image_url: imageUrl || null,
       order_bump_product_id: hasBump ? bumpProductId : null,
