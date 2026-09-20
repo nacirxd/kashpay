@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatMZN, formatCurrency } from "@/lib/currency";
-import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Copy, ShoppingBag, DollarSign, TrendingUp, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
@@ -74,7 +74,7 @@ const ProductForm = () => {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
   
   const [externalUrl, setExternalUrl] = useState("");
-  const [upsells, setUpsells] = useState<{ title: string; url: string }[]>([]);
+  const [upsellUrl, setUpsellUrl] = useState("");
   const [downsellUrl, setDownsellUrl] = useState("");
   const [bumpProductId, setBumpProductId] = useState<string>("none");
   const [bumpPrice, setBumpPrice] = useState("");
@@ -133,16 +133,7 @@ const ProductForm = () => {
             setDeliveryType((data as any).delivery_type || "link");
             setExternalUrl((data as any).external_url || "");
             setDownsellUrl((data as any).downsell_url || "");
-            const rawUpsells = (data as any).upsell_urls;
-            if (Array.isArray(rawUpsells) && rawUpsells.length) {
-              setUpsells(rawUpsells
-                .filter((u: any) => u && typeof u.url === "string" && u.url.trim())
-                .map((u: any) => ({ title: String(u.title || ""), url: String(u.url) })));
-            } else if ((data as any).upsell_url) {
-              setUpsells([{ title: "", url: (data as any).upsell_url }]);
-            } else {
-              setUpsells([]);
-            }
+            setUpsellUrl((data as any).upsell_url || "");
             setBumpProductId((data as any).order_bump_product_id || "none");
             setBumpPrice((data as any).order_bump_price != null ? String((data as any).order_bump_price) : "");
             setBumpTitle((data as any).order_bump_title || "");
@@ -295,11 +286,8 @@ const ProductForm = () => {
         return;
       }
     }
-    const validUpsells = upsells
-      .map((u) => ({ title: u.title.trim(), url: u.url.trim() }))
-      .filter((u) => u.url);
-    for (const u of validUpsells) {
-      try { new URL(u.url); } catch {
+    if (upsellUrl.trim()) {
+      try { new URL(upsellUrl.trim()); } catch {
         toast.error("Link de upsell inválido.");
         return;
       }
@@ -333,8 +321,7 @@ const ProductForm = () => {
       
       file_url: deliveryType === "file" ? fileUrl : null,
       external_url: deliveryType === "link" ? externalUrl : null,
-      upsell_url: validUpsells[0]?.url || null,
-      upsell_urls: validUpsells,
+      upsell_url: upsellUrl.trim() || null,
       downsell_url: downsellUrl.trim() || null,
       image_url: imageUrl || null,
       order_bump_product_id: hasBump ? bumpProductId : null,
@@ -801,42 +788,15 @@ const ProductForm = () => {
             </p>
           </div>
           <div className="space-y-2">
-            <Label>Links de upsell</Label>
-            {upsells.map((u, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Input
-                  value={u.title}
-                  onChange={(e) => setUpsells(upsells.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
-                  placeholder="Nome da oferta (opcional)"
-                  className="w-2/5"
-                />
-                <Input
-                  type="url"
-                  value={u.url}
-                  onChange={(e) => setUpsells(upsells.map((x, j) => j === i ? { ...x, url: e.target.value } : x))}
-                  placeholder="https://..."
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setUpsells(upsells.filter((_, j) => j !== i))}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={() => setUpsells([...upsells, { title: "", url: "" }])}
-            >
-              <Plus className="h-4 w-4" /> Adicionar upsell
-            </Button>
-            <p className="text-xs text-muted-foreground">Ofertas extras apresentadas após a compra aprovada. Com um só link, o cliente é levado automaticamente; com vários, ele escolhe.</p>
+            <Label htmlFor="upsellUrl">Link de upsell</Label>
+            <Input
+              id="upsellUrl"
+              type="url"
+              value={upsellUrl}
+              onChange={(e) => setUpsellUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Após a compra aprovada, o cliente é levado automaticamente para este link.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="downsellUrl">Link de downsell</Label>
