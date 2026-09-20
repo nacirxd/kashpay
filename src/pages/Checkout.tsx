@@ -17,6 +17,17 @@ import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
 
+// Lista de upsells do produto (vários links ou fallback para o link único antigo)
+const getUpsells = (p: any): { title: string; url: string }[] => {
+  const arr = Array.isArray(p?.upsell_urls) ? p.upsell_urls : [];
+  const list = arr
+    .filter((u: any) => u && typeof u.url === "string" && u.url.trim())
+    .map((u: any) => ({ title: String(u.title || "").trim(), url: String(u.url).trim() }));
+  if (list.length) return list;
+  const single = p?.upsell_url?.trim();
+  return single ? [{ title: "", url: single }] : [];
+};
+
 const Checkout = () => {
   const { id } = useParams();
   const [product, setProduct] = useState<any>(null);
@@ -581,7 +592,7 @@ const Checkout = () => {
 
   if (done) {
     const deliveryType = product.delivery_type || "link";
-    const upsellUrl: string | undefined = product.upsell_url?.trim() || undefined;
+    const upsells = getUpsells(product);
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
 
