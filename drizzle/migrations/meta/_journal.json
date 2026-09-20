@@ -8,6 +8,13 @@
       "when": 1789670568963,
       "tag": "0000_harden_security_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789913369780,
+      "tag": "0001_restore_anon_checkout_select_products",
+      "breakpoints": true
     }
   ]
 }
