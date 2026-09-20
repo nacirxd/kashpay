@@ -76,10 +76,7 @@ const ProductForm = () => {
   const [externalUrl, setExternalUrl] = useState("");
   const [upsellUrl, setUpsellUrl] = useState("");
   const [downsellUrl, setDownsellUrl] = useState("");
-  const [bumpProductId, setBumpProductId] = useState<string>("none");
-  const [bumpPrice, setBumpPrice] = useState("");
-  const [bumpTitle, setBumpTitle] = useState("");
-  const [bumpDescription, setBumpDescription] = useState("");
+  const [bumps, setBumps] = useState<{ productId: string; price: string; title: string; description: string }[]>([]);
   const [myProducts, setMyProducts] = useState<any[]>([]);
   const [fileUrl, setFileUrl] = useState("");
   const [fileName, setFileName] = useState("");
@@ -134,10 +131,26 @@ const ProductForm = () => {
             setExternalUrl((data as any).external_url || "");
             setDownsellUrl((data as any).downsell_url || "");
             setUpsellUrl((data as any).upsell_url || "");
-            setBumpProductId((data as any).order_bump_product_id || "none");
-            setBumpPrice((data as any).order_bump_price != null ? String((data as any).order_bump_price) : "");
-            setBumpTitle((data as any).order_bump_title || "");
-            setBumpDescription((data as any).order_bump_description || "");
+            const rawBumps = (data as any).order_bumps;
+            if (Array.isArray(rawBumps) && rawBumps.length) {
+              setBumps(rawBumps
+                .filter((b: any) => b && typeof b.product_id === "string" && b.product_id)
+                .map((b: any) => ({
+                  productId: b.product_id,
+                  price: b.price != null ? String(b.price) : "",
+                  title: String(b.title || ""),
+                  description: String(b.description || ""),
+                })));
+            } else if ((data as any).order_bump_product_id) {
+              setBumps([{
+                productId: (data as any).order_bump_product_id,
+                price: (data as any).order_bump_price != null ? String((data as any).order_bump_price) : "",
+                title: (data as any).order_bump_title || "",
+                description: (data as any).order_bump_description || "",
+              }]);
+            } else {
+              setBumps([]);
+            }
             setFileUrl((data as any).file_url || "");
             const prodCurrency = ((data as any).currency as "MZN" | "AOA") || "MZN";
             setCurrency(prodCurrency);
@@ -299,10 +312,14 @@ const ProductForm = () => {
       }
     }
 
-    const hasBump = bumpProductId !== "none" && !!bumpProductId;
-    if (hasBump && bumpPrice.trim() && (isNaN(parseFloat(bumpPrice)) || parseFloat(bumpPrice) < 0)) {
-      toast.error("Preço da oferta extra inválido.");
-      return;
+    const validBumps = bumps
+      .map((b) => ({ ...b, productId: b.productId.trim() }))
+      .filter((b) => b.productId && b.productId !== "none");
+    for (const b of validBumps) {
+      if (b.price.trim() && (isNaN(parseFloat(b.price)) || parseFloat(b.price) < 0)) {
+        toast.error("Preço da oferta extra inválido.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -324,10 +341,16 @@ const ProductForm = () => {
       upsell_url: upsellUrl.trim() || null,
       downsell_url: downsellUrl.trim() || null,
       image_url: imageUrl || null,
-      order_bump_product_id: hasBump ? bumpProductId : null,
-      order_bump_price: hasBump && bumpPrice.trim() ? parseFloat(bumpPrice) : null,
-      order_bump_title: hasBump ? bumpTitle.trim() || null : null,
-      order_bump_description: hasBump ? bumpDescription.trim() || null : null,
+      order_bumps: validBumps.map((b) => ({
+        product_id: b.productId,
+        price: b.price.trim() ? parseFloat(b.price) : null,
+        title: b.title.trim() || null,
+        description: b.description.trim() || null,
+      })),
+      order_bump_product_id: validBumps[0]?.productId || null,
+      order_bump_price: validBumps[0]?.price.trim() ? parseFloat(validBumps[0].price) : null,
+      order_bump_title: validBumps[0]?.title.trim() || null,
+      order_bump_description: validBumps[0]?.description.trim() || null,
     };
 
     if (isEditing) {
