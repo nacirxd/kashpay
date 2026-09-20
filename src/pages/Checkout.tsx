@@ -607,16 +607,6 @@ const Checkout = () => {
     const upsellUrl: string | undefined = product.upsell_url?.trim() || undefined;
     const downsellUrl: string | undefined = product.downsell_url?.trim() || undefined;
 
-
-    const handleDownload = async () => {
-      if (!product.file_url) return;
-      const { data } = await supabase.storage
-        .from("product-files")
-        .createSignedUrl(product.file_url, 3600);
-      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-      else toast.error("Erro ao gerar link de download.");
-    };
-
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
         <motion.div className="max-w-md text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
@@ -652,46 +642,25 @@ const Checkout = () => {
           ) : (
 
             <>
-          {deliveryType === "file" && product.file_url && (
-            <Button onClick={handleDownload} size="lg" className="gap-2">
-              <Download className="h-5 w-5" /> Baixar arquivo
-            </Button>
-          )}
-
-          {deliveryType === "link" && product.external_url && (
-            <Button asChild size="lg" className="gap-2">
-              <a href={product.external_url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-5 w-5" /> Acessar conteúdo
-              </a>
-            </Button>
-          )}
-
-          {deliveryType === "members" && (
-            <div className="rounded-lg border border-border bg-card p-4 text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <Lock className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm">Área de Membros</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Seu acesso foi liberado. Verifique seu email para instruções.
-              </p>
+          <div className="rounded-lg border border-border bg-card p-4 text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm">
+                {deliveryType === "members" ? "Área de Membros" : "Acesso ao produto"}
+              </span>
             </div>
-          )}
+            <p className="text-sm text-muted-foreground">
+              Enviámos o seu acesso para o email indicado na compra. Verifique a sua caixa de entrada
+              (e a pasta de spam).
+            </p>
+          </div>
 
           {acceptedBumps.map((b) => (
             <div key={b.id} className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
               <p className="text-sm font-semibold mb-2">Oferta extra: {b.product.nome}</p>
-              {b.product.delivery_type === "link" && b.product.external_url ? (
-                <Button asChild variant="outline" size="sm" className="gap-2">
-                  <a href={b.product.external_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4" /> Acessar conteúdo extra
-                  </a>
-                </Button>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Enviámos o acesso para o seu email.
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground">
+                Enviámos o acesso para o seu email.
+              </p>
             </div>
           ))}
             </>
