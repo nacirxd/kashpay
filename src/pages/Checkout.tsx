@@ -895,10 +895,10 @@ const Checkout = () => {
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-extrabold uppercase leading-snug tracking-tight">
+                      <p className="truncate text-sm font-bold uppercase leading-snug tracking-tight">
                         {product.order_bump_title || bumpProduct.nome}
                       </p>
-                      <p className="mt-0.5 text-base font-bold text-primary">
+                      <p className="mt-0.5 text-sm font-bold text-primary">
                         {formatCurrency(bumpPrice, productCurrency)}
                       </p>
                     </div>
