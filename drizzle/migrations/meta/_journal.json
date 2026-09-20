@@ -29,6 +29,13 @@
       "when": 1789919049747,
       "tag": "0003_add_multiple_order_bumps",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789920714482,
+      "tag": "0004_restrict_products_public_read_and_definer_execute",
+      "breakpoints": true
     }
   ]
 }
