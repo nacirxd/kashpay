@@ -121,13 +121,14 @@ const Checkout = () => {
   }, [product, done]);
 
   // Upsell: após o pagamento aprovado, leva o comprador ao link de upsell
+  // (redirecionamento automático apenas quando há um único upsell)
   useEffect(() => {
-    const upsellUrl: string | undefined = product?.upsell_url?.trim() || undefined;
-    if (!done || !upsellUrl || upsellFiredRef.current) return;
+    const upsells = getUpsells(product);
+    if (!done || upsells.length !== 1 || upsellFiredRef.current) return;
     upsellFiredRef.current = true;
     const t = setTimeout(() => {
       leavingRef.current = true;
-      window.location.href = upsellUrl;
+      window.location.href = upsells[0].url;
     }, 2500);
     return () => clearTimeout(t);
   }, [done, product]);
@@ -138,7 +139,7 @@ const Checkout = () => {
     supabase
       .from("products")
       .select(
-        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, upsell_urls, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
       )
       .eq("id", id)
       .single()
