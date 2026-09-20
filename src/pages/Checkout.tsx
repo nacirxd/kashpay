@@ -895,7 +895,7 @@ const Checkout = () => {
                         <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={2.5} />
                       </motion.span>
                       <span
-                        className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
+                        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
                           bumpAccepted
                             ? "border-primary bg-primary"
                             : "border-muted-foreground/30 bg-background"
