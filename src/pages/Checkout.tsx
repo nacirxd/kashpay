@@ -44,6 +44,33 @@ const Checkout = () => {
   const guardPushedRef = useRef(false);
 
 
+  // Envia o evento ao Meta e leva o cliente à oferta (upsell / downsell),
+  // reencaminhando os identificadores do anúncio para que a venda dessa
+  // oferta também seja atribuída à mesma campanha.
+  const goToOffer = (url: string, kind: "upsell" | "downsell") => {
+    const pixelId = (product as any)?.meta_pixel_id?.trim() || undefined;
+    trackCustom(kind === "upsell" ? "UpsellClick" : "DownsellClick", {
+      content_name: product?.nome,
+      content_ids: product?.id ? [product.id] : undefined,
+      currency: (product?.currency as string) || "MZN",
+    });
+    pushDataLayer(kind === "upsell" ? "upsell_click" : "downsell_click", {
+      item_name: product?.nome,
+      item_id: product?.id,
+    });
+    leavingRef.current = true;
+    window.location.href = withMetaTracking(url, {
+      pixelId,
+      extra: {
+        offer: kind,
+        src_product_id: product?.id,
+        email: email || undefined,
+        name: name || undefined,
+        phone: whatsapp || undefined,
+      },
+    });
+  };
+
   const productCurrency: "MZN" | "AOA" = (product?.currency as "MZN" | "AOA") || "MZN";
   const isAOA = productCurrency === "AOA";
 
