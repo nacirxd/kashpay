@@ -138,8 +138,7 @@ const Checkout = () => {
 
     const onPopState = () => {
       if (leavingRef.current) return;
-      leavingRef.current = true;
-      window.location.href = downsellUrl;
+      goToOffer(downsellUrl, "downsell");
     };
 
     window.addEventListener("popstate", onPopState);
