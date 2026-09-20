@@ -35,8 +35,8 @@ const Checkout = () => {
   const [refOpen, setRefOpen] = useState(false);
   const [refCountdown, setRefCountdown] = useState(2 * 60 * 60);
   const [verifying, setVerifying] = useState(false);
-  const [bumpProduct, setBumpProduct] = useState<any>(null);
-  const [bumpAccepted, setBumpAccepted] = useState(false);
+  const [bumpOffers, setBumpOffers] = useState<{ id: string; price: number; title?: string; description?: string; product: any }[]>([]);
+  const [bumpAcceptedIds, setBumpAcceptedIds] = useState<string[]>([]);
 
   // Controlo de saída/redirecionamentos (upsell / downsell)
   const leavingRef = useRef(false);
@@ -139,7 +139,7 @@ const Checkout = () => {
     supabase
       .from("products")
       .select(
-        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description, order_bumps"
       )
       .eq("id", id)
       .single()
@@ -147,16 +147,42 @@ const Checkout = () => {
       if (data) {
         setProduct(data);
 
-        // Oferta extra (order bump)
-        const bumpId = (data as any).order_bump_product_id;
-        if (bumpId) {
+        // Ofertas extra (order bump): lista nova + legado de oferta única
+        const rawBumps: any[] = Array.isArray((data as any).order_bumps) ? (data as any).order_bumps : [];
+        const bumpCfgs = rawBumps
+          .filter((b) => b && typeof b.product_id === "string" && b.product_id)
+          .map((b) => ({
+            id: b.product_id as string,
+            price: b.price != null ? Number(b.price) : null as number | null,
+            title: b.title ? String(b.title) : undefined,
+            description: b.description ? String(b.description) : undefined,
+          }));
+        if (!bumpCfgs.length && (data as any).order_bump_product_id) {
+          bumpCfgs.push({
+            id: (data as any).order_bump_product_id,
+            price: (data as any).order_bump_price != null ? Number((data as any).order_bump_price) : null,
+            title: (data as any).order_bump_title || undefined,
+            description: (data as any).order_bump_description || undefined,
+          });
+        }
+        if (bumpCfgs.length) {
           supabase
             .from("products")
             .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
-            .eq("id", bumpId)
-            .maybeSingle()
-            .then(({ data: bp }) => {
-              if (bp) setBumpProduct(bp);
+            .in("id", bumpCfgs.map((b) => b.id))
+            .then(({ data: rows }) => {
+              const byId = new Map((rows || []).map((r: any) => [r.id, r]));
+              setBumpOffers(
+                bumpCfgs
+                  .filter((b) => byId.has(b.id))
+                  .map((b) => ({
+                    id: b.id,
+                    price: b.price != null ? b.price : Number(byId.get(b.id).preco),
+                    title: b.title,
+                    description: b.description,
+                    product: byId.get(b.id),
+                  }))
+              );
             });
         }
 
@@ -336,11 +362,11 @@ const Checkout = () => {
 
 
 
-  const bumpPrice = bumpProduct
-    ? Number(product?.order_bump_price ?? bumpProduct.preco)
-    : 0;
+  const acceptedBumps = bumpOffers.filter((b) => bumpAcceptedIds.includes(b.id));
+  const bumpSum = acceptedBumps.reduce((s, b) => s + b.price, 0);
   const basePrice = Number(product?.preco || 0);
-  const totalPrice = basePrice + (bumpAccepted && bumpProduct ? bumpPrice : 0);
+  const totalPrice = basePrice + bumpSum;
+  const bumpIdsPayload = acceptedBumps.length ? acceptedBumps.map((b) => b.id) : undefined;
 
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
