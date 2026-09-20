@@ -857,8 +857,8 @@ const Checkout = () => {
                   transition={{ duration: 0.25 }}
                   className={`w-full text-left rounded-xl p-3 transition-colors border-2 border-dashed ${
                     bumpAccepted
-                      ? "border-primary/60 bg-primary/5"
-                      : "border-emerald-600/40 bg-emerald-500/[0.04] hover:border-emerald-600/60"
+                      ? "border-primary/70 bg-primary/10"
+                      : "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
                   }`}
                 >
                   <div className="flex items-stretch gap-2">
@@ -877,7 +877,7 @@ const Checkout = () => {
                       <p className="truncate text-sm font-bold uppercase leading-snug tracking-tight">
                         {product.order_bump_title || bumpProduct.nome}
                       </p>
-                      <p className="mt-0.5 text-sm font-bold text-emerald-600">
+                      <p className="mt-0.5 text-sm font-bold text-primary">
                         {formatCurrency(bumpPrice, productCurrency)}
                       </p>
                     </div>
