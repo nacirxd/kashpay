@@ -153,8 +153,7 @@ const Checkout = () => {
     if (!done || !upsellUrl || upsellFiredRef.current) return;
     upsellFiredRef.current = true;
     const t = setTimeout(() => {
-      leavingRef.current = true;
-      window.location.href = upsellUrl;
+      goToOffer(upsellUrl, "upsell");
     }, 2500);
     return () => clearTimeout(t);
   }, [done, product]);
