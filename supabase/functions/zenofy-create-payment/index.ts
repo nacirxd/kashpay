@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json()
     const {
-      amount, product_id, user_id, name, email, phone, whatsapp, bump_product_id, bump_valor,
+      amount, product_id, user_id, name, email, phone, whatsapp, bump_product_id, bump_product_ids, bump_valor,
       utm_source, utm_medium, utm_campaign, utm_content, return_url,
     } = body
 
@@ -113,7 +113,8 @@ Deno.serve(async (req) => {
     }
 
     // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
-    const priced = await resolvePrice(supabase, product_id, bump_product_id)
+    const priced = await resolvePrice(supabase, product_id,
+      Array.isArray(bump_product_ids) && bump_product_ids.length ? bump_product_ids : bump_product_id)
     if (priced.error) {
       return new Response(JSON.stringify({ error: priced.error }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -155,6 +156,7 @@ Deno.serve(async (req) => {
       gateway: 'zenofy',
       bump_product_id: priced.bumpProductId,
       bump_valor: priced.bumpValor,
+      bumps: priced.bumps,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,

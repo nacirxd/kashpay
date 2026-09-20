@@ -35,8 +35,8 @@ const Checkout = () => {
   const [refOpen, setRefOpen] = useState(false);
   const [refCountdown, setRefCountdown] = useState(2 * 60 * 60);
   const [verifying, setVerifying] = useState(false);
-  const [bumpProduct, setBumpProduct] = useState<any>(null);
-  const [bumpAccepted, setBumpAccepted] = useState(false);
+  const [bumpOffers, setBumpOffers] = useState<{ id: string; price: number; title?: string; description?: string; product: any }[]>([]);
+  const [bumpAcceptedIds, setBumpAcceptedIds] = useState<string[]>([]);
 
   // Controlo de saída/redirecionamentos (upsell / downsell)
   const leavingRef = useRef(false);
@@ -139,7 +139,7 @@ const Checkout = () => {
     supabase
       .from("products")
       .select(
-        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description"
+        "id, user_id, nome, descricao, preco, currency, status, image_url, delivery_type, external_url, file_url, payment_methods, meta_pixel_id, support_phone, support_email, upsell_url, downsell_url, order_bump_product_id, order_bump_price, order_bump_title, order_bump_description, order_bumps"
       )
       .eq("id", id)
       .single()
@@ -147,16 +147,42 @@ const Checkout = () => {
       if (data) {
         setProduct(data);
 
-        // Oferta extra (order bump)
-        const bumpId = (data as any).order_bump_product_id;
-        if (bumpId) {
+        // Ofertas extra (order bump): lista nova + legado de oferta única
+        const rawBumps: any[] = Array.isArray((data as any).order_bumps) ? (data as any).order_bumps : [];
+        const bumpCfgs = rawBumps
+          .filter((b) => b && typeof b.product_id === "string" && b.product_id)
+          .map((b) => ({
+            id: b.product_id as string,
+            price: b.price != null ? Number(b.price) : null as number | null,
+            title: b.title ? String(b.title) : undefined,
+            description: b.description ? String(b.description) : undefined,
+          }));
+        if (!bumpCfgs.length && (data as any).order_bump_product_id) {
+          bumpCfgs.push({
+            id: (data as any).order_bump_product_id,
+            price: (data as any).order_bump_price != null ? Number((data as any).order_bump_price) : null,
+            title: (data as any).order_bump_title || undefined,
+            description: (data as any).order_bump_description || undefined,
+          });
+        }
+        if (bumpCfgs.length) {
           supabase
             .from("products")
             .select("id, nome, descricao, preco, currency, image_url, delivery_type, external_url, file_url")
-            .eq("id", bumpId)
-            .maybeSingle()
-            .then(({ data: bp }) => {
-              if (bp) setBumpProduct(bp);
+            .in("id", bumpCfgs.map((b) => b.id))
+            .then(({ data: rows }) => {
+              const byId = new Map((rows || []).map((r: any) => [r.id, r]));
+              setBumpOffers(
+                bumpCfgs
+                  .filter((b) => byId.has(b.id))
+                  .map((b) => ({
+                    id: b.id,
+                    price: b.price != null ? b.price : Number(byId.get(b.id).preco),
+                    title: b.title,
+                    description: b.description,
+                    product: byId.get(b.id),
+                  }))
+              );
             });
         }
 
@@ -336,11 +362,11 @@ const Checkout = () => {
 
 
 
-  const bumpPrice = bumpProduct
-    ? Number(product?.order_bump_price ?? bumpProduct.preco)
-    : 0;
+  const acceptedBumps = bumpOffers.filter((b) => bumpAcceptedIds.includes(b.id));
+  const bumpSum = acceptedBumps.reduce((s, b) => s + b.price, 0);
   const basePrice = Number(product?.preco || 0);
-  const totalPrice = basePrice + (bumpAccepted && bumpProduct ? bumpPrice : 0);
+  const totalPrice = basePrice + bumpSum;
+  const bumpIdsPayload = acceptedBumps.length ? acceptedBumps.map((b) => b.id) : undefined;
 
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -460,8 +486,7 @@ const Checkout = () => {
             whatsapp: whatsapp || undefined,
             amount: totalPrice,
             product_id: product.id,
-            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
-            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
+            bump_product_ids: bumpIdsPayload,
             user_id: product.user_id,
             return_url: `${window.location.origin}${window.location.pathname}`,
             ...utms,
@@ -499,8 +524,7 @@ const Checkout = () => {
             whatsapp: whatsapp || undefined,
             amount: totalPrice,
             product_id: product.id,
-            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
-            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
+            bump_product_ids: bumpIdsPayload,
             user_id: product.user_id,
             ...utms,
           },
@@ -534,8 +558,7 @@ const Checkout = () => {
             whatsapp: whatsapp || undefined,
             amount: totalPrice,
             reference: "moonpay",
-            bump_product_id: bumpAccepted && bumpProduct ? bumpProduct.id : undefined,
-            bump_valor: bumpAccepted && bumpProduct ? bumpPrice : undefined,
+            bump_product_ids: bumpIdsPayload,
             product_id: product.id,
             user_id: product.user_id,
             ...utms,
@@ -655,12 +678,12 @@ const Checkout = () => {
             </div>
           )}
 
-          {bumpAccepted && bumpProduct && (
-            <div className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
-              <p className="text-sm font-semibold mb-2">Oferta extra: {bumpProduct.nome}</p>
-              {bumpProduct.delivery_type === "link" && bumpProduct.external_url ? (
+          {acceptedBumps.map((b) => (
+            <div key={b.id} className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
+              <p className="text-sm font-semibold mb-2">Oferta extra: {b.product.nome}</p>
+              {b.product.delivery_type === "link" && b.product.external_url ? (
                 <Button asChild variant="outline" size="sm" className="gap-2">
-                  <a href={bumpProduct.external_url} target="_blank" rel="noopener noreferrer">
+                  <a href={b.product.external_url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" /> Acessar conteúdo extra
                   </a>
                 </Button>
@@ -670,7 +693,7 @@ const Checkout = () => {
                 </p>
               )}
             </div>
-          )}
+          ))}
             </>
           )}
         </motion.div>
@@ -849,83 +872,91 @@ const Checkout = () => {
                 </motion.div>
               )}
 
-              {bumpProduct && (
-                <motion.button
-                  type="button"
-                  onClick={() => setBumpAccepted((v) => !v)}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className={`w-full text-left rounded-xl px-2.5 py-2 transition-colors border-2 border-dashed ${
-                    bumpAccepted
-                      ? "border-primary/70 bg-primary/10"
-                      : "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {bumpProduct.image_url ? (
-                      <img
-                        src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
-                        alt={bumpProduct.nome}
-                        className="h-11 w-11 shrink-0 rounded-lg object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="h-11 w-11 shrink-0 rounded-lg bg-muted" />
-                    )}
-
-                    <div className="min-w-0 flex-1 flex flex-col justify-center">
-                      <p className="truncate text-xs font-bold uppercase leading-snug tracking-tight">
-                        {product.order_bump_title || bumpProduct.nome}
-                      </p>
-                      <p className="mt-0.5 text-xs font-bold text-primary">
-                        {formatCurrency(bumpPrice, productCurrency)}
-                      </p>
-                      {(product.order_bump_description || bumpProduct.descricao) && (
-                        <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground leading-snug">
-                          {product.order_bump_description || bumpProduct.descricao}
-                        </p>
+              {bumpOffers.map((bump) => {
+                const accepted = bumpAcceptedIds.includes(bump.id);
+                return (
+                  <motion.button
+                    key={bump.id}
+                    type="button"
+                    onClick={() =>
+                      setBumpAcceptedIds((ids) =>
+                        accepted ? ids.filter((x) => x !== bump.id) : [...ids, bump.id]
+                      )
+                    }
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className={`w-full text-left rounded-xl px-2.5 py-2 transition-colors border-2 border-dashed ${
+                      accepted
+                        ? "border-primary/70 bg-primary/10"
+                        : "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {bump.product.image_url ? (
+                        <img
+                          src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bump.product.image_url}`}
+                          alt={bump.product.nome}
+                          className="h-11 w-11 shrink-0 rounded-lg object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-11 w-11 shrink-0 rounded-lg bg-muted" />
                       )}
-                    </div>
 
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <motion.span
-                        animate={bumpAccepted ? { y: 0 } : { y: [-2.5, 2.5, -2.5] }}
-                        transition={
-                          bumpAccepted
-                            ? { duration: 0.2 }
-                            : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
-                        }
-                        className="flex"
-                      >
-                        <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={3.5} />
-                      </motion.span>
-                      <span
-                        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
-                          bumpAccepted
-                            ? "border-primary bg-primary"
-                            : "border-muted-foreground/30 bg-background"
-                        }`}
-                      >
-                        {bumpAccepted && <CheckCircle className="h-3 w-3 text-primary-foreground" />}
-                      </span>
+                      <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <p className="truncate text-xs font-bold uppercase leading-snug tracking-tight">
+                          {bump.title || bump.product.nome}
+                        </p>
+                        <p className="mt-0.5 text-xs font-bold text-primary">
+                          {formatCurrency(bump.price, productCurrency)}
+                        </p>
+                        {(bump.description || bump.product.descricao) && (
+                          <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground leading-snug">
+                            {bump.description || bump.product.descricao}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <motion.span
+                          animate={accepted ? { y: 0 } : { y: [-2.5, 2.5, -2.5] }}
+                          transition={
+                            accepted
+                              ? { duration: 0.2 }
+                              : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
+                          }
+                          className="flex"
+                        >
+                          <ArrowDown className="h-4 w-4 text-destructive" strokeWidth={3.5} />
+                        </motion.span>
+                        <span
+                          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border-2 transition-all ${
+                            accepted
+                              ? "border-primary bg-primary"
+                              : "border-muted-foreground/30 bg-background"
+                          }`}
+                        >
+                          {accepted && <CheckCircle className="h-3 w-3 text-primary-foreground" />}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </motion.button>
-              )}
+                  </motion.button>
+                );
+              })}
 
               <div className="border-t border-border/50 mt-2 pt-3 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground truncate">{product.nome}</span>
                   <span className="text-sm font-bold">{formatCurrency(basePrice, productCurrency)}</span>
                 </div>
-                {bumpAccepted && bumpProduct && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground truncate">{bumpProduct.nome}</span>
-                    <span className="text-sm font-bold">{formatCurrency(bumpPrice, productCurrency)}</span>
+                {acceptedBumps.map((b) => (
+                  <div key={b.id} className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground truncate">{b.product.nome}</span>
+                    <span className="text-sm font-bold">{formatCurrency(b.price, productCurrency)}</span>
                   </div>
-                )}
-                {bumpAccepted && bumpProduct && (
+                ))}
+                {acceptedBumps.length > 0 && (
                   <div className="flex items-center justify-between border-t border-border/50 pt-1.5">
                     <span className="text-sm font-bold">Total</span>
                     <span className="text-base font-bold text-primary">{formatCurrency(totalPrice, productCurrency)}</span>

@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
+    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, bump_product_ids, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
 
     if (!method || !phone || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -186,7 +186,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
-    const priced = await resolvePrice(supabase, product_id, bump_product_id)
+    const priced = await resolvePrice(supabase, product_id,
+      Array.isArray(bump_product_ids) && bump_product_ids.length ? bump_product_ids : bump_product_id)
     if (priced.error) {
       return new Response(JSON.stringify({ error: priced.error }), {
         status: 400,
@@ -207,6 +208,7 @@ Deno.serve(async (req) => {
       payment_phone: phone || null,
       bump_product_id: priced.bumpProductId,
       bump_valor: priced.bumpValor,
+      bumps: priced.bumps,
       utm_source: utm_source || null,
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
@@ -309,6 +311,7 @@ Deno.serve(async (req) => {
             payment_method: method,
             bump_product_id: priced.bumpProductId,
             bump_valor: priced.bumpValor,
+            bumps: priced.bumps,
           }, method)
         }
 
