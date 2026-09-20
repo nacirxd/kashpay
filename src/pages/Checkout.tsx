@@ -855,14 +855,14 @@ const Checkout = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}
-                  className={`w-full text-left rounded-2xl border bg-card p-5 transition-colors ${
+                  className={`w-full text-left rounded-xl border bg-card p-4 transition-colors ${
                     bumpAccepted ? "border-primary/50" : "border-border hover:border-border"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex flex-col items-center gap-2.5 pt-0.5">
+                  <div className="flex items-start gap-3">
+                    <div className="flex flex-col items-center gap-2 pt-0.5">
                       <motion.span
-                        animate={bumpAccepted ? { y: 0 } : { y: [-3, 3, -3] }}
+                        animate={bumpAccepted ? { y: 0 } : { y: [-2.5, 2.5, -2.5] }}
                         transition={
                           bumpAccepted
                             ? { duration: 0.2 }
@@ -870,7 +870,7 @@ const Checkout = () => {
                         }
                         className="flex"
                       >
-                        <ArrowDown className="h-4 w-4 text-destructive" />
+                        <ArrowDown className="h-3.5 w-3.5 text-destructive" strokeWidth={1.5} />
                       </motion.span>
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
