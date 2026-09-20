@@ -10,7 +10,7 @@ import { getStoredUTMs, captureUTMs } from "@/lib/utm";
 import { loadMetaPixel, trackEvent } from "@/lib/metaPixel";
 import { loadGTM, pushDataLayer } from "@/lib/gtm";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X } from "lucide-react";
+import { ShieldCheck, CheckCircle, Smartphone, Download, ExternalLink, Lock, Clock, Copy, RefreshCw, X, ArrowDown } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
@@ -849,78 +849,57 @@ const Checkout = () => {
               )}
 
               {bumpProduct && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                  className="relative"
+                <motion.button
+                  type="button"
+                  onClick={() => setBumpAccepted((v) => !v)}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className={`w-full text-left rounded-2xl border bg-card p-5 transition-colors ${
+                    bumpAccepted ? "border-primary/50" : "border-border hover:border-border"
+                  }`}
                 >
-                  {/* Selo de destaque */}
-                  <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary-foreground shadow-sm">
-                    ⚡ Oferta única — só nesta página
-                  </span>
-                  <motion.button
-                    type="button"
-                    onClick={() => setBumpAccepted((v) => !v)}
-                    animate={
-                      bumpAccepted
-                        ? { scale: 1 }
-                        : { scale: [1, 1.012, 1] }
-                    }
-                    transition={
-                      bumpAccepted
-                        ? { duration: 0.15 }
-                        : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }
-                    }
-                    className={`w-full text-left rounded-xl border-2 border-dashed p-4 pt-5 transition-colors shadow-sm ${
-                      bumpAccepted
-                        ? "border-primary bg-primary/10 shadow-primary/20"
-                        : "border-primary/60 bg-primary/[0.06] hover:bg-primary/10"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-4">
+                    <div className="flex flex-col items-center gap-2.5 pt-0.5">
+                      <ArrowDown className="h-4 w-4 text-destructive" />
                       <span
-                        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                           bumpAccepted
-                            ? "border-primary bg-primary text-primary-foreground scale-110"
-                            : "border-primary/60 bg-background"
+                            ? "border-primary bg-primary"
+                            : "border-muted-foreground/30 bg-background"
                         }`}
                       >
-                        {bumpAccepted && <CheckCircle className="h-4 w-4" />}
+                        {bumpAccepted && <CheckCircle className="h-3.5 w-3.5 text-primary-foreground" />}
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-extrabold leading-snug text-foreground">
-                          {product.order_bump_title || `SIM! Quero adicionar ${bumpProduct.nome}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          {product.order_bump_description || bumpProduct.descricao || "Adicione este extra à sua compra com um clique."}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-md bg-primary px-2 py-0.5 text-sm font-extrabold text-primary-foreground">
-                            + {formatCurrency(bumpPrice, productCurrency)}
-                          </span>
-                          {bumpPrice < Number(bumpProduct.preco) && (
-                            <>
-                              <span className="text-xs text-muted-foreground line-through">
-                                {formatCurrency(Number(bumpProduct.preco), productCurrency)}
-                              </span>
-                              <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
-                                -{Math.round((1 - bumpPrice / Number(bumpProduct.preco)) * 100)}% HOJE
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {bumpProduct.image_url && (
-                        <img
-                          src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
-                          alt={bumpProduct.nome}
-                          className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-border"
-                        />
-                      )}
                     </div>
-                  </motion.button>
-                </motion.div>
+
+                    {bumpProduct.image_url ? (
+                      <img
+                        src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${bumpProduct.image_url}`}
+                        alt={bumpProduct.nome}
+                        className="h-[72px] w-[72px] shrink-0 rounded-xl object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="h-[72px] w-[72px] shrink-0 rounded-xl bg-muted" />
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-base font-extrabold uppercase leading-snug tracking-tight">
+                        {product.order_bump_title || bumpProduct.nome}
+                      </p>
+                      <p className="mt-0.5 text-base font-bold text-primary">
+                        {formatCurrency(bumpPrice, productCurrency)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(product.order_bump_description || bumpProduct.descricao) && (
+                    <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                      {product.order_bump_description || bumpProduct.descricao}
+                    </p>
+                  )}
+                </motion.button>
               )}
 
               <div className="border-t border-border/50 mt-2 pt-3 space-y-1.5">
