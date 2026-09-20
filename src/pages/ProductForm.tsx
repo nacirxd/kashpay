@@ -74,7 +74,7 @@ const ProductForm = () => {
   const [metaAccessToken, setMetaAccessToken] = useState("");
   const [preco, setPreco] = useState("");
   const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(["zenofy"]);
   
   const [externalUrl, setExternalUrl] = useState("");
   const [upsellUrl, setUpsellUrl] = useState("");
@@ -111,7 +111,7 @@ const ProductForm = () => {
         setMetaAccessToken(draft.metaAccessToken || "");
         setPreco(draft.preco || "");
         setCurrency(draft.currency === "AOA" ? "AOA" : "MZN");
-        setPaymentMethods(Array.isArray(draft.paymentMethods) ? draft.paymentMethods : ["mpesa", "emola"]);
+        setPaymentMethods(Array.isArray(draft.paymentMethods) && draft.paymentMethods.length ? draft.paymentMethods : ["zenofy"]);
         setExternalUrl(draft.externalUrl || "");
         setUpsellUrl(draft.upsellUrl || "");
         setDownsellUrl(draft.downsellUrl || "");
