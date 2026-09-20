@@ -57,6 +57,9 @@ const ProductForm = () => {
   const isEditing = !!id;
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
+  const draftKey = user?.id ? `aureon-product-draft-${user.id}` : null;
+  const draftReadyRef = useRef(false);
+  const restoredDraftRef = useRef(false);
 
   // Step control: editing skips the selector
   const [step, setStep] = useState<"type" | "form">(isEditing ? "form" : "type");
@@ -89,6 +92,52 @@ const ProductForm = () => {
   const [productSales, setProductSales] = useState<any[]>([]);
 
   useEffect(() => {
+    if (isEditing || !draftKey || draftReadyRef.current) return;
+    draftReadyRef.current = true;
+
+    try {
+      const saved = sessionStorage.getItem(draftKey);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        restoredDraftRef.current = true;
+        setStep(draft.step === "form" ? "form" : "type");
+        setDeliveryType(draft.deliveryType || "link");
+        setNome(draft.nome || "");
+        setDescricao(draft.descricao || "");
+        setCategoria(draft.categoria || "");
+        setSupportPhone(draft.supportPhone || "");
+        setSupportEmail(draft.supportEmail || "");
+        setMetaPixelId(draft.metaPixelId || "");
+        setMetaAccessToken(draft.metaAccessToken || "");
+        setPreco(draft.preco || "");
+        setCurrency(draft.currency === "AOA" ? "AOA" : "MZN");
+        setPaymentMethods(Array.isArray(draft.paymentMethods) ? draft.paymentMethods : ["mpesa", "emola"]);
+        setExternalUrl(draft.externalUrl || "");
+        setUpsellUrl(draft.upsellUrl || "");
+        setDownsellUrl(draft.downsellUrl || "");
+        setBumps(Array.isArray(draft.bumps) ? draft.bumps : []);
+        setFileUrl(draft.fileUrl || "");
+        setFileName(draft.fileName || "");
+        setImageUrl(draft.imageUrl || "");
+        setImagePreview(draft.imagePreview || "");
+      }
+    } catch {
+      sessionStorage.removeItem(draftKey);
+    }
+  }, [draftKey, isEditing]);
+
+  useEffect(() => {
+    if (isEditing || !draftKey || !draftReadyRef.current) return;
+    sessionStorage.setItem(draftKey, JSON.stringify({
+      step, deliveryType, nome, descricao, categoria, supportPhone, supportEmail,
+      metaPixelId, metaAccessToken, preco, currency, paymentMethods, externalUrl,
+      upsellUrl, downsellUrl, bumps, fileUrl, fileName, imageUrl, imagePreview,
+    }));
+  }, [isEditing, draftKey, step, deliveryType, nome, descricao, categoria, supportPhone,
+    supportEmail, metaPixelId, metaAccessToken, preco, currency, paymentMethods,
+    externalUrl, upsellUrl, downsellUrl, bumps, fileUrl, fileName, imageUrl, imagePreview]);
+
+  useEffect(() => {
     // Lista de produtos do vendedor (para a oferta extra / order bump)
     if (user) {
       supabase
@@ -101,11 +150,11 @@ const ProductForm = () => {
     if (user) {
       supabase.from("profiles").select("currency").eq("user_id", user.id).maybeSingle().then(({ data }) => {
         const c = ((data as any)?.currency as "MZN" | "AOA") || "MZN";
-        setCurrency(c);
+        if (!restoredDraftRef.current) setCurrency(c);
         // Só ajusta o default se ainda estiver no default original
         setPaymentMethods((prev) => {
           const defaultMzn = prev.length === 2 && prev.includes("mpesa") && prev.includes("emola");
-          if (!isEditing && defaultMzn && c === "AOA") return ["mcx", "ref"];
+          if (!isEditing && !restoredDraftRef.current && defaultMzn && c === "AOA") return ["mcx", "ref"];
           return prev;
         });
       });
@@ -374,6 +423,7 @@ const ProductForm = () => {
         .insert({ ...payload, user_id: user.id } as any);
       if (error) toast.error(error.message);
       else {
+        if (draftKey) sessionStorage.removeItem(draftKey);
         toast.success("Produto criado!");
         navigate("/produtos");
       }
