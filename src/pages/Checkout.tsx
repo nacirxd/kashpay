@@ -658,7 +658,7 @@ const Checkout = () => {
                   variant="ghost"
                   size="lg"
                   className="w-full"
-                  onClick={() => { leavingRef.current = true; upsellFiredRef.current = true; window.location.href = downsellUrl; }}
+                  onClick={() => { upsellFiredRef.current = true; goToOffer(downsellUrl, "downsell"); }}
                 >
                   Não, obrigado
                 </Button>
