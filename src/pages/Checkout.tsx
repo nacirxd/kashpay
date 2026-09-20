@@ -898,6 +898,11 @@ const Checkout = () => {
                       <p className="mt-0.5 text-xs font-bold text-primary">
                         {formatCurrency(bumpPrice, productCurrency)}
                       </p>
+                      {(product.order_bump_description || bumpProduct.descricao) && (
+                        <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground leading-snug">
+                          {product.order_bump_description || bumpProduct.descricao}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-col items-center justify-center gap-1">
@@ -923,12 +928,6 @@ const Checkout = () => {
                       </span>
                     </div>
                   </div>
-
-                  {(product.order_bump_description || bumpProduct.descricao) && (
-                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                      {product.order_bump_description || bumpProduct.descricao}
-                    </p>
-                  )}
                 </motion.button>
               )}
 
