@@ -151,10 +151,10 @@ const ProductForm = () => {
       supabase.from("profiles").select("currency").eq("user_id", user.id).maybeSingle().then(({ data }) => {
         const c = ((data as any)?.currency as "MZN" | "AOA") || "MZN";
         if (!restoredDraftRef.current) setCurrency(c);
-        // Só ajusta o default se ainda estiver no default original
+        // Só ajusta o default se ainda estiver no default original (Zenofy)
         setPaymentMethods((prev) => {
-          const defaultMzn = prev.length === 2 && prev.includes("mpesa") && prev.includes("emola");
-          if (!isEditing && !restoredDraftRef.current && defaultMzn && c === "AOA") return ["mcx", "ref"];
+          const isDefaultMzn = prev.length === 1 && prev.includes("zenofy");
+          if (!isEditing && !restoredDraftRef.current && isDefaultMzn && c === "AOA") return ["mcx", "ref"];
           return prev;
         });
       });
