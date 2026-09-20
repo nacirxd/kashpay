@@ -74,7 +74,7 @@ const ProductForm = () => {
   const [metaAccessToken, setMetaAccessToken] = useState("");
   const [preco, setPreco] = useState("");
   const [currency, setCurrency] = useState<"MZN" | "AOA">("MZN");
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(["mpesa", "emola"]);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(["zenofy"]);
   
   const [externalUrl, setExternalUrl] = useState("");
   const [upsellUrl, setUpsellUrl] = useState("");
@@ -111,7 +111,7 @@ const ProductForm = () => {
         setMetaAccessToken(draft.metaAccessToken || "");
         setPreco(draft.preco || "");
         setCurrency(draft.currency === "AOA" ? "AOA" : "MZN");
-        setPaymentMethods(Array.isArray(draft.paymentMethods) ? draft.paymentMethods : ["mpesa", "emola"]);
+        setPaymentMethods(Array.isArray(draft.paymentMethods) && draft.paymentMethods.length ? draft.paymentMethods : ["zenofy"]);
         setExternalUrl(draft.externalUrl || "");
         setUpsellUrl(draft.upsellUrl || "");
         setDownsellUrl(draft.downsellUrl || "");
@@ -151,10 +151,10 @@ const ProductForm = () => {
       supabase.from("profiles").select("currency").eq("user_id", user.id).maybeSingle().then(({ data }) => {
         const c = ((data as any)?.currency as "MZN" | "AOA") || "MZN";
         if (!restoredDraftRef.current) setCurrency(c);
-        // Só ajusta o default se ainda estiver no default original
+        // Só ajusta o default se ainda estiver no default original (Zenofy)
         setPaymentMethods((prev) => {
-          const defaultMzn = prev.length === 2 && prev.includes("mpesa") && prev.includes("emola");
-          if (!isEditing && !restoredDraftRef.current && defaultMzn && c === "AOA") return ["mcx", "ref"];
+          const isDefaultMzn = prev.length === 1 && prev.includes("zenofy");
+          if (!isEditing && !restoredDraftRef.current && isDefaultMzn && c === "AOA") return ["mcx", "ref"];
           return prev;
         });
       });
