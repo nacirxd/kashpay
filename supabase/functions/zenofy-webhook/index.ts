@@ -8,6 +8,7 @@ import { sendUtmifyOrder } from '../_shared/utmify.ts'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 import { sendAppEmail } from '../_shared/sendAppEmail.ts'
+import { sendMetaPurchase } from '../_shared/metaCapi.ts'
 
 /**
  * Webhook chamado pela Zenofy.
@@ -145,8 +146,9 @@ Deno.serve(async (req) => {
 
       try {
         const { data: prod } = await supabase
-          .from('products').select('nome, currency').eq('id', sale.product_id).maybeSingle()
+          .from('products').select('nome, currency, meta_pixel_id, meta_access_token').eq('id', sale.product_id).maybeSingle()
         await sendUtmifyOrder(supabase, sale, prod as any, 'zenofy')
+        await sendMetaPurchase(supabase, sale, prod as any)
       } catch (e) {
         console.error('[zenofy-webhook] erro utmify:', e)
       }

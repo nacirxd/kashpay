@@ -7,6 +7,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 import { sendAppEmail } from '../_shared/sendAppEmail.ts'
+import { sendMetaPurchase } from '../_shared/metaCapi.ts'
 
 /**
  * Webhook chamado pela Kumbify quando o status do pagamento muda.
@@ -139,6 +140,8 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error('[kumbify-webhook] erro emails:', e)
       }
+
+      await sendMetaPurchase(supabase, sale, null)
     }
 
     return new Response(JSON.stringify({ ok: true, status: newStatus }), {
