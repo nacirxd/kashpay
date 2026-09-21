@@ -22,7 +22,7 @@ const Sales = () => {
     if (!user) return;
     supabase
       .from("sales")
-      .select("*, products(nome, currency)")
+      .select("*, products!sales_product_id_fkey(nome, currency)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {

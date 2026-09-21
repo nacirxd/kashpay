@@ -54,7 +54,7 @@ const Dashboard = () => {
     if (!user) return;
     const fetchData = async () => {
       const { data: salesData } = await supabase
-        .from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false });
+        .from("sales").select("*, products!sales_product_id_fkey(nome)").eq("user_id", user.id).order("created_at", { ascending: false });
       setAllSales(salesData || []);
       setLoading(false);
     };

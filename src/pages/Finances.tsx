@@ -40,7 +40,7 @@ const Finances = () => {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("sales").select("*, products!sales_product_id_fkey(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("withdrawals").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("profiles").select("mpesa_nome, mpesa_telefone, emola_nome, emola_telefone, banco_nome, banco_conta").eq("user_id", user.id).single(),
     ]).then(([salesRes, withdrawRes, profileRes]) => {
