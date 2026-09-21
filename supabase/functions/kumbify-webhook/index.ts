@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // Localiza a venda por external_transaction_id
     const { data: sale } = await supabase
       .from('sales')
-      .select('id, status, user_id, valor, product_id, buyer_email, buyer_name, payment_method, bump_product_id, bump_valor')
+      .select('id, status, user_id, valor, product_id, buyer_email, buyer_name, payment_method, bump_product_id, bump_valor, bumps')
       .eq('external_transaction_id', externalId)
       .maybeSingle()
 
