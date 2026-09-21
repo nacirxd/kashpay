@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar as CalendarWidget } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, subDays, isAfter, isBefore } from "date-fns";
+import { format, subDays, addDays, isAfter, isBefore } from "date-fns";
 import { toMozambiqueDate, formatDateMZ } from "@/lib/timezone";
 
 type DateRange = { from: Date; to: Date };
