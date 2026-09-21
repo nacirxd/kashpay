@@ -6,6 +6,7 @@ const corsHeaders = {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendUtmifyOrder } from '../_shared/utmify.ts'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
+import { sendMetaPurchase } from '../_shared/metaCapi.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
 import { sendAppEmail } from '../_shared/sendAppEmail.ts'
 
@@ -66,7 +67,7 @@ async function approveSale(supabase: Supa, sale: any) {
 
   const { data: product } = await supabase
     .from('products')
-    .select('nome, delivery_type, external_url, file_url, support_phone, support_email, currency, webhook_url')
+    .select('nome, delivery_type, external_url, file_url, support_phone, support_email, currency, webhook_url, meta_pixel_id, meta_access_token')
     .eq('id', sale.product_id)
     .maybeSingle()
 
@@ -144,6 +145,9 @@ async function approveSale(supabase: Supa, sale: any) {
 
   // UTMify
   await sendUtmifyOrder(supabase, sale, product as any, 'zenofy')
+
+  // Meta (Facebook) Purchase
+  await sendMetaPurchase(supabase, sale, product as any)
 
   // Webhook do produto
   try {
