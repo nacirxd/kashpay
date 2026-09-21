@@ -45,7 +45,7 @@ const Reports = () => {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("sales").select("*, products(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("sales").select("*, products!sales_product_id_fkey(nome)").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("withdrawals").select("*").eq("user_id", user.id),
     ]).then(([s, w]) => {
       setSales(s.data || []);
