@@ -35,12 +35,17 @@ const Dashboard = () => {
         const mzNow = toMozambiqueDate(now);
         const startMZ = new Date(mzNow);
         startMZ.setHours(0, 0, 0, 0);
+        const endMZ = new Date(mzNow);
+        endMZ.setHours(23, 59, 59, 999);
         // Convert back: offset between local start-of-day in MZ and UTC
         const offsetMs = now.getTime() - mzNow.getTime();
-        return { from: new Date(startMZ.getTime() + offsetMs), to: now };
+        return {
+          from: new Date(startMZ.getTime() + offsetMs),
+          to: new Date(endMZ.getTime() + offsetMs),
+        };
       }
-      case "7d": return { from: subDays(now, 7), to: now };
-      case "30d": return { from: subDays(now, 30), to: now };
+      case "7d": return { from: subDays(now, 7), to: addDays(now, 1) };
+      case "30d": return { from: subDays(now, 30), to: addDays(now, 1) };
       case "custom": return customRange;
     }
   }, [preset, customRange]);
