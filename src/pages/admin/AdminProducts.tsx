@@ -4,7 +4,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { formatDateTimeMZ } from "@/lib/timezone";
-import { Search, ImageOff, Eye, X, ExternalLink, Download } from "lucide-react";
+import { Search, ImageOff, Eye, X, ExternalLink, Download, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -35,6 +35,8 @@ interface Product {
   seller_email: string;
   created_at: string;
   zenofy_product_id: string | null;
+  upsell_url: string | null;
+  downsell_url: string | null;
 }
 
 const statusMap: Record<string, { label: string; classes: string }> = {
@@ -64,6 +66,9 @@ const AdminProducts = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [zenofyDraft, setZenofyDraft] = useState("");
   const [zenofySaving, setZenofySaving] = useState(false);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", external_url: "", upsell_url: "", downsell_url: "" });
+  const [editSaving, setEditSaving] = useState(false);
 
   const load = () => {
     setLoading(true);
