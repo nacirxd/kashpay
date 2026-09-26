@@ -534,7 +534,7 @@ const AdminProducts = () => {
       {/* Edit product modal */}
       {editProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 overflow-y-auto py-8" onClick={() => setEditProduct(null)}>
-          <div className="w-full max-w-lg rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4 my-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4 my-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold">Editar Produto</h2>
               <button onClick={() => setEditProduct(null)} className="text-gray-500 hover:text-gray-300">
@@ -549,7 +549,7 @@ const AdminProducts = () => {
                   type="text"
                   value={editForm.nome}
                   onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 focus:outline-none"
+                  className={inputCls}
                 />
               </div>
               <div>
@@ -558,20 +558,100 @@ const AdminProducts = () => {
                   value={editForm.descricao}
                   onChange={(e) => setEditForm({ ...editForm, descricao: e.target.value })}
                   rows={3}
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 focus:outline-none resize-none"
+                  className={`${inputCls} resize-none`}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Preço</label>
+                  <input
+                    type="number" min="0" step="0.01"
+                    value={editForm.preco}
+                    onChange={(e) => setEditForm({ ...editForm, preco: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Moeda</label>
+                  <select
+                    value={editForm.currency}
+                    onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                    className={inputCls}
+                  >
+                    <option value="MZN">MZN — Moçambique</option>
+                    <option value="AOA">AOA — Angola</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Categoria</label>
+                  <select
+                    value={editForm.categoria}
+                    onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })}
+                    className={inputCls}
+                  >
+                    <option value="">Sem categoria</option>
+                    {CATEGORIAS_ADMIN.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    className={inputCls}
+                  >
+                    <option value="approved">Aprovado</option>
+                    <option value="pending">Pendente</option>
+                    <option value="rejected">Rejeitado</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="text-xs text-gray-500 font-medium">Preço</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={editForm.preco}
-                  onChange={(e) => setEditForm({ ...editForm, preco: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 focus:outline-none"
-                />
+                <label className="text-xs text-gray-500 font-medium">Métodos de pagamento</label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {PAYMENT_OPTIONS.filter((o) => o.currency === editForm.currency).map((o) => {
+                    const on = editForm.payment_methods.includes(o.key);
+                    return (
+                      <button
+                        key={o.key}
+                        type="button"
+                        onClick={() => togglePaymentMethod(o.key)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
+                          on ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" : "bg-gray-800 text-gray-400 border-gray-700 hover:text-gray-200"
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Tipo de entrega</label>
+                  <select
+                    value={editForm.delivery_type}
+                    onChange={(e) => setEditForm({ ...editForm, delivery_type: e.target.value })}
+                    className={inputCls}
+                  >
+                    <option value="link">Link de acesso</option>
+                    <option value="file">Arquivo para download</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Imagem (caminho ou URL)</label>
+                  <input
+                    type="text"
+                    value={editForm.image_url}
+                    onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs text-gray-500 font-medium">Link de entrega (URL externa)</label>
                 <input
@@ -579,30 +659,166 @@ const AdminProducts = () => {
                   value={editForm.external_url}
                   onChange={(e) => setEditForm({ ...editForm, external_url: e.target.value })}
                   placeholder="https://..."
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
+                  className={inputCls}
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500 font-medium">Link de upsell</label>
+                <label className="text-xs text-gray-500 font-medium">Arquivo de entrega (caminho no armazenamento)</label>
                 <input
-                  type="url"
-                  value={editForm.upsell_url}
-                  onChange={(e) => setEditForm({ ...editForm, upsell_url: e.target.value })}
-                  placeholder="https://..."
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
+                  type="text"
+                  value={editForm.file_url}
+                  onChange={(e) => setEditForm({ ...editForm, file_url: e.target.value })}
+                  className={inputCls}
                 />
               </div>
-              <div>
-                <label className="text-xs text-gray-500 font-medium">Link de downsell</label>
-                <input
-                  type="url"
-                  value={editForm.downsell_url}
-                  onChange={(e) => setEditForm({ ...editForm, downsell_url: e.target.value })}
-                  placeholder="https://..."
-                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">WhatsApp de suporte</label>
+                  <input
+                    type="text"
+                    value={editForm.support_phone}
+                    onChange={(e) => setEditForm({ ...editForm, support_phone: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Email de suporte</label>
+                  <input
+                    type="email"
+                    value={editForm.support_email}
+                    onChange={(e) => setEditForm({ ...editForm, support_email: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Pixel do Facebook</label>
+                  <input
+                    type="text"
+                    value={editForm.meta_pixel_id}
+                    onChange={(e) => setEditForm({ ...editForm, meta_pixel_id: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Token do Facebook</label>
+                  <input
+                    type="text"
+                    value={editForm.meta_access_token}
+                    onChange={(e) => setEditForm({ ...editForm, meta_access_token: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Webhook do produto</label>
+                  <input
+                    type="url"
+                    value={editForm.webhook_url}
+                    onChange={(e) => setEditForm({ ...editForm, webhook_url: e.target.value })}
+                    placeholder="https://..."
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">ID Zenofy</label>
+                  <input
+                    type="text"
+                    value={editForm.zenofy_product_id}
+                    onChange={(e) => setEditForm({ ...editForm, zenofy_product_id: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Link de upsell</label>
+                  <input
+                    type="url"
+                    value={editForm.upsell_url}
+                    onChange={(e) => setEditForm({ ...editForm, upsell_url: e.target.value })}
+                    placeholder="https://..."
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Link de downsell</label>
+                  <input
+                    type="url"
+                    value={editForm.downsell_url}
+                    onChange={(e) => setEditForm({ ...editForm, downsell_url: e.target.value })}
+                    placeholder="https://..."
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-800 pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs text-gray-500 font-medium">Ofertas extra no checkout</label>
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((f) => ({ ...f, order_bumps: [...f.order_bumps, { product_id: "", price: "", title: "", description: "" }] }))}
+                    className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </button>
+                </div>
+                {editForm.order_bumps.length === 0 && (
+                  <p className="text-xs text-gray-600">Nenhuma oferta extra.</p>
+                )}
+                <div className="space-y-3">
+                  {editForm.order_bumps.map((b, idx) => (
+                    <div key={idx} className="rounded-lg border border-gray-700 p-3 space-y-2">
+                      <div className="flex gap-2">
+                        <select
+                          value={b.product_id}
+                          onChange={(e) => updateBump(idx, { product_id: e.target.value })}
+                          className={`${inputCls} mt-0 flex-1`}
+                        >
+                          <option value="">Escolher produto...</option>
+                          {bumpCandidates.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setEditForm((f) => ({ ...f, order_bumps: f.order_bumps.filter((_, i) => i !== idx) }))}
+                          className="rounded-lg bg-red-500/10 px-2 text-red-400 hover:bg-red-500/20 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="number" min="0" step="0.01"
+                          value={b.price}
+                          onChange={(e) => updateBump(idx, { price: e.target.value })}
+                          placeholder="Preço promocional"
+                          className={`${inputCls} mt-0`}
+                        />
+                        <input
+                          type="text"
+                          value={b.title}
+                          onChange={(e) => updateBump(idx, { title: e.target.value })}
+                          placeholder="Título"
+                          className={`${inputCls} mt-0`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={b.description}
+                        onChange={(e) => updateBump(idx, { description: e.target.value })}
+                        placeholder="Descrição"
+                        className={`${inputCls} mt-0`}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+
 
             <div className="flex justify-end gap-2 mt-6">
               <button
