@@ -193,21 +193,80 @@ const AdminProducts = () => {
 
   const openEdit = (p: Product) => {
     setEditProduct(p);
+    const rawBumps = Array.isArray(p.order_bumps) ? p.order_bumps : [];
+    let bumps: BumpEntry[] = rawBumps
+      .filter((b: any) => b && typeof b.product_id === "string" && b.product_id)
+      .map((b: any) => ({
+        product_id: b.product_id,
+        price: b.price != null ? String(b.price) : "",
+        title: String(b.title || ""),
+        description: String(b.description || ""),
+      }));
+    if (bumps.length === 0 && p.order_bump_product_id) {
+      bumps = [{
+        product_id: p.order_bump_product_id,
+        price: p.order_bump_price != null ? String(p.order_bump_price) : "",
+        title: p.order_bump_title || "",
+        description: p.order_bump_description || "",
+      }];
+    }
     setEditForm({
       nome: p.nome,
       descricao: p.descricao || "",
       preco: String(p.preco),
+      categoria: p.categoria || "",
+      currency: p.currency || "MZN",
+      status: p.status || "approved",
+      delivery_type: p.delivery_type || "link",
+      payment_methods: Array.isArray(p.payment_methods) ? p.payment_methods : [],
       external_url: p.external_url || "",
+      file_url: p.file_url || "",
+      image_url: p.image_url || "",
       upsell_url: p.upsell_url || "",
       downsell_url: p.downsell_url || "",
+      support_phone: p.support_phone || "",
+      support_email: p.support_email || "",
+      meta_pixel_id: p.meta_pixel_id || "",
+      meta_access_token: p.meta_access_token || "",
+      webhook_url: p.webhook_url || "",
+      zenofy_product_id: p.zenofy_product_id || "",
+      order_bumps: bumps,
     });
   };
+
+  const togglePaymentMethod = (key: string) => {
+    setEditForm((f) => ({
+      ...f,
+      payment_methods: f.payment_methods.includes(key)
+        ? f.payment_methods.filter((m) => m !== key)
+        : [...f.payment_methods, key],
+    }));
+  };
+
+  const updateBump = (idx: number, patch: Partial<BumpEntry>) => {
+    setEditForm((f) => ({
+      ...f,
+      order_bumps: f.order_bumps.map((b, i) => (i === idx ? { ...b, ...patch } : b)),
+    }));
+  };
+
+  const bumpCandidates = useMemo(() => {
+    if (!editProduct) return [];
+    return products.filter(
+      (p) => p.id !== editProduct.id && p.user_id === editProduct.user_id && (p.currency || "MZN") === editForm.currency
+    );
+  }, [products, editProduct, editForm.currency]);
 
   const handleSaveEdit = async () => {
     if (!editProduct) return;
     if (!editForm.nome.trim()) { toast.error("O nome não pode ficar vazio"); return; }
     const preco = Number(editForm.preco);
     if (!Number.isFinite(preco) || preco <= 0) { toast.error("Preço inválido"); return; }
+    if (editForm.payment_methods.length === 0) { toast.error("Escolha pelo menos um método de pagamento"); return; }
+    if (editForm.order_bumps.some((b) => !b.product_id)) { toast.error("Escolha o produto de cada oferta extra"); return; }
+    if (editForm.order_bumps.some((b) => b.price !== "" && (!Number.isFinite(Number(b.price)) || Number(b.price) < 0))) {
+      toast.error("Preço de oferta extra inválido"); return;
+    }
     setEditSaving(true);
     try {
       await adminFetch("update_product", {
@@ -215,9 +274,28 @@ const AdminProducts = () => {
         nome: editForm.nome,
         descricao: editForm.descricao,
         preco,
+        categoria: editForm.categoria,
+        currency: editForm.currency,
+        status: editForm.status,
+        delivery_type: editForm.delivery_type,
+        payment_methods: editForm.payment_methods,
         external_url: editForm.external_url,
+        file_url: editForm.file_url,
+        image_url: editForm.image_url,
         upsell_url: editForm.upsell_url,
         downsell_url: editForm.downsell_url,
+        support_phone: editForm.support_phone,
+        support_email: editForm.support_email,
+        meta_pixel_id: editForm.meta_pixel_id,
+        meta_access_token: editForm.meta_access_token,
+        webhook_url: editForm.webhook_url,
+        zenofy_product_id: editForm.zenofy_product_id,
+        order_bumps: editForm.order_bumps.map((b) => ({
+          product_id: b.product_id,
+          price: b.price === "" ? null : Number(b.price),
+          title: b.title,
+          description: b.description,
+        })),
       });
       toast.success("Produto atualizado");
       setEditProduct(null);
