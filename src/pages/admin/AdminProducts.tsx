@@ -4,7 +4,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from "sonner";
 import { formatMZN } from "@/lib/currency";
 import { formatDateTimeMZ } from "@/lib/timezone";
-import { Search, ImageOff, Eye, X, ExternalLink, Download, Pencil } from "lucide-react";
+import { Search, ImageOff, Eye, X, ExternalLink, Download, Pencil, Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
