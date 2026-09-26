@@ -19,6 +19,13 @@ function getImageUrl(url: string | null): string | null {
   return STORAGE_URL + url;
 }
 
+interface BumpEntry {
+  product_id: string;
+  price: string;
+  title: string;
+  description: string;
+}
+
 interface Product {
   id: string;
   nome: string;
@@ -37,7 +44,62 @@ interface Product {
   zenofy_product_id: string | null;
   upsell_url: string | null;
   downsell_url: string | null;
+  categoria: string | null;
+  currency: string | null;
+  payment_methods: string[] | null;
+  support_phone: string | null;
+  support_email: string | null;
+  meta_pixel_id: string | null;
+  meta_access_token: string | null;
+  webhook_url: string | null;
+  order_bumps: any;
+  order_bump_product_id: string | null;
+  order_bump_price: number | null;
+  order_bump_title: string | null;
+  order_bump_description: string | null;
 }
+
+const PAYMENT_OPTIONS: { key: string; label: string; currency: "MZN" | "AOA" }[] = [
+  { key: "zenofy", label: "Zenofy", currency: "MZN" },
+  { key: "mpesa", label: "M-Pesa", currency: "MZN" },
+  { key: "emola", label: "e-Mola", currency: "MZN" },
+  { key: "mcx", label: "Multicaixa Express", currency: "AOA" },
+  { key: "ref", label: "Referência", currency: "AOA" },
+];
+
+const CATEGORIAS_ADMIN = [
+  "Cursos e Educação", "E-books e Livros", "Marketing Digital",
+  "Negócios e Empreendedorismo", "Finanças e Investimentos", "Desenvolvimento Pessoal",
+  "Saúde e Bem-estar", "Fitness e Esporte", "Beleza e Moda", "Culinária e Receitas",
+  "Tecnologia e Programação", "Design e Criatividade", "Fotografia e Vídeo",
+  "Música e Áudio", "Idiomas", "Espiritualidade e Religião", "Relacionamentos",
+  "Família e Filhos", "Hobbies e Lazer", "Viagens", "Imobiliário", "Direito",
+  "Engenharia", "Software e SaaS", "Templates e Ferramentas", "Consultoria e Mentoria",
+  "Eventos e Ingressos", "Outro",
+];
+
+const emptyEditForm = {
+  nome: "",
+  descricao: "",
+  preco: "",
+  categoria: "",
+  currency: "MZN",
+  status: "approved",
+  delivery_type: "link",
+  payment_methods: [] as string[],
+  external_url: "",
+  file_url: "",
+  image_url: "",
+  upsell_url: "",
+  downsell_url: "",
+  support_phone: "",
+  support_email: "",
+  meta_pixel_id: "",
+  meta_access_token: "",
+  webhook_url: "",
+  zenofy_product_id: "",
+  order_bumps: [] as BumpEntry[],
+};
 
 const statusMap: Record<string, { label: string; classes: string }> = {
   pending: { label: "Pendente", classes: "bg-yellow-500/10 text-yellow-400" },
