@@ -129,6 +129,43 @@ const AdminProducts = () => {
     setZenofySaving(false);
   };
 
+  const openEdit = (p: Product) => {
+    setEditProduct(p);
+    setEditForm({
+      nome: p.nome,
+      descricao: p.descricao || "",
+      preco: String(p.preco),
+      external_url: p.external_url || "",
+      upsell_url: p.upsell_url || "",
+      downsell_url: p.downsell_url || "",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editProduct) return;
+    if (!editForm.nome.trim()) { toast.error("O nome não pode ficar vazio"); return; }
+    const preco = Number(editForm.preco);
+    if (!Number.isFinite(preco) || preco <= 0) { toast.error("Preço inválido"); return; }
+    setEditSaving(true);
+    try {
+      await adminFetch("update_product", {
+        product_id: editProduct.id,
+        nome: editForm.nome,
+        descricao: editForm.descricao,
+        preco,
+        external_url: editForm.external_url,
+        upsell_url: editForm.upsell_url,
+        downsell_url: editForm.downsell_url,
+      });
+      toast.success("Produto atualizado");
+      setEditProduct(null);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setEditSaving(false);
+  };
+
   return (
     <AdminLayout>
       <h1 className="text-2xl font-bold mb-6">Produtos</h1>
