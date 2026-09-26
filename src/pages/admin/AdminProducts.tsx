@@ -260,6 +260,12 @@ const AdminProducts = () => {
                       <TableCell className="text-gray-400 text-xs">{formatDateTimeMZ(p.created_at)}</TableCell>
                       <TableCell>
                         <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => openEdit(p)}
+                            className="rounded-lg bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1"
+                          >
+                            <Pencil className="h-3 w-3" /> Editar
+                          </button>
                           {p.status !== "approved" && (
                             <button
                               onClick={() => setConfirm({ id: p.id, status: "approved", name: p.nome })}
@@ -380,6 +386,98 @@ const AdminProducts = () => {
               {!viewProduct.file_url && !viewProduct.external_url && (
                 <p className="text-gray-500 text-sm">Nenhum material configurado.</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit product modal */}
+      {editProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 overflow-y-auto py-8" onClick={() => setEditProduct(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-gray-800 bg-[#13151d] p-6 mx-4 my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">Editar Produto</h2>
+              <button onClick={() => setEditProduct(null)} className="text-gray-500 hover:text-gray-300">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Nome</label>
+                <input
+                  type="text"
+                  value={editForm.nome}
+                  onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Descrição</label>
+                <textarea
+                  value={editForm.descricao}
+                  onChange={(e) => setEditForm({ ...editForm, descricao: e.target.value })}
+                  rows={3}
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 focus:outline-none resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Preço</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editForm.preco}
+                  onChange={(e) => setEditForm({ ...editForm, preco: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Link de entrega (URL externa)</label>
+                <input
+                  type="url"
+                  value={editForm.external_url}
+                  onChange={(e) => setEditForm({ ...editForm, external_url: e.target.value })}
+                  placeholder="https://..."
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Link de upsell</label>
+                <input
+                  type="url"
+                  value={editForm.upsell_url}
+                  onChange={(e) => setEditForm({ ...editForm, upsell_url: e.target.value })}
+                  placeholder="https://..."
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Link de downsell</label>
+                <input
+                  type="url"
+                  value={editForm.downsell_url}
+                  onChange={(e) => setEditForm({ ...editForm, downsell_url: e.target.value })}
+                  placeholder="https://..."
+                  className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setEditProduct(null)}
+                className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={editSaving}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-50"
+              >
+                {editSaving ? "Salvando..." : "Salvar alterações"}
+              </button>
             </div>
           </div>
         </div>
