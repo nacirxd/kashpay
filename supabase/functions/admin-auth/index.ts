@@ -281,6 +281,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    // UPDATE PRODUCT (admin edit)
+    if (action === "update_product") {
+      const productId = typeof body.product_id === "string" ? body.product_id : "";
+      if (!productId) throw new Error("Produto inválido");
+      const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+      const updates: Record<string, unknown> = {};
+      if (body.nome !== undefined) {
+        const nome = str(body.nome);
+        if (!nome) throw new Error("Nome não pode ficar vazio");
+        updates.nome = nome;
+      }
+      if (body.descricao !== undefined) updates.descricao = str(body.descricao);
+      if (body.preco !== undefined) {
+        const preco = Number(body.preco);
+        if (!Number.isFinite(preco) || preco <= 0) throw new Error("Preço inválido");
+        updates.preco = preco;
+      }
+      if (body.external_url !== undefined) updates.external_url = str(body.external_url) || null;
+      if (body.upsell_url !== undefined) updates.upsell_url = str(body.upsell_url) || null;
+      if (body.downsell_url !== undefined) updates.downsell_url = str(body.downsell_url) || null;
+      if (Object.keys(updates).length === 0) throw new Error("Nada para atualizar");
+      const { error } = await supabaseAdmin.from("products").update(updates).eq("id", productId);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // GET GLOBAL SETTINGS
     if (action === "get_settings") {
       const { data } = await supabaseAdmin.from("app_settings").select("key, value");
