@@ -129,7 +129,7 @@ const AdminProducts = () => {
   const [zenofyDraft, setZenofyDraft] = useState("");
   const [zenofySaving, setZenofySaving] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [editForm, setEditForm] = useState({ nome: "", descricao: "", preco: "", external_url: "", upsell_url: "", downsell_url: "" });
+  const [editForm, setEditForm] = useState({ ...emptyEditForm });
   const [editSaving, setEditSaving] = useState(false);
 
   const load = () => {
