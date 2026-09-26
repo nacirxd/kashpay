@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // UPDATE PRODUCT (admin edit)
+    // UPDATE PRODUCT (admin edit — full owner-level edit)
     if (action === "update_product") {
       const productId = typeof body.product_id === "string" ? body.product_id : "";
       if (!productId) throw new Error("Produto inválido");
@@ -290,17 +290,78 @@ Deno.serve(async (req) => {
       if (body.nome !== undefined) {
         const nome = str(body.nome);
         if (!nome) throw new Error("Nome não pode ficar vazio");
+        if (nome.length > 200) throw new Error("Nome muito longo");
         updates.nome = nome;
       }
-      if (body.descricao !== undefined) updates.descricao = str(body.descricao);
+      if (body.descricao !== undefined) updates.descricao = str(body.descricao).slice(0, 5000);
       if (body.preco !== undefined) {
         const preco = Number(body.preco);
         if (!Number.isFinite(preco) || preco <= 0) throw new Error("Preço inválido");
         updates.preco = preco;
       }
+      if (body.categoria !== undefined) updates.categoria = str(body.categoria).slice(0, 120);
+      if (body.currency !== undefined) {
+        const cur = str(body.currency).toUpperCase();
+        if (!["MZN", "AOA"].includes(cur)) throw new Error("Moeda inválida");
+        updates.currency = cur;
+      }
+      if (body.delivery_type !== undefined) {
+        const dt = str(body.delivery_type);
+        if (!["link", "file"].includes(dt)) throw new Error("Tipo de entrega inválido");
+        updates.delivery_type = dt;
+      }
+      if (body.payment_methods !== undefined) {
+        const allowedPm = ["zenofy", "mpesa", "emola", "mcx", "ref"];
+        const pm = Array.isArray(body.payment_methods)
+          ? body.payment_methods.map((m: unknown) => str(m)).filter((m: string) => allowedPm.includes(m))
+          : [];
+        if (pm.length === 0) throw new Error("Escolha pelo menos um método de pagamento");
+        updates.payment_methods = [...new Set(pm)];
+      }
+      if (body.status !== undefined) {
+        const st = str(body.status);
+        if (!["pending", "approved", "rejected"].includes(st)) throw new Error("Status inválido");
+        updates.status = st;
+      }
+      if (body.image_url !== undefined) updates.image_url = str(body.image_url) || null;
+      if (body.file_url !== undefined) updates.file_url = str(body.file_url) || null;
+      if (body.support_phone !== undefined) updates.support_phone = str(body.support_phone).slice(0, 40);
+      if (body.support_email !== undefined) updates.support_email = str(body.support_email).slice(0, 255);
+      if (body.meta_pixel_id !== undefined) updates.meta_pixel_id = str(body.meta_pixel_id).slice(0, 100);
+      if (body.meta_access_token !== undefined) updates.meta_access_token = str(body.meta_access_token).slice(0, 500);
+      if (body.webhook_url !== undefined) updates.webhook_url = str(body.webhook_url) || null;
+      if (body.zenofy_product_id !== undefined) updates.zenofy_product_id = str(body.zenofy_product_id) || null;
       if (body.external_url !== undefined) updates.external_url = str(body.external_url) || null;
       if (body.upsell_url !== undefined) updates.upsell_url = str(body.upsell_url) || null;
       if (body.downsell_url !== undefined) updates.downsell_url = str(body.downsell_url) || null;
+      if (body.order_bumps !== undefined) {
+        const raw = Array.isArray(body.order_bumps) ? body.order_bumps : [];
+        const bumps = raw
+          .map((b: any) => {
+            const pid = str(b?.product_id);
+            if (!pid) return null;
+            const priceRaw = b?.price;
+            let price: number | null = null;
+            if (priceRaw !== null && priceRaw !== undefined && str(String(priceRaw)) !== "") {
+              const n = Number(priceRaw);
+              if (!Number.isFinite(n) || n < 0) throw new Error("Preço da oferta extra inválido");
+              price = n;
+            }
+            return {
+              product_id: pid,
+              price,
+              title: str(b?.title).slice(0, 200),
+              description: str(b?.description).slice(0, 500),
+            };
+          })
+          .filter(Boolean);
+        updates.order_bumps = bumps;
+        const first: any = bumps[0] || null;
+        updates.order_bump_product_id = first?.product_id || null;
+        updates.order_bump_price = first?.price ?? null;
+        updates.order_bump_title = first?.title || null;
+        updates.order_bump_description = first?.description || null;
+      }
       if (Object.keys(updates).length === 0) throw new Error("Nada para atualizar");
       const { error } = await supabaseAdmin.from("products").update(updates).eq("id", productId);
       if (error) throw error;
