@@ -13,6 +13,8 @@ import {
 
 const STORAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/`;
 
+const inputCls = "mt-1 w-full rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-500 focus:outline-none";
+
 function getImageUrl(url: string | null): string | null {
   if (!url) return null;
   if (url.startsWith("http")) return url;
