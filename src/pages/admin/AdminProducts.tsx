@@ -62,7 +62,6 @@ interface Product {
 }
 
 const PAYMENT_OPTIONS: { key: string; label: string; currency: "MZN" | "AOA" }[] = [
-  { key: "zenofy", label: "Zenofy", currency: "MZN" },
   { key: "mpesa", label: "M-Pesa", currency: "MZN" },
   { key: "emola", label: "e-Mola", currency: "MZN" },
   { key: "mcx", label: "Multicaixa Express", currency: "AOA" },
