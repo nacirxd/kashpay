@@ -434,14 +434,6 @@ const Checkout = () => {
       const validMpesa = /^8[45]\d{7}$/.test(digits);
       const validEmola = /^8[67]\d{7}$/.test(digits);
       const validMcx = /^9\d{8}$/.test(digits);
-      if (method === "mpesa" && !validMpesa) {
-        toast.error("M-Pesa: use 84 ou 85 seguido de 7 dígitos.");
-        return;
-      }
-      if (method === "emola" && !validEmola) {
-        toast.error("e-Mola: use 86 ou 87 seguido de 7 dígitos.");
-        return;
-      }
       if (method === "mcx" && !validMcx) {
         toast.error("Multicaixa Express: use número Angola com 9 dígitos (9XXXXXXXX).");
         return;
@@ -856,11 +848,7 @@ const Checkout = () => {
                     value={payPhone}
                     onChange={(e) => setPayPhone(e.target.value)}
                     required
-                    placeholder={
-                      method === "mpesa" ? "84/85xxxxxxx"
-                      : method === "emola" ? "86/87xxxxxxx"
-                      : "9XXXXXXXX"
-                    }
+                    placeholder="9XXXXXXXX"
                   />
                   {method === "mcx" && (
                     <p className="text-xs text-muted-foreground">
