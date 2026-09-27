@@ -578,7 +578,16 @@ const AdminProducts = () => {
                   <label className="text-xs text-gray-500 font-medium">Moeda</label>
                   <select
                     value={editForm.currency}
-                    onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                    onChange={(e) => {
+                      const cur = e.target.value;
+                      const validKeys = PAYMENT_OPTIONS.filter((o) => o.currency === cur).map((o) => o.key);
+                      const kept = editForm.payment_methods.filter((m) => validKeys.includes(m));
+                      setEditForm({
+                        ...editForm,
+                        currency: cur,
+                        payment_methods: kept.length > 0 ? kept : [validKeys[0]],
+                      });
+                    }}
                     className={inputCls}
                   >
                     <option value="MZN">MZN — Moçambique</option>
