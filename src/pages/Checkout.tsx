@@ -431,8 +431,6 @@ const Checkout = () => {
         return;
       }
       const digits = payPhone.replace(/\D/g, "");
-      const validMpesa = /^8[45]\d{7}$/.test(digits);
-      const validEmola = /^8[67]\d{7}$/.test(digits);
       const validMcx = /^9\d{8}$/.test(digits);
       if (method === "mcx" && !validMcx) {
         toast.error("Multicaixa Express: use número Angola com 9 dígitos (9XXXXXXXX).");
