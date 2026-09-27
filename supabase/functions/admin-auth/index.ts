@@ -318,6 +318,27 @@ Deno.serve(async (req) => {
         if (pm.length === 0) throw new Error("Escolha pelo menos um método de pagamento");
         updates.payment_methods = [...new Set(pm)];
       }
+      // Cross-check payment methods against the effective currency so a
+      // product can never be saved with methods that don't match its country.
+      if (updates.payment_methods !== undefined || updates.currency !== undefined) {
+        let effectiveCurrency = (updates.currency as string | undefined) || "";
+        if (!effectiveCurrency) {
+          const { data: cur } = await supabaseAdmin
+            .from("products")
+            .select("currency")
+            .eq("id", productId)
+            .maybeSingle();
+          effectiveCurrency = (cur?.currency as string) || "MZN";
+        }
+        const byCountry = effectiveCurrency === "AOA" ? ["mcx", "ref"] : ["zenofy", "mpesa", "emola"];
+        if (updates.payment_methods !== undefined) {
+          const filtered = (updates.payment_methods as string[]).filter((m) => byCountry.includes(m));
+          if (filtered.length === 0) {
+            throw new Error("Os métodos de pagamento não correspondem à moeda do produto");
+          }
+          updates.payment_methods = filtered;
+        }
+      }
       if (body.status !== undefined) {
         const st = str(body.status);
         if (!["pending", "approved", "rejected"].includes(st)) throw new Error("Status inválido");
