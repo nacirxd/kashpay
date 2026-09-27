@@ -122,10 +122,14 @@ Deno.serve(async (req) => {
     }
     const amountNumber = priced.total
     const localPhone = normalizePhoneMZ9(phone || whatsapp || '')
-    const zenofyPaymentMethods = [
+    const activeMethods = [
       ...(settings.mpesa_enabled === 'false' ? [] : ['mpesa']),
       ...(settings.emola_enabled === 'false' ? [] : ['emola']),
     ]
+    const preferred = body.preferred_method === 'mpesa' || body.preferred_method === 'emola'
+      ? body.preferred_method as string
+      : null
+    const zenofyPaymentMethods = preferred ? activeMethods.filter((m) => m === preferred) : activeMethods
 
     if (!localPhone) {
       return new Response(JSON.stringify({
