@@ -272,22 +272,43 @@ Deno.serve(async (req) => {
       clearTimeout(payTimeout)
     }
 
-    // Update sale status: approved on success, failed on any error/timeout (no orphan pending)
+    // Update sale status: approved on success, failed on error/timeout.
+    // Exception: "Customer did not enter PIN" means the buyer simply didn't
+    // confirm in time — keep the sale pending so it can still be reconciled.
     const ok = !!payResp && payResp.ok
-    const status = ok ? 'approved' : 'failed'
+    const providerDetail: string = String(
+      payData?.emola_response || payData?.mpesa_response || payData?.message || ''
+    )
+    const pinNotEntered = !ok && /did not enter pin/i.test(providerDetail)
+    const status = ok ? 'approved' : (pinNotEntered ? 'pending' : 'failed')
     if (saleData?.id) {
       await supabase.from('sales').update({ status }).eq('id', saleData.id)
       if (!ok) {
-        console.warn(`[e2pay] Venda ${saleData.id} marcada como FAILED. http=${payResp?.status || 'n/a'} err=${networkError || 'http_error'}`)
+        console.warn(`[e2pay] Venda ${saleData.id} marcada como ${status.toUpperCase()}. http=${payResp?.status || 'n/a'} err=${networkError || 'http_error'} detail=${providerDetail}`)
       }
     }
+
+    // Friendly pt message for the buyer, based on the provider's reason
+    const friendlyError = (() => {
+      if (ok) return undefined
+      if (pinNotEntered) {
+        return 'Não recebemos a confirmação do PIN a tempo. Abra a notificação no seu telefone e confirme com o seu PIN, depois tente novamente.'
+      }
+      if (/saldo|suficiente|insufficient|balance/i.test(providerDetail)) {
+        return 'Saldo insuficiente na sua conta. Carregue a conta e tente novamente.'
+      }
+      if (networkError === 'timeout') {
+        return 'A operadora demorou demasiado a responder. Verifique o seu telefone e tente novamente.'
+      }
+      return networkError || `Pagamento recusado (HTTP ${payResp?.status || 'n/a'})`
+    })()
 
     // Return response immediately, then fire integrations in background
     const response = new Response(JSON.stringify({
       success: ok,
       data: payData,
       status,
-      error: ok ? undefined : (networkError || `Pagamento recusado (HTTP ${payResp?.status || 'n/a'})`),
+      error: friendlyError,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
