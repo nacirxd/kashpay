@@ -115,6 +115,15 @@ const Checkout = () => {
   })();
 
   useEffect(() => {
+    // Moçambique: fluxo Zenofy — sem seleção de método, só dados pessoais + Continuar
+    if (!isAOA) {
+      if (methodFlags && !methodFlags.mpesa && !methodFlags.emola) {
+        if (method !== null) setMethod(null);
+        return;
+      }
+      if (method !== "zenofy") setMethod("zenofy");
+      return;
+    }
     if (enabledMethods.length === 1 && method !== enabledMethods[0]) {
       setMethod(enabledMethods[0]);
       return;
@@ -752,7 +761,7 @@ const Checkout = () => {
                 />
               </div>
 
-              {!(enabledMethods.length === 1 && enabledMethods[0] === "zenofy") && (
+              {isAOA && (
                 <div className="space-y-1.5">
                   <Label className="text-sm">Método de pagamento</Label>
                   <div className={`grid gap-2 ${enabledMethods.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
@@ -956,6 +965,12 @@ const Checkout = () => {
                     method === "ref" ? "Gerar referência" : method === "zenofy" ? "Continuar" : "Comprar agora"
                   )}
                 </Button>
+              )}
+
+              {!method && !isAOA && methodFlags && (
+                <p className="text-center text-sm text-destructive">
+                  Os métodos de pagamento estão temporariamente indisponíveis. Tente novamente mais tarde.
+                </p>
               )}
 
               <p className="text-center text-xs text-muted-foreground pt-1">
