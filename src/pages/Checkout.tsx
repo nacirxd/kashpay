@@ -849,7 +849,7 @@ const Checkout = () => {
                 </div>
               )}
 
-              {method && method !== "ref" && method !== "zenofy" && (
+              {method === "mcx" && (
                 <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
                   <Label className="text-sm">Número de pagamento</Label>
                   <Input
