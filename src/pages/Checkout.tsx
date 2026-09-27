@@ -967,6 +967,12 @@ const Checkout = () => {
                 </Button>
               )}
 
+              {!method && !isAOA && methodFlags && (
+                <p className="text-center text-sm text-destructive">
+                  Os métodos de pagamento estão temporariamente indisponíveis. Tente novamente mais tarde.
+                </p>
+              )}
+
               <p className="text-center text-xs text-muted-foreground pt-1">
                 🔒 Pagamento seguro e criptografado
               </p>
