@@ -100,12 +100,15 @@ const Checkout = () => {
     };
   }, []);
 
-  const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola", "zenofy"];
+  // M-Pesa e e-Mola são processados pela Zenofy; produtos antigos com "zenofy" mostram ambos
+  const allMethods: PayMethod[] = isAOA ? ["mcx", "ref"] : ["mpesa", "emola"];
   const enabledMethods: PayMethod[] = (() => {
     const pm = product?.payment_methods;
-    const base = Array.isArray(pm) && pm.length > 0
-      ? (pm as string[]).filter((m): m is PayMethod => allMethods.includes(m as PayMethod))
-      : allMethods;
+    const expanded = Array.isArray(pm)
+      ? Array.from(new Set((pm as string[]).flatMap((m) => (m === "zenofy" ? ["mpesa", "emola"] : [m]))))
+      : [];
+    const filtered = expanded.filter((m): m is PayMethod => allMethods.includes(m as PayMethod));
+    const base = filtered.length > 0 ? filtered : allMethods;
     if (isAOA) return base;
     if (!methodFlags) return base.filter((m) => m !== "mpesa" && m !== "emola");
     return base.filter((m) => (m === "mpesa" ? methodFlags.mpesa : m === "emola" ? methodFlags.emola : true));
@@ -421,8 +424,8 @@ const Checkout = () => {
       }
     }
 
-    // REF (Referência Multicaixa) e Zenofy não pedem telefone aqui
-    if (method !== "ref" && method !== "zenofy") {
+    // REF e M-Pesa/e-Mola (via Zenofy) não pedem telefone aqui
+    if (method === "mcx") {
       if (!payPhone) {
         toast.error("Informe o número de pagamento.");
         return;
@@ -501,17 +504,18 @@ const Checkout = () => {
     };
 
     try {
-      if (method === "zenofy") {
-        // Fluxo Zenofy (Moçambique)
+      if (method === "zenofy" || method === "mpesa" || method === "emola") {
+        // Fluxo Zenofy (Moçambique) — M-Pesa/e-Mola processados pela Zenofy
         const { data, error } = await supabase.functions.invoke("zenofy-create-payment", {
           body: {
             name,
             email,
-            phone: payPhone || whatsapp || undefined,
+            phone: whatsapp || payPhone || undefined,
             whatsapp: whatsapp || undefined,
             amount: totalPrice,
             product_id: product.id,
             bump_product_ids: bumpIdsPayload,
+            preferred_method: method === "zenofy" ? undefined : method,
             user_id: product.user_id,
             return_url: `${window.location.origin}${window.location.pathname}`,
             ...utms,
