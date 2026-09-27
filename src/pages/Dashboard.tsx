@@ -17,7 +17,7 @@ import { format, subDays, addDays, isAfter, isBefore } from "date-fns";
 import { toMozambiqueDate, formatDateMZ } from "@/lib/timezone";
 
 type DateRange = { from: Date; to: Date };
-type FilterPreset = "today" | "7d" | "30d" | "custom";
+type FilterPreset = "all" | "today" | "7d" | "30d" | "custom";
 
 const COLORS = ["hsl(160,84%,39%)", "hsl(200,80%,50%)", "hsl(40,90%,55%)", "hsl(280,60%,55%)", "hsl(350,70%,55%)"];
 
@@ -25,12 +25,13 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [allSales, setAllSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [preset, setPreset] = useState<FilterPreset>("today");
+  const [preset, setPreset] = useState<FilterPreset>("all");
   const [customRange, setCustomRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
 
   const dateRange: DateRange = useMemo(() => {
     const now = new Date();
     switch (preset) {
+      case "all": return { from: new Date(0), to: addDays(now, 1) };
       case "today": {
         const mzNow = toMozambiqueDate(now);
         const startMZ = new Date(mzNow);
@@ -166,6 +167,7 @@ const Dashboard = () => {
   ];
 
   const presets: { label: string; value: FilterPreset }[] = [
+    { label: "Todas", value: "all" },
     { label: "Hoje", value: "today" },
     { label: "7 dias", value: "7d" },
     { label: "30 dias", value: "30d" },
