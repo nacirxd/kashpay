@@ -17,7 +17,6 @@ import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
-import zenofyLogo from "@/assets/zenofy.svg";
 
 const CATEGORIAS = [
   "Cursos e Educação",
@@ -205,7 +204,7 @@ const ProductForm = () => {
             setCurrency(prodCurrency);
             
             const pm = (data as any).payment_methods;
-            if (Array.isArray(pm) && pm.length > 0) setPaymentMethods(pm);
+            if (Array.isArray(pm) && pm.length > 0) setPaymentMethods(Array.from(new Set(pm.flatMap((m: string) => (m === "zenofy" ? ["mpesa", "emola"] : [m])))));
             if ((data as any).image_url) {
               setImageUrl((data as any).image_url);
               const { data: pubUrl } = supabase.storage.from("product-images").getPublicUrl((data as any).image_url);
