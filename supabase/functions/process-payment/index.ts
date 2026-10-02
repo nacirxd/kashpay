@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, bump_product_ids, utm_source, utm_medium, utm_campaign, utm_content } = await req.json()
+    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, bump_product_ids, utm_source, utm_medium, utm_campaign, utm_content, referrer_url: body_referrer } = await req.json()
 
     if (!method || !phone || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -213,6 +213,7 @@ Deno.serve(async (req) => {
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
       utm_content: utm_content || null,
+      referrer_url: typeof body_referrer === "string" ? body_referrer.slice(0, 500) : null,
     }).select().single()
 
     const { data: productData } = await supabase

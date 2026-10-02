@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const {
       amount, product_id, user_id, name, email, phone, whatsapp, bump_product_id, bump_product_ids, bump_valor,
-      utm_source, utm_medium, utm_campaign, utm_content, return_url,
+      utm_source, utm_medium, utm_campaign, utm_content, return_url, referrer_url: body_referrer,
     } = body
 
 
@@ -165,6 +165,7 @@ Deno.serve(async (req) => {
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
       utm_content: utm_content || null,
+      referrer_url: typeof body_referrer === "string" ? body_referrer.slice(0, 500) : null,
     }).select().single()
 
     if (saleErr || !saleData) {

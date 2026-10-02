@@ -31,6 +31,10 @@ interface Order {
   payment_method: string | null;
   payment_phone: string | null;
   created_at: string;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  referrer_url: string | null;
   seller_name: string;
   seller_email: string;
   product_name: string;
@@ -152,6 +156,7 @@ const AdminOrders = () => {
               <TableHead className="text-gray-400">Vendedor</TableHead>
               <TableHead className="text-gray-400">Valor</TableHead>
               <TableHead className="text-gray-400">Pagamento</TableHead>
+              <TableHead className="text-gray-400">Origem</TableHead>
               <TableHead className="text-gray-400">Status</TableHead>
               <TableHead className="text-gray-400">Data</TableHead>
               <TableHead className="text-gray-400">Ações</TableHead>
@@ -159,9 +164,9 @@ const AdminOrders = () => {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={9} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={10} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={9} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum pedido"}</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={10} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum pedido"}</TableCell></TableRow>
             ) : (
               filtered.map((o) => {
                 const st = statusMap[o.status] || statusMap.pending;
@@ -191,6 +196,25 @@ const AdminOrders = () => {
                     <TableCell className="text-gray-400 text-xs uppercase">
                       {o.payment_method || "—"}
                       {o.payment_phone && <div className="text-gray-500">{o.payment_phone}</div>}
+                    </TableCell>
+                    <TableCell className="text-xs max-w-[200px]">
+                      {o.utm_source || o.referrer_url ? (
+                        <>
+                          {o.utm_source && (
+                            <div className="text-gray-200">
+                              {o.utm_source}{o.utm_medium ? ` / ${o.utm_medium}` : ""}
+                            </div>
+                          )}
+                          {o.utm_campaign && <div className="text-gray-500 truncate">{o.utm_campaign}</div>}
+                          {o.referrer_url && (
+                            <a href={o.referrer_url} target="_blank" rel="noopener noreferrer" className="block truncate text-emerald-400 hover:underline" title={o.referrer_url}>
+                              {(() => { try { const u = new URL(o.referrer_url); return u.hostname + u.pathname; } catch { return o.referrer_url; } })()}
+                            </a>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-gray-500">Direto</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${st.classes}`}>

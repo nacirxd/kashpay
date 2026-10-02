@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { method, phone, amount, product_id, user_id, name, email, whatsapp, bump_product_id, bump_product_ids, bump_valor, utm_source, utm_medium, utm_campaign, utm_content } = body
+    const { method, phone, amount, product_id, user_id, name, email, whatsapp, bump_product_id, bump_product_ids, bump_valor, utm_source, utm_medium, utm_campaign, utm_content, referrer_url: body_referrer } = body
 
     if (!method || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
@@ -115,6 +115,7 @@ Deno.serve(async (req) => {
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
       utm_content: utm_content || null,
+      referrer_url: typeof body_referrer === "string" ? body_referrer.slice(0, 500) : null,
     }).select().single()
 
     if (saleErr || !saleData) {
