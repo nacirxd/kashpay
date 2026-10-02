@@ -165,6 +165,7 @@ Deno.serve(async (req) => {
       utm_medium: utm_medium || null,
       utm_campaign: utm_campaign || null,
       utm_content: utm_content || null,
+      referrer_url: typeof body_referrer === "string" ? body_referrer.slice(0, 500) : null,
     }).select().single()
 
     if (saleErr || !saleData) {
