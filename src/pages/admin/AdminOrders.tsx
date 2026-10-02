@@ -164,9 +164,9 @@ const AdminOrders = () => {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={9} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={10} className="text-center text-gray-500 py-8">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow className="border-gray-800"><TableCell colSpan={9} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum pedido"}</TableCell></TableRow>
+              <TableRow className="border-gray-800"><TableCell colSpan={10} className="text-center text-gray-500 py-8">{search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum pedido"}</TableCell></TableRow>
             ) : (
               filtered.map((o) => {
                 const st = statusMap[o.status] || statusMap.pending;
