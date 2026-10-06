@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
       }
 
       // Verify TOTP 2FA
-      const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
+      const totpSecret = ""; // 2FA desativado
       if (totpSecret) {
         try {
           const secret = Secret.fromUTF8(totpSecret);
@@ -743,7 +743,7 @@ Deno.serve(async (req) => {
 
     // GET 2FA SETUP
     if (action === "get_2fa_setup") {
-      const totpSecret = Deno.env.get("ADMIN_TOTP_SECRET");
+      const totpSecret = ""; // 2FA desativado
       if (!totpSecret) {
         return new Response(JSON.stringify({ error: "TOTP secret não configurado" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
