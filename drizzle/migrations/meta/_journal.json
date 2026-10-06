@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791325909525,
+      "tag": "0000_backfill_profiles",
+      "breakpoints": true
+    }
+  ]
 }
