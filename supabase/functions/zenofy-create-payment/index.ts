@@ -6,7 +6,7 @@ const corsHeaders = {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { resolvePrice } from '../_shared/pricing.ts'
 
-const ZENOFY_BASE = 'https://api.zenofy.io'
+const PAYZENO_BASE = 'https://api.payzeno.io'
 
 function normalizePhoneMZ9(raw: string): string | null {
   if (!raw) return null
@@ -103,14 +103,7 @@ Deno.serve(async (req) => {
       (settingRows || []).map((row: { key: string; value: string | null }) => [row.key, row.value]),
     )
     const globalZenofyId = settings.zenofy_product_id?.toString().trim()
-    const zenofyProductId = globalZenofyId || (productData as any)?.zenofy_product_id?.toString().trim()
-    if (!zenofyProductId) {
-      return new Response(JSON.stringify({
-        error: 'Pagamento pela Zenofy indisponível neste momento. Contacte o suporte.',
-      }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    void globalZenofyId
 
     // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
     const priced = await resolvePrice(supabase, product_id,
@@ -181,77 +174,98 @@ Deno.serve(async (req) => {
     const sep = baseReturn && baseReturn.includes('?') ? '&' : '?'
 
     const payload: Record<string, unknown> = {
-      productId: zenofyProductId,
-      locale: 'pt',
-      language: 'pt',
-      lang: 'pt',
       amount: Math.round(amountNumber * 100), // unidades menores
       currency: (productData as any)?.currency || 'MZN',
-      reference: saleData.id,
+      description: `${(productData as any)?.nome || 'Pedido'} #${String(saleData.id).slice(0, 8)}`,
+      customer: { name, email, phone: toE164MZ(localPhone) },
       payment_methods: zenofyPaymentMethods,
       metadata: { sale_id: saleData.id, product_id, user_id },
-      customer: { name, email, phone: toE164MZ(localPhone) },
-      name,
-      email,
-      phone: toE164MZ(localPhone),
       success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}` : undefined,
       cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zcancel=1` : undefined,
     }
 
+    const callApi = async (path: string, idem: string, body: unknown) => {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 30000)
+      try {
+        const r = await fetch(`${PAYZENO_BASE}${path}`, {
+          method: 'POST',
+          signal: ctrl.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Api-Key': apiKey,
+            'Idempotency-Key': idem,
+          },
+          body: JSON.stringify(body),
+        })
+        const d = await r.json().catch(() => ({}))
+        console.log(`[payzeno] ${path} status=${r.status} body=`, JSON.stringify(d))
+        return { ok: r.ok, status: r.status, data: d as any }
+      } finally {
+        clearTimeout(t)
+      }
+    }
 
-    const ctrl = new AbortController()
-    const t = setTimeout(() => ctrl.abort(), 30000)
-    let resp: Response
+    let session
     try {
-      resp = await fetch(`${ZENOFY_BASE}/checkout/order-api-gateway`, {
-        method: 'POST',
-        signal: ctrl.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Api-Key': apiKey,
-        },
-        body: JSON.stringify(payload),
-      })
+      session = await callApi('/v1/checkout/sessions', `order-${saleData.id}`, payload)
     } catch (e) {
-      clearTimeout(t)
       await supabase.from('sales').update({ status: 'failed' }).eq('id', saleData.id)
-      console.error('[zenofy] erro de rede:', e)
-      return new Response(JSON.stringify({ error: 'Não foi possível contactar a Zenofy. Tente novamente.' }), {
+      console.error('[payzeno] erro de rede:', e)
+      return new Response(JSON.stringify({ error: 'Não foi possível contactar o gateway de pagamento. Tente novamente.' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    clearTimeout(t)
 
-    const data = await resp.json().catch(() => ({}))
-    console.log(`[zenofy] create status=${resp.status} body=`, JSON.stringify(data))
-
-    if (!resp.ok) {
+    if (!session.ok) {
       await supabase.from('sales').update({ status: 'failed' }).eq('id', saleData.id)
       return new Response(JSON.stringify({
         success: false,
-        error: data?.message || data?.error || 'Falha ao criar pagamento na Zenofy',
-        status: resp.status,
-        details: data,
+        error: session.data?.message || session.data?.error || 'Falha ao criar pagamento',
+        status: session.status,
+        details: session.data,
       }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const checkoutId = pickId(data)
-    const checkoutUrl = forcePortuguese(pickUrl(data))
+    const checkoutId = pickId(session.data)
+    const checkoutUrl = forcePortuguese(pickUrl(session.data))
 
     await supabase.from('sales').update({
       zenofy_checkout_id: checkoutId,
       external_transaction_id: checkoutId,
     }).eq('id', saleData.id)
 
+    // Pagamento directo (push no telemóvel) quando o comprador escolheu M-Pesa ou e-Mola
+    let directOk = false
+    if (preferred && checkoutId) {
+      try {
+        const pay = await callApi(`/v1/payment/${preferred}`, `pay-${saleData.id}-${preferred}`, {
+          checkout_id: checkoutId,
+          phone: localPhone,
+        })
+        directOk = pay.ok
+        if (!pay.ok && !checkoutUrl) {
+          return new Response(JSON.stringify({
+            success: false,
+            sale_id: saleData.id,
+            error: pay.data?.message || pay.data?.error || 'Não foi possível iniciar o pagamento no telemóvel.',
+          }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+      } catch (e) {
+        console.error('[payzeno] pagamento directo falhou:', e)
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       sale_id: saleData.id,
       checkout_id: checkoutId,
       checkout_url: checkoutUrl,
-      raw: data,
+      direct_payment: directOk,
+      raw: session.data,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
