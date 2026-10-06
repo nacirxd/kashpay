@@ -25,10 +25,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const ensured = new Set<string>();
     const apply = (next: Session | null) => {
       setSession((prev) => (prev?.access_token === next?.access_token ? prev : next));
       setUser((prev) => (prev?.id && prev.id === next?.user?.id ? prev : next?.user ?? null));
       setLoading(false);
+      const u = next?.user;
+      if (u && !ensured.has(u.id)) {
+        ensured.add(u.id);
+        setTimeout(async () => {
+          const { data } = await supabase.from("profiles").select("id").eq("user_id", u.id).maybeSingle();
+          if (!data) {
+            await supabase.from("profiles").insert({
+              user_id: u.id,
+              nome: (u.user_metadata as any)?.nome || "",
+              email: u.email || "",
+            });
+          }
+        }, 0);
+      }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
