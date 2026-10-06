@@ -37,7 +37,7 @@ const AdminLogin = () => {
             <Shield className="h-7 w-7 text-emerald-500" />
           </div>
           <h1 className="text-xl font-bold text-gray-100">Painel Administrativo</h1>
-          <p className="mt-2 text-sm text-gray-500">Insira a chave de acesso e o código 2FA</p>
+          <p className="mt-2 text-sm text-gray-500">Insira a chave de acesso</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
