@@ -14,7 +14,7 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!key.trim() || !totpCode.trim()) return;
+    if (!key.trim()) return;
     setLoading(true);
     const result = await login(key.trim(), totpCode.trim());
     setLoading(false);
@@ -48,19 +48,6 @@ const AdminLogin = () => {
               placeholder="Chave de acesso"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-800/50 py-3 pl-10 pr-4 text-sm text-gray-100 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              required
-            />
-          </div>
-          <div className="relative">
-            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="Código 2FA (Google Authenticator)"
-              value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
               className="w-full rounded-lg border border-gray-700 bg-gray-800/50 py-3 pl-10 pr-4 text-sm text-gray-100 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               required
             />
