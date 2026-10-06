@@ -103,14 +103,7 @@ Deno.serve(async (req) => {
       (settingRows || []).map((row: { key: string; value: string | null }) => [row.key, row.value]),
     )
     const globalZenofyId = settings.zenofy_product_id?.toString().trim()
-    const zenofyProductId = globalZenofyId || (productData as any)?.zenofy_product_id?.toString().trim()
-    if (!zenofyProductId) {
-      return new Response(JSON.stringify({
-        error: 'Pagamento pela Zenofy indisponível neste momento. Contacte o suporte.',
-      }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    void globalZenofyId
 
     // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
     const priced = await resolvePrice(supabase, product_id,
