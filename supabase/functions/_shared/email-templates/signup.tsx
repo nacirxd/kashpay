@@ -36,7 +36,7 @@ export const SignupEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Img
-          src="https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/aureon-pay-logo-email.png"
+          src="https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/kashpay-pay-logo-email.png"
           width="148"
           alt={siteName}
           style={logo}

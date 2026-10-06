@@ -56,7 +56,7 @@ const ProductForm = () => {
   const isEditing = !!id;
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
-  const draftKey = user?.id ? `aureon-product-draft-${user.id}` : null;
+  const draftKey = user?.id ? `kashpay-product-draft-${user.id}` : null;
   const draftReadyRef = useRef(false);
   const restoredDraftRef = useRef(false);
 

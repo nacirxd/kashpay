@@ -1,6 +1,6 @@
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content"] as const;
 const STORAGE_KEY = "moonpay_utms";
-const REF_KEY = "aureon_referrer";
+const REF_KEY = "kashpay_referrer";
 
 export type UTMParams = {
   utm_source: string | null;

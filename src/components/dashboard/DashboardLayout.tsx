@@ -1,4 +1,4 @@
-import aureonLogo from "@/assets/aureon-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -104,8 +104,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         lg:relative lg:translate-x-0
       `}>
         <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
-          <img src={aureonLogo} alt="Aureon Pay" className="h-8 w-8 rounded-lg" />
-          <span className="font-bold text-lg text-sidebar-foreground">Aureon Pay</span>
+          <img src={kashpayLogo} alt="KashPay" className="h-8 w-8 rounded-lg" />
+          <span className="font-bold text-lg text-sidebar-foreground">KashPay</span>
           <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
           </button>

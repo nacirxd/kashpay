@@ -1,4 +1,4 @@
-import aureonLogo from "@/assets/aureon-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
 import { Lock } from "lucide-react";
 
 const FooterSection = () => {
@@ -9,8 +9,8 @@ const FooterSection = () => {
           {/* Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <img src={aureonLogo} alt="Aureon Pay" className="h-8 w-8 rounded-xl" />
-              <span className="font-bold text-lg">Aureon Pay</span>
+              <img src={kashpayLogo} alt="KashPay" className="h-8 w-8 rounded-xl" />
+              <span className="font-bold text-lg">KashPay</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               Plataforma de checkout para produtos digitais em Moçambique. Simples, segura e confiável.
@@ -43,7 +43,7 @@ const FooterSection = () => {
 
         <div className="mt-10 pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Aureon Pay. Todos os direitos reservados.
+            © {new Date().getFullYear()} KashPay. Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Lock className="h-3 w-3" />

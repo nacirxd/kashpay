@@ -55,7 +55,7 @@ export async function sendUtmifyOrder(
         headers: { 'Content-Type': 'application/json', 'x-api-token': apiToken },
         body: JSON.stringify({
           orderId: sale.id,
-          platform: 'AureonPay',
+          platform: 'KashPay',
           paymentMethod: 'unknown',
           status: 'paid',
           createdAt: sale.created_at || nowIso,

@@ -1,4 +1,4 @@
-import aureonLogo from "@/assets/aureon-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAdmin } from "@/contexts/AdminContext";
 import {
