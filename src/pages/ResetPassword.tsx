@@ -1,4 +1,4 @@
-import aureonLogo from "@/assets/aureon-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -73,7 +73,7 @@ const ResetPassword = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="mb-8 text-center">
-          <img src={aureonLogo} alt="Aureon Pay" className="mx-auto mb-4 h-12 w-12 rounded-xl" />
+          <img src={kashpayLogo} alt="KashPay" className="mx-auto mb-4 h-12 w-12 rounded-xl" />
           <h1 className="text-2xl font-bold">
             {success ? "Senha atualizada!" : "Redefinir senha"}
           </h1>

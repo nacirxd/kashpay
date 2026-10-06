@@ -734,7 +734,7 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const message = String(body.message || "Teste de SMS AureonPay - integracao Tsemba ativa.");
+      const message = String(body.message || "Teste de SMS KashPay - integracao Tsemba ativa.");
       const sent = await sendTsembaSMS(apiKey, senderId, phone, message);
       return new Response(JSON.stringify({ success: sent, sender_id: senderId, phone, message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -750,7 +750,7 @@ Deno.serve(async (req) => {
         });
       }
       const secret = Secret.fromUTF8(totpSecret);
-      const totp = new TOTP({ issuer: "AureonPay Admin", label: "admin", secret, digits: 6, period: 30 });
+      const totp = new TOTP({ issuer: "KashPay Admin", label: "admin", secret, digits: 6, period: 30 });
       const uri = totp.toString();
       return new Response(JSON.stringify({ manual_key: secret.base32, uri }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

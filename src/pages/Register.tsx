@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
-import aureonLogo from "@/assets/aureon-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const Register = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="mb-8 text-center">
-          <img src={aureonLogo} alt="Aureon Pay" className="mx-auto mb-4 h-12 w-12 rounded-xl" />
+          <img src={kashpayLogo} alt="KashPay" className="mx-auto mb-4 h-12 w-12 rounded-xl" />
           <h1 className="text-2xl font-bold">Criar conta</h1>
           <p className="mt-2 text-sm text-muted-foreground">Comece a vender seus produtos digitais</p>
         </div>

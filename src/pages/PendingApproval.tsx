@@ -1,4 +1,4 @@
-import aureonLogo from "@/assets/aureon-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Clock, LogOut, ShieldAlert, RefreshCw } from "lucide-react";
@@ -22,7 +22,7 @@ const PendingApproval = ({ status }: { status: string }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <img src={aureonLogo} alt="Aureon Pay" className="mx-auto mb-6 h-12 w-12 rounded-xl" />
+        <img src={kashpayLogo} alt="KashPay" className="mx-auto mb-6 h-12 w-12 rounded-xl" />
 
         <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${banned ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
           {banned ? <ShieldAlert className="h-7 w-7" /> : <Clock className="h-7 w-7" />}

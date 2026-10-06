@@ -22,7 +22,7 @@ const AdminSms = () => {
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [testPhone, setTestPhone] = useState("");
-  const [testMsg, setTestMsg] = useState("Teste de SMS AureonPay - integracao Tsemba ativa.");
+  const [testMsg, setTestMsg] = useState("Teste de SMS KashPay - integracao Tsemba ativa.");
   const [sending, setSending] = useState(false);
 
   const load = async () => {

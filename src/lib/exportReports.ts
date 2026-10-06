@@ -90,7 +90,7 @@ export function exportPDF(
     <div class="header-left">
       <div class="logo-circle">AP</div>
       <div>
-        <div class="brand-name">Aureon Pay</div>
+        <div class="brand-name">KashPay</div>
         <div class="brand-sub">Relatório de Vendas</div>
       </div>
     </div>
@@ -130,7 +130,7 @@ export function exportPDF(
       </tbody>
     </table>
 
-    <div class="footer">Powered by <span>Aureon Pay</span> · Relatório gerado automaticamente</div>
+    <div class="footer">Powered by <span>KashPay</span> · Relatório gerado automaticamente</div>
   </div>
 </body>
 </html>`;

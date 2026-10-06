@@ -18,9 +18,9 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const LOGO_URL = 'https://eabvrprjqmpdcxkhwvbf.supabase.co/storage/v1/object/public/email-assets/aureon-pay-logo.png'
+const LOGO_URL = 'https://wyfzffmndlfizxzumiep.supabase.co/storage/v1/object/public/email-assets/kashpay-logo.png'
 
-const SITE_NAME = 'Aureon Pay'
+const SITE_NAME = 'KashPay'
 
 interface PurchaseConfirmationProps {
   buyerName?: string
@@ -50,7 +50,7 @@ const PurchaseConfirmationEmail = ({
     <Preview>Compra confirmada — {productName || 'seu produto'}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="Aureon Pay" width="48" height="48" style={{ margin: '0 0 20px' }} />
+        <Img src={LOGO_URL} alt="KashPay" width="48" height="48" style={{ margin: '0 0 20px' }} />
         <Heading style={h1}>
           {buyerName ? `Obrigado, ${buyerName}!` : 'Compra confirmada!'}
         </Heading>

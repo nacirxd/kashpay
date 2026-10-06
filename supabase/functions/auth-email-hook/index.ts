@@ -15,10 +15,10 @@ const corsHeaders = {
 }
 
 // Configuration
-const SITE_NAME = "Aureon Pay"
-const SENDER_DOMAIN = "notify.aureonpays.com"
-const ROOT_DOMAIN = "aureonpays.com"
-const FROM_DOMAIN = "aureonpays.com"
+const SITE_NAME = "KashPay"
+const SENDER_DOMAIN = "notify.kashpays.com"
+const ROOT_DOMAIN = "kashpays.com"
+const FROM_DOMAIN = "kashpays.com"
 const SITE_URL = `https://${ROOT_DOMAIN}`
 
 // Template mapping for preview mode
@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 // The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
 // can always find-and-replace it with the actual recipient when sending test emails,
 // even if the project's domain has changed since the template was scaffolded.
-const SAMPLE_PROJECT_URL = "https://aureonpay.lovable.app"
+const SAMPLE_PROJECT_URL = "https://kashpay.lovable.app"
 const SAMPLE_EMAIL = "user@example.test"
 const SAMPLE_DATA: Record<string, object> = {
   signup: {

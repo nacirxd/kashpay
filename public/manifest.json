@@ -1,6 +1,6 @@
 {
-  "name": "Aureon Pay",
-  "short_name": "AureonPay",
+  "name": "KashPay",
+  "short_name": "KashPay",
   "description": "Venda seus produtos digitais para o mundo",
   "start_url": "/",
   "display": "standalone",
