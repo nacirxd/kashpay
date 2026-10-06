@@ -1,1 +1,0 @@
-ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS utm_content text;

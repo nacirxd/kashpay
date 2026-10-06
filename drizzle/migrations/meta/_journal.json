@@ -1,41 +1,5 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1789670568963,
-      "tag": "0000_harden_security_policies",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1789913369780,
-      "tag": "0001_restore_anon_checkout_select_products",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1789918619745,
-      "tag": "0002_add_multiple_upsells",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1789919049747,
-      "tag": "0003_add_multiple_order_bumps",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1789920714482,
-      "tag": "0004_restrict_products_public_read_and_definer_execute",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }
