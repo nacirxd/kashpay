@@ -22,14 +22,20 @@ async function fetchZenofyStatus(orderId: string, apiKey: string) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
   try {
-    const resp = await fetch(`${ZENOFY_BASE}/checkout/order-status?orderId=${encodeURIComponent(orderId)}`, {
+    let resp = await fetch(`https://api.payzeno.io/v1/checkout/sessions/${encodeURIComponent(orderId)}`, {
       signal: ctrl.signal,
       headers: { 'Api-Key': apiKey, 'Accept': 'application/json' },
     })
+    if (!resp.ok) {
+      resp = await fetch(`${ZENOFY_BASE}/checkout/order-status?orderId=${encodeURIComponent(orderId)}`, {
+        signal: ctrl.signal,
+        headers: { 'Api-Key': apiKey, 'Accept': 'application/json' },
+      })
+    }
     const data = await resp.json().catch(() => ({}))
     console.log('[zenofy-status]', orderId, resp.status, JSON.stringify(data))
     if (!resp.ok) return null
-    const raw = String((data as any)?.status || '').toLowerCase()
+    const raw = String((data as any)?.status || (data as any)?.data?.status || (data as any)?.payment_status || '').toLowerCase()
     if (PAID.includes(raw)) return 'approved'
     if (FAILED.includes(raw)) return 'failed'
     return 'pending'
