@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
-import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 
 const Register = () => {
   const navigate = useNavigate();

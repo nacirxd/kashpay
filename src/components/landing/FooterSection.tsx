@@ -1,4 +1,4 @@
-import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 import { Lock } from "lucide-react";
 
 const FooterSection = () => {

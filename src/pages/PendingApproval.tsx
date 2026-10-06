@@ -1,4 +1,4 @@
-import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Clock, LogOut, ShieldAlert, RefreshCw } from "lucide-react";

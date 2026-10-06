@@ -1,4 +1,4 @@
-import kashpayLogo from "@/assets/kashpay-pay-logo.svg";
+import kashpayLogo from "@/assets/kashpay-logo.png";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
