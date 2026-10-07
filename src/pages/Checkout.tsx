@@ -317,6 +317,27 @@ const Checkout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product, done]);
 
+  // Pós-compra: busca o link do material e abre automaticamente
+  useEffect(() => {
+    if (!done || !confirmedSaleId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("get-delivery", {
+          body: { sale_id: confirmedSaleId },
+        });
+        if (cancelled || !data?.items) return;
+        setDeliveryItems(data.items);
+        const first = data.items.find((i: any) => i.url);
+        if (first && !deliveryOpenedRef.current) {
+          deliveryOpenedRef.current = true;
+          window.open(first.url, "_blank");
+        }
+      } catch { /* mantém só a mensagem de email */ }
+    })();
+    return () => { cancelled = true; };
+  }, [done, confirmedSaleId]);
+
 
   useEffect(() => {
     if (countdown <= 0) return;
