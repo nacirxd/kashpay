@@ -1,4 +1,5 @@
 import kashpayLogo from "@/assets/kashpay-logo.png";
+import AppInstallNotify from "./AppInstallNotify";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,6 +169,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            <AppInstallNotify />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
