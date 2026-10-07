@@ -40,7 +40,10 @@ const AppInstallNotify = () => {
     } else if ("serviceWorker" in navigator && (inIframe || isPreview)) {
       navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
     }
-    return () => window.removeEventListener("beforeinstallprompt", h);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", h);
+      if ("serviceWorker" in navigator) navigator.serviceWorker.removeEventListener("message", onMsg);
+    };
   }, []);
 
   const enableNotifications = async () => {
