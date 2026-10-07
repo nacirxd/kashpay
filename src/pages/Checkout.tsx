@@ -271,7 +271,13 @@ const Checkout = () => {
     const params = new URLSearchParams(window.location.search);
     let saleId = params.get("zsale");
     if (!saleId) {
-      try { saleId = localStorage.getItem(`zenofy_sale_${product.id}`); } catch { saleId = null; }
+      try {
+        const raw = localStorage.getItem(`zenofy_sale_${product.id}`);
+        const [id, ts] = (raw || "").split("|");
+        // Só retoma pagamentos iniciados há menos de 20 min; compras antigas não reabrem o "Compra realizada"
+        if (id && ts && Date.now() - Number(ts) < 20 * 60 * 1000) saleId = id;
+        else { saleId = null; if (raw) localStorage.removeItem(`zenofy_sale_${product.id}`); }
+      } catch { saleId = null; }
     }
     if (!saleId) return;
 
@@ -415,7 +421,10 @@ const Checkout = () => {
         const { data } = await supabase.functions.invoke("zenofy-check-status", {
           body: { sale_id: saleId },
         });
-        if (data?.status === "approved") { setConfirmedSaleId(saleId); return true; }
+        if (data?.status === "approved") {
+          try { localStorage.removeItem(`zenofy_sale_${product?.id}`); } catch { /* ignore */ }
+          setConfirmedSaleId(saleId); return true;
+        }
         if (data?.status === "failed") return false;
       } catch { /* tenta de novo */ }
       await new Promise((r) => setTimeout(r, 3000));
@@ -549,7 +558,7 @@ const Checkout = () => {
         });
 
         if (data?.sale_id) {
-          try { localStorage.setItem(`zenofy_sale_${product.id}`, data.sale_id); } catch { /* ignore */ }
+          try { localStorage.setItem(`zenofy_sale_${product.id}`, `${data.sale_id}|${Date.now()}`); } catch { /* ignore */ }
         }
 
         if (error || !data?.success) {
