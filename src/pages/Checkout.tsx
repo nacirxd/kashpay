@@ -115,13 +115,13 @@ const Checkout = () => {
   })();
 
   useEffect(() => {
-    // Moçambique: fluxo Zenofy — sem seleção de método, só dados pessoais + Continuar
+    // Moçambique: pagamento dentro do checkout (M-Pesa / e-Mola)
     if (!isAOA) {
-      if (methodFlags && !methodFlags.mpesa && !methodFlags.emola) {
+      if (enabledMethods.length === 0) {
         if (method !== null) setMethod(null);
         return;
       }
-      if (method !== "zenofy") setMethod("zenofy");
+      if (!method || !enabledMethods.includes(method)) setMethod(enabledMethods[0]);
       return;
     }
     if (enabledMethods.length === 1 && method !== enabledMethods[0]) {
@@ -509,7 +509,7 @@ const Checkout = () => {
           body: {
             name,
             email,
-            phone: whatsapp || payPhone || undefined,
+            phone: payPhone || whatsapp || undefined,
             whatsapp: whatsapp || undefined,
             amount: totalPrice,
             product_id: product.id,
@@ -525,21 +525,17 @@ const Checkout = () => {
           try { localStorage.setItem(`zenofy_sale_${product.id}`, data.sale_id); } catch { /* ignore */ }
         }
 
-
         if (error || !data?.success) {
-          toast.error(data?.error || "Erro ao iniciar pagamento pela Zenofy. Tente novamente.");
-        } else if (data.checkout_url) {
-          toast.success("A abrir o pagamento seguro Zenofy...");
-          leavingRef.current = true;
-          window.location.href = data.checkout_url;
-
-          return;
-        } else {
-          toast.info("Pagamento criado na Zenofy. Aguardando confirmação...");
-          const ok = await pollZenofySale(data.sale_id, 20);
+          toast.error(data?.error || "Erro ao iniciar pagamento. Tente novamente.");
+        } else if (data.direct_payment || !data.checkout_url) {
+          toast.info("Confirme o pagamento no seu telemóvel com o PIN...");
+          const ok = await pollZenofySale(data.sale_id, 30);
           if (ok) fireSuccess();
-          else toast.info("Vai receber email assim que o pagamento for confirmado.");
+          else toast.info("Ainda não recebemos a confirmação. Vai receber email assim que o pagamento for confirmado.");
+        } else {
+          toast.error("Não foi possível enviar o pedido ao telemóvel. Verifique o número e tente novamente.");
         }
+
 
       } else if (method === "mcx" || method === "ref") {
         // Fluxo Kumbify (Angola)
@@ -761,7 +757,7 @@ const Checkout = () => {
                 />
               </div>
 
-              {isAOA && (
+              {enabledMethods.length > 0 && (
                 <div className="space-y-1.5">
                   <Label className="text-sm">Método de pagamento</Label>
                   <div className={`grid gap-2 ${enabledMethods.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
@@ -846,6 +842,22 @@ const Checkout = () => {
                     </motion.div>
                   )}
                 </div>
+              )}
+
+              {(method === "mpesa" || method === "emola") && (
+                <motion.div className="space-y-1.5" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
+                  <Label className="text-sm">Número {method === "mpesa" ? "M-Pesa" : "e-Mola"}</Label>
+                  <Input
+                    value={payPhone}
+                    onChange={(e) => setPayPhone(e.target.value)}
+                    required
+                    inputMode="numeric"
+                    placeholder={method === "mpesa" ? "84/85XXXXXXX" : "86/87XXXXXXX"}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Vai receber um pedido no telemóvel para confirmar com o seu PIN.
+                  </p>
+                </motion.div>
               )}
 
               {method === "mcx" && (
