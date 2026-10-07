@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import {
   LayoutDashboard, Package, Link2, Settings, LogOut,
@@ -99,18 +100,18 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <div className="flex h-screen bg-muted/30">
-      <aside className={`
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-muted/30">
+      <aside id="dashboard-navigation" className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border transform transition-transform duration-200
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:relative lg:translate-x-0
+        lg:relative lg:translate-x-0 lg:shrink-0
       `}>
         <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
           <img src={kashpayLogo} alt="KashPay" className="h-8 w-8 rounded-lg" />
           <span className="font-bold text-lg text-sidebar-foreground">KashPay</span>
-          <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
+           <Button variant="ghost" size="icon" className="lg:hidden ml-auto" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
-          </button>
+           </Button>
         </div>
 
         <nav className="p-4 space-y-1">
@@ -151,13 +152,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="fixed inset-0 z-40 bg-foreground/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <main className="flex-1 overflow-auto">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
-          <div className="flex items-center">
-            <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 flex min-h-16 shrink-0 items-center justify-between gap-1 border-b border-border bg-background px-2 pt-[env(safe-area-inset-top)] sm:px-6">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+            <Button variant="ghost" size="icon" className="lg:hidden shrink-0" aria-label="Abrir menu" aria-controls="dashboard-navigation" aria-expanded={sidebarOpen} title="Abrir menu" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
-            </button>
-            <span className="text-sm font-semibold">
+            </Button>
+            <span className="truncate text-sm font-semibold">
               {firstName ? (
                 <>
                   Olá, <span className="capitalize">{firstName}</span>
@@ -168,34 +169,35 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-3">
             <AppInstallNotify />
-            <button
+            <Button variant="ghost" size="icon"
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label={dark ? "Modo claro" : "Modo escuro"}
               title={dark ? "Modo claro" : "Modo escuro"}
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-            <div className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${tier.bg} ${tier.color}`}>
+            </Button>
+            <div className={`hidden md:flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${tier.bg} ${tier.color}`}>
               <span>{tier.icon}</span>
               {tier.label}
               <span className="font-normal opacity-70">MT {formatTierValue(tier.min)} – {formatTierValue(tier.max)}</span>
             </div>
-            <div className="w-24">
+            <div className="hidden w-24 xl:block">
               <Progress value={progress} className="h-2" />
             </div>
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs uppercase overflow-hidden">
+            <Button variant="default" size="icon" aria-label="Abrir perfil" title="Abrir perfil" onClick={() => navigate("/configuracoes")} className="h-10 w-10 shrink-0 rounded-full font-bold text-xs uppercase overflow-hidden">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
                 firstName.slice(0, 2).toUpperCase() || "U"
               )}
-            </div>
+            </Button>
           </div>
         </header>
 
-        <div className="p-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">{children}</div>
       </main>
     </div>
   );
