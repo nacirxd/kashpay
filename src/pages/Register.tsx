@@ -17,34 +17,35 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [telefone, setTelefone] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"form" | "otp">("form");
+
+  const sendCode = async () => {
+    const { data, error } = await supabase.functions.invoke("whatsapp-otp", { body: { action: "send", phone: telefone } });
+    const err = data?.error || (error && ((await (error as any).context?.json?.().catch(() => null))?.error || "Erro ao enviar código"));
+    if (err) { toast.error(err); return false; }
+    toast.success("Código enviado para o seu WhatsApp");
+    return true;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { nome }, emailRedirectTo: window.location.origin },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else if (
-      data.user &&
-      (!data.user.identities || data.user.identities.length === 0)
-    ) {
-      toast.error("Este email já está em uso. Tente fazer login.");
-    } else if (data.user) {
-      // Supabase returns the existing user on repeated signup when email confirmation is on.
-      // Detect by checking if user was created more than 5 seconds ago.
-      const createdAt = new Date(data.user.created_at).getTime();
-      const now = Date.now();
-      if (now - createdAt > 5000) {
-        toast.error("Este email já está em uso. Tente fazer login.");
-      } else {
-        toast.success("Conta criada! Verifique seu email e aguarde a aprovação do administrador.");
-        navigate("/login");
-      }
+    if (step === "form") {
+      if (await sendCode()) setStep("otp");
+      setLoading(false);
+      return;
     }
+    const { data, error } = await supabase.functions.invoke("whatsapp-otp", {
+      body: { action: "register", nome, email, password, phone: telefone, code },
+    });
+    const err = data?.error || (error && ((await (error as any).context?.json?.().catch(() => null))?.error || "Erro ao criar conta"));
+    if (err) { setLoading(false); toast.error(err); return; }
+    await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    toast.success("Conta criada! Aguarde a aprovação do administrador.");
+    navigate("/dashboard");
   };
 
   return (
@@ -70,6 +71,20 @@ const Register = () => {
             <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="telefone">WhatsApp</Label>
+            <Input id="telefone" type="tel" placeholder="84 000 0000" value={telefone} onChange={(e) => setTelefone(e.target.value)} required disabled={step === "otp"} />
+          </div>
+          {step === "otp" && (
+            <div className="space-y-2">
+              <Label htmlFor="code">Código recebido no WhatsApp</Label>
+              <Input id="code" inputMode="numeric" maxLength={6} placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} required />
+              <div className="flex justify-between text-xs">
+                <button type="button" className="text-muted-foreground hover:underline" onClick={() => { setStep("form"); setCode(""); }}>Mudar número</button>
+                <button type="button" className="text-primary hover:underline" onClick={sendCode}>Reenviar código</button>
+              </div>
+            </div>
+          )}
+          <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
             <div className="relative">
               <Input id="password" type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
@@ -79,7 +94,7 @@ const Register = () => {
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><UserPlus className="mr-2 h-4 w-4" /> Criar conta</>}
+            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : <><UserPlus className="mr-2 h-4 w-4" /> {step === "form" ? "Receber código no WhatsApp" : "Confirmar e criar conta"}</>}
           </Button>
         </form>
 
