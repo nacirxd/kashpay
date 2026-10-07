@@ -87,6 +87,7 @@ const SmsCampaigns = () => {
           <div>
             <h1 className="text-2xl font-bold">Disparos SMS</h1>
             <p className="text-sm text-muted-foreground">Mensagens automáticas que os seus clientes recebem por SMS.</p>
+            <p className="text-xs text-muted-foreground mt-1">Dica anti-spam: crie vários modelos para o mesmo evento — o sistema alterna aleatoriamente entre eles em cada disparo, enviando sempre apenas um.</p>
           </div>
           <Button onClick={() => { setForm(empty); setOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Novo disparo</Button>
         </div>
