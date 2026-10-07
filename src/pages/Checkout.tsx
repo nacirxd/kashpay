@@ -394,7 +394,7 @@ const Checkout = () => {
         const { data } = await supabase.functions.invoke("zenofy-check-status", {
           body: { sale_id: saleId },
         });
-        if (data?.status === "approved") return true;
+        if (data?.status === "approved") { setConfirmedSaleId(saleId); return true; }
         if (data?.status === "failed") return false;
       } catch { /* tenta de novo */ }
       await new Promise((r) => setTimeout(r, 3000));
@@ -501,6 +501,7 @@ const Checkout = () => {
 
         // Só considera sucesso real quando aprovado (não pending)
         if (data?.found && data.status === "approved") {
+          if (data.sale_id) setConfirmedSaleId(data.sale_id);
           return true;
         }
       }
