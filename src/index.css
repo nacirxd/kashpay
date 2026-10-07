@@ -126,3 +126,8 @@
     box-shadow: var(--shadow-elevated);
   }
 }
+
+@layer base {
+  html, body { overflow-x: hidden; max-width: 100%; }
+  img, video { max-width: 100%; }
+}
