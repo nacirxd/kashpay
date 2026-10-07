@@ -11,7 +11,7 @@ const navItems = [
   { icon: Package, label: "Produtos", path: "/admin/products" },
   { icon: ShoppingCart, label: "Pedidos", path: "/admin/orders" },
   { icon: Wallet, label: "Saques", path: "/admin/withdrawals" },
-  { icon: MessageSquare, label: "SMS", path: "/admin/sms" },
+  { icon: MessageSquare, label: "Disparos SMS", path: "/admin/sms" },
   { icon: Settings, label: "Configurações", path: "/admin/settings" },
 ];
 
