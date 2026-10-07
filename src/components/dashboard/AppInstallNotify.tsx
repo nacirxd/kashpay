@@ -34,8 +34,10 @@ const AppInstallNotify = () => {
     if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", onMsg);
     if (swAllowed) {
       navigator.serviceWorker.register("/sw.js").then(async (reg) => {
-        const sub = await reg.pushManager.getSubscription();
-        setEnabled(!!sub && Notification.permission === "granted");
+        const sub = "pushManager" in reg ? await reg.pushManager.getSubscription() : null;
+        const ok = !!sub && Notification.permission === "granted";
+        setEnabled(ok);
+        if (ok && sub) await saveSub(sub); // garante que este aparelho está registado
       }).catch(() => {});
     } else if ("serviceWorker" in navigator && (inIframe || isPreview)) {
       navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
@@ -44,25 +46,50 @@ const AppInstallNotify = () => {
       window.removeEventListener("beforeinstallprompt", h);
       if ("serviceWorker" in navigator) navigator.serviceWorker.removeEventListener("message", onMsg);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-  const enableNotifications = async () => {
-    if (!swAllowed || !("PushManager" in window)) {
-      toast.error("Abra o site publicado (kashpay.shop) para ativar as notificações. No iPhone, primeiro adicione ao ecrã inicial.");
-      return;
-    }
-    const perm = await Notification.requestPermission();
-    if (perm !== "granted") { toast.error("Permissão de notificações negada."); return; }
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY) });
+  const saveSub = async (sub: PushSubscription) => {
+    if (!user?.id) return false;
     const j = sub.toJSON() as any;
     const { error } = await supabase.from("push_subscriptions").upsert(
-      { user_id: user!.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth },
+      { user_id: user.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth },
       { onConflict: "endpoint" }
     );
-    if (error) { toast.error("Não foi possível ativar as notificações."); return; }
-    setEnabled(true);
-    toast.success("Notificações de vendas ativadas!");
+    if (error) console.error("[push] erro a guardar", error);
+    return !error;
+  };
+
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as any).standalone === true;
+
+  const enableNotifications = async () => {
+    if (isIOS && !isStandalone) {
+      toast.info("No iPhone: toque em Partilhar (quadrado com seta) → \"Adicionar ao ecrã principal\". Depois abra o KashPay pelo ícone e toque no sino.", { duration: 10000 });
+      return;
+    }
+    if (!swAllowed || !("PushManager" in window) || !("Notification" in window)) {
+      toast.error("Este navegador não suporta notificações. Use o Chrome (Android) ou o app instalado no iPhone.");
+      return;
+    }
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        toast.error("Notificações bloqueadas. Ative-as nas definições do telemóvel para o KashPay.");
+        return;
+      }
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY) });
+      if (!(await saveSub(sub))) { toast.error("Não foi possível ativar as notificações."); return; }
+      setEnabled(true);
+      toast.success("Notificações de vendas ativadas!");
+      reg.showNotification("KashPay", { body: "Vai receber aqui um aviso a cada venda aprovada.", icon: "/favicon.ico" }).catch(() => {});
+    } catch (e) {
+      console.error("[push]", e);
+      toast.error("Falha ao ativar notificações. Feche e abra o app e tente de novo.");
+    }
   };
 
   const install = async () => {
