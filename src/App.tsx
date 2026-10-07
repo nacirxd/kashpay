@@ -27,6 +27,7 @@ import Reports from "./pages/Reports";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
+import SmsCampaigns from "./pages/SmsCampaigns";
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -64,6 +65,7 @@ const App = () => {
               <Route path="/relatorios" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               <Route path="/produtos/novo" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
               <Route path="/produtos/:id" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+              <Route path="/disparos-sms" element={<ProtectedRoute><SmsCampaigns /></ProtectedRoute>} />
               <Route path="/integracoes" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
               <Route path="/integracoes/:tipo" element={<ProtectedRoute><IntegrationDetail /></ProtectedRoute>} />
               <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

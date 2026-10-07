@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTheme } from "@/hooks/use-theme";
 import {
   LayoutDashboard, Package, Link2, Settings, LogOut,
-  DollarSign, Menu, X, Moon, Sun, ShoppingCart, BarChart3
+  DollarSign, Menu, X, Moon, Sun, ShoppingCart, BarChart3, MessageSquare
 } from "lucide-react";
 
 const navItems = [
@@ -15,6 +15,7 @@ const navItems = [
   { icon: Package, label: "Produtos", path: "/produtos" },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
   { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+  { icon: MessageSquare, label: "Disparos SMS", path: "/disparos-sms" },
   { icon: Link2, label: "Integrações", path: "/integracoes" },
   { icon: DollarSign, label: "Finanças", path: "/financas" },
   { icon: Settings, label: "Configurações", path: "/configuracoes" },
