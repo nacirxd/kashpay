@@ -700,13 +700,29 @@ const Checkout = () => {
                 {deliveryType === "members" ? "Área de Membros" : "Acesso ao produto"}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Enviámos o seu acesso para o email indicado na compra. Verifique a sua caixa de entrada
-              (e a pasta de spam).
-            </p>
+            {deliveryItems.length > 0 ? (
+              <div className="space-y-2 mt-1">
+                {deliveryItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    size="lg"
+                    className="gap-2 w-full"
+                    disabled={!item.url}
+                    onClick={() => item.url && window.open(item.url, "_blank")}
+                  >
+                    <ExternalLink className="h-5 w-5" /> Aceder: {item.nome}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Enviámos o seu acesso para o email indicado na compra. Verifique a sua caixa de entrada
+                (e a pasta de spam).
+              </p>
+            )}
           </div>
 
-          {acceptedBumps.map((b) => (
+          {acceptedBumps.filter((b) => !deliveryItems.some((i) => i.id === b.id)).map((b) => (
             <div key={b.id} className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
               <p className="text-sm font-semibold mb-2">Oferta extra: {b.product.nome}</p>
               <p className="text-sm text-muted-foreground">
