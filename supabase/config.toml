@@ -1,1 +1,3 @@
 project_id = "wyfzffmndlfizxzumiep"
+[functions.visionspy-whatsapp]
+verify_jwt = false
