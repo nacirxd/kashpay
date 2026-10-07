@@ -192,6 +192,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}))
     const saleId = (body as any)?.sale_id
     const reconcile = Boolean((body as any)?.reconcile) || !saleId
+    const srk = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const trusted = (req.headers.get('x-internal-key') || '') === srk
+    const forceApprove = trusted && Boolean((body as any)?.force_approve)
 
     let sales: any[] = []
     if (saleId) {
@@ -219,7 +222,7 @@ Deno.serve(async (req) => {
         results.push({ sale_id: sale.id, status: sale.status })
         continue
       }
-      const remote = await fetchZenofyStatus(String(sale.zenofy_checkout_id), apiKey)
+      const remote = forceApprove ? 'approved' : await fetchZenofyStatus(String(sale.zenofy_checkout_id), apiKey)
       if (remote === 'approved') {
         await approveSale(supabase, sale)
         results.push({ sale_id: sale.id, status: 'approved' })

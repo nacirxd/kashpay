@@ -247,6 +247,16 @@ Deno.serve(async (req) => {
           phone: localPhone,
         })
         directOk = pay.ok
+        const pst = String(pay.data?.status || '').toLowerCase()
+        if (pay.ok && ['succeeded','paid','success','approved','completed'].includes(pst)) {
+          try {
+            await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/zenofy-check-status`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-internal-key': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! },
+              body: JSON.stringify({ sale_id: saleData.id, force_approve: true }),
+            })
+          } catch (e) { console.error('[payzeno] aprovação falhou', e) }
+        }
         if (!pay.ok && !checkoutUrl) {
           return new Response(JSON.stringify({
             success: false,
