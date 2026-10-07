@@ -24,6 +24,9 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [done, setDone] = useState(false);
+  const [confirmedSaleId, setConfirmedSaleId] = useState<string | null>(null);
+  const [deliveryItems, setDeliveryItems] = useState<{ id: string; nome: string; url: string | null }[]>([]);
+  const deliveryOpenedRef = useRef(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
