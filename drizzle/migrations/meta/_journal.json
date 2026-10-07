@@ -29,6 +29,13 @@
       "when": 1791394352752,
       "tag": "0003_phone_otps",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791400495075,
+      "tag": "0004_push_subscriptions",
+      "breakpoints": true
     }
   ]
 }
