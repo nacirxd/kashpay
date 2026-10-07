@@ -197,7 +197,7 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-muted/50 rounded-xl p-1">
+          <div className="flex flex-wrap items-center gap-1.5 bg-muted/50 rounded-xl p-1 max-w-full">
           {presets.map((p) => (
             <button
               key={p.value}

@@ -110,7 +110,7 @@ const Sales = () => {
         <div className="space-y-4">
           {/* Filter tabs + Search */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex gap-1 rounded-lg bg-muted/50 p-1 w-fit">
+            <div className="flex gap-1 rounded-lg bg-muted/50 p-1 max-w-full overflow-x-auto">
               {([
                 { key: "all", label: "Todas" },
                 { key: "approved", label: "Aprovadas" },
