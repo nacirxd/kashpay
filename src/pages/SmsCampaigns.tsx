@@ -47,19 +47,20 @@ const SmsCampaigns = () => {
 
   const save = async () => {
     if (!user) return;
-    if (!form.mensagem.trim()) return toast.error("Escreva a mensagem");
-    if (form.mensagem.length > 480) return toast.error("Mensagem muito longa (máx. 480 caracteres)");
+    const mensagens = (form.id ? [form.mensagem] : variacoes).map((m) => m.trim()).filter(Boolean);
+    if (!mensagens.length) return toast.error("Escreva pelo menos uma mensagem");
+    if (mensagens.some((m) => m.length > 480)) return toast.error("Mensagem muito longa (máx. 480 caracteres)");
     setSaving(true);
-    const payload = {
+    const base = {
       user_id: user.id, nome: form.nome.trim() || EVENTOS[form.evento], evento: form.evento,
-      product_ids: form.product_ids, mensagem: form.mensagem.trim(), ativo: form.ativo,
+      product_ids: form.product_ids, ativo: form.ativo,
     };
     const { error } = form.id
-      ? await supabase.from("sms_templates").update(payload).eq("id", form.id)
-      : await supabase.from("sms_templates").insert(payload);
+      ? await supabase.from("sms_templates").update({ ...base, mensagem: mensagens[0] }).eq("id", form.id)
+      : await supabase.from("sms_templates").insert(mensagens.map((m, i) => ({ ...base, nome: mensagens.length > 1 ? `${base.nome} ${i + 1}` : base.nome, mensagem: m })));
     setSaving(false);
     if (error) return toast.error("Erro ao guardar");
-    toast.success("Disparo guardado");
+    toast.success(mensagens.length > 1 ? `${mensagens.length} modelos guardados` : "Disparo guardado");
     setOpen(false);
     load();
   };
