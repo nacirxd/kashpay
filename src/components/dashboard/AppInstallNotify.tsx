@@ -105,8 +105,9 @@ const AppInstallNotify = () => {
         </button>
       )}
       <button onClick={enableNotifications} title={enabled ? "Notificações ativas" : "Ativar notificações de vendas"}
-        className={`p-2 rounded-lg transition-colors hover:bg-accent ${enabled ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+        className={`flex items-center gap-1.5 p-2 rounded-lg transition-colors hover:bg-accent ${enabled ? "text-primary" : "text-primary border border-primary/40 animate-pulse"}`}>
         {enabled ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+        {!enabled && <span className="text-xs font-medium">Ativar avisos</span>}
       </button>
     </>
   );
