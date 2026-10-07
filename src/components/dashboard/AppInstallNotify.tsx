@@ -25,6 +25,13 @@ const AppInstallNotify = () => {
   useEffect(() => {
     const h = (e: Event) => { e.preventDefault(); setInstallEvt(e); };
     window.addEventListener("beforeinstallprompt", h);
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.type === "SALE_PUSH") {
+        const audio = new Audio(saleChing.url);
+        audio.play().catch(() => {});
+      }
+    };
+    if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", onMsg);
     if (swAllowed) {
       navigator.serviceWorker.register("/sw.js").then(async (reg) => {
         const sub = await reg.pushManager.getSubscription();
