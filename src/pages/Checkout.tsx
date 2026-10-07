@@ -269,17 +269,9 @@ const Checkout = () => {
   useEffect(() => {
     if (!product || done) return;
     const params = new URLSearchParams(window.location.search);
-    let saleId = params.get("zsale");
-    if (!saleId) {
-      try {
-        const raw = localStorage.getItem(`zenofy_sale_${product.id}`);
-        const [id, ts] = (raw || "").split("|");
-        // Só retoma pagamentos iniciados há menos de 20 min; compras antigas não reabrem o "Compra realizada"
-        if (id && ts && Date.now() - Number(ts) < 20 * 60 * 1000) saleId = id;
-        else { saleId = null; if (raw) localStorage.removeItem(`zenofy_sale_${product.id}`); }
-      } catch { saleId = null; }
-    }
+    const saleId = params.get("zsale");
     if (!saleId) return;
+
 
     let cancelled = false;
     let attempts = 0;
@@ -291,8 +283,8 @@ const Checkout = () => {
         });
         if (cancelled) return;
         if (data?.status === "approved") {
-          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
           setConfirmedSaleId(saleId);
+
           trackEvent('Purchase', {
             content_name: product.nome,
             content_ids: [product.id],
@@ -310,10 +302,8 @@ const Checkout = () => {
           toast.success("Pagamento confirmado!");
           return;
         }
-        if (data?.status === "failed") {
-          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
-          return;
-        }
+        if (data?.status === "failed") return;
+
       } catch { /* tenta de novo */ }
       if (!cancelled && attempts < 40) setTimeout(check, 5000);
     };
@@ -422,9 +412,9 @@ const Checkout = () => {
           body: { sale_id: saleId },
         });
         if (data?.status === "approved") {
-          try { localStorage.removeItem(`zenofy_sale_${product?.id}`); } catch { /* ignore */ }
           setConfirmedSaleId(saleId); return true;
         }
+
         if (data?.status === "failed") return false;
       } catch { /* tenta de novo */ }
       await new Promise((r) => setTimeout(r, 3000));
@@ -557,16 +547,12 @@ const Checkout = () => {
           },
         });
 
-        if (data?.sale_id) {
-          try { localStorage.setItem(`zenofy_sale_${product.id}`, `${data.sale_id}|${Date.now()}`); } catch { /* ignore */ }
-        }
-
         if (error || !data?.success) {
           toast.error(data?.error || "Erro ao iniciar pagamento. Tente novamente.");
         } else if (data.paid) {
           setConfirmedSaleId(data.sale_id);
-          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
           fireSuccess();
+
         } else if (data.direct_payment || !data.checkout_url) {
           toast.info("Confirme o pagamento no seu telemóvel com o PIN...");
           const ok = await pollZenofySale(data.sale_id, 30);

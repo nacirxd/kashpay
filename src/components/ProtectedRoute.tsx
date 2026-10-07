@@ -12,12 +12,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
-    // Usa o último estado conhecido para entrar logo, sem ecrã de espera
-    try {
-      const cached = localStorage.getItem(`kp_status_${user.id}`);
-      if (cached) { setStatus(cached); setStatusFor(user.id); }
-    } catch { /* ignore */ }
     const load = async (attempt = 0) => {
+
       const { data, error } = await supabase
         .from("profiles")
         .select("status")
@@ -26,8 +22,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       if (cancelled) return;
       if (error && attempt < 2) { setTimeout(() => load(attempt + 1), 800); return; }
       const s = (data?.status as string) || "pending";
-      try { localStorage.setItem(`kp_status_${user.id}`, s); } catch { /* ignore */ }
       setStatus(s);
+
       setStatusFor(user.id);
     };
     load();
