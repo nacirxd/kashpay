@@ -164,7 +164,7 @@ const SmsCampaigns = () => {
                 placeholder="Olá {nome}, obrigado pela compra de {produto}! Acesso: {link}" />
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex gap-1">
-                  {["nome", "produto", "link"].map((v) => (
+                  {["nome", "produto", "link", "compra"].map((v) => (
                     <button key={v} type="button" onClick={() => insertVar(v)} className="rounded border border-border px-1.5 py-0.5 hover:bg-muted">{`{${v}}`}</button>
                   ))}
                 </div>

@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     const access = await resolveAccessUrl(supabase, sale.products)
     const msg = `${firstName(sale.buyer_name)}, o seu pagamento de *${sale.products?.nome || 'produto'}* foi confirmado! ✅\n\n` +
       (access ? `Aceda aqui: ${access}\n\n` : 'Enviámos o acesso para o seu email.\n\n') + 'Obrigado pela compra!'
-    await sendTemplateSms(supabase, sale, 'approved', { nome: firstName(sale.buyer_name), produto: sale.products?.nome || '', link: access || '' })
+    await sendTemplateSms(supabase, sale, 'approved', { nome: firstName(sale.buyer_name), produto: sale.products?.nome || '', link: access || '', compra: sale.id })
     const ok = await send(to, msg)
     if (ok) await supabase.from('sales').update({ wa_approved_sent_at: new Date().toISOString() }).eq('id', sale.id)
     return ok
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     await supabase.from('sales').update({ wa_recovery_sent_at: new Date().toISOString() }).eq('id', (s as any).id)
     if (!to) continue
     const link = `${SITE}/checkout/${(s as any).product_id}`
-    await sendTemplateSms(supabase, s, 'pending', { nome: firstName((s as any).buyer_name), produto: (s as any).products?.nome || '', link })
+    await sendTemplateSms(supabase, s, 'pending', { nome: firstName((s as any).buyer_name), produto: (s as any).products?.nome || '', link, compra: (s as any).id })
     if (await send(to, `${firstName((s as any).buyer_name)}, notámos que o seu pedido de *${(s as any).products?.nome || 'produto'}* ainda não foi pago. 😊\n\nFinalize aqui: ${link}\n\nSe precisar de ajuda, responda esta mensagem.`)) recovered++
   }
 
