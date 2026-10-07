@@ -43,16 +43,20 @@ async function sendTemplateSms(supabase: any, sale: any, evento: 'approved' | 'p
     if (!digits) return
     const { data: tpls } = await supabase.from('sms_templates').select('id, mensagem, product_ids')
       .eq('user_id', sale.user_id).eq('evento', evento).eq('ativo', true)
-    for (const t of tpls || []) {
+    // Filtra modelos que combinam com o produto e escolhe UM aleatório por disparo,
+    // para variar as mensagens e reduzir risco de bloqueio por spam
+    const matching = (tpls || []).filter((t: any) => {
       const ids: string[] = t.product_ids || []
-      if (ids.length && !ids.includes(sale.product_id)) continue
-      const message = String(t.mensagem).replace(/\{(\w+)\}/g, (m: string, k: string) => vars[k] ?? m)
-      const body: Record<string, string> = { to: `+${digits}`, message }
-      const sender = Deno.env.get('TSEMBA_SENDER_ID'); if (sender) body.sender_id = sender
-      const r = await fetch(TSEMBA_SMS_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey }, body: JSON.stringify(body) })
-      const txt = await r.text()
-      await supabase.from('sms_logs').insert({ user_id: sale.user_id, sale_id: sale.id, recipient_phone: `+${digits}`, sender_id: sender || null, message, status: r.ok ? 'sent' : 'failed', provider_response: txt.slice(0, 1000) })
-    }
+      return !ids.length || ids.includes(sale.product_id)
+    })
+    if (!matching.length) return
+    const t = matching[Math.floor(Math.random() * matching.length)]
+    const message = String(t.mensagem).replace(/\{(\w+)\}/g, (m: string, k: string) => vars[k] ?? m)
+    const body: Record<string, string> = { to: `+${digits}`, message }
+    const sender = Deno.env.get('TSEMBA_SENDER_ID'); if (sender) body.sender_id = sender
+    const r = await fetch(TSEMBA_SMS_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey }, body: JSON.stringify(body) })
+    const txt = await r.text()
+    await supabase.from('sms_logs').insert({ user_id: sale.user_id, sale_id: sale.id, recipient_phone: `+${digits}`, sender_id: sender || null, message, status: r.ok ? 'sent' : 'failed', provider_response: txt.slice(0, 1000) })
   } catch (e) { console.error('[sms-template] erro:', e) }
 }
 
