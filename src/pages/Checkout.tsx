@@ -24,6 +24,9 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [done, setDone] = useState(false);
+  const [confirmedSaleId, setConfirmedSaleId] = useState<string | null>(null);
+  const [deliveryItems, setDeliveryItems] = useState<{ id: string; nome: string; url: string | null }[]>([]);
+  const deliveryOpenedRef = useRef(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -283,6 +286,7 @@ const Checkout = () => {
         if (cancelled) return;
         if (data?.status === "approved") {
           try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          setConfirmedSaleId(saleId);
           trackEvent('Purchase', {
             content_name: product.nome,
             content_ids: [product.id],
@@ -312,6 +316,27 @@ const Checkout = () => {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product, done]);
+
+  // Pós-compra: busca o link do material e abre automaticamente
+  useEffect(() => {
+    if (!done || !confirmedSaleId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("get-delivery", {
+          body: { sale_id: confirmedSaleId },
+        });
+        if (cancelled || !data?.items) return;
+        setDeliveryItems(data.items);
+        const first = data.items.find((i: any) => i.url);
+        if (first && !deliveryOpenedRef.current) {
+          deliveryOpenedRef.current = true;
+          window.open(first.url, "_blank");
+        }
+      } catch { /* mantém só a mensagem de email */ }
+    })();
+    return () => { cancelled = true; };
+  }, [done, confirmedSaleId]);
 
 
   useEffect(() => {
@@ -358,6 +383,7 @@ const Checkout = () => {
       });
       if (data?.found && data.status === "approved") {
         setRefOpen(false);
+        if (data.sale_id) setConfirmedSaleId(data.sale_id);
         trackEvent('Purchase', {
           content_name: product.nome,
           content_ids: [product.id],
@@ -389,7 +415,7 @@ const Checkout = () => {
         const { data } = await supabase.functions.invoke("zenofy-check-status", {
           body: { sale_id: saleId },
         });
-        if (data?.status === "approved") return true;
+        if (data?.status === "approved") { setConfirmedSaleId(saleId); return true; }
         if (data?.status === "failed") return false;
       } catch { /* tenta de novo */ }
       await new Promise((r) => setTimeout(r, 3000));
@@ -496,6 +522,7 @@ const Checkout = () => {
 
         // Só considera sucesso real quando aprovado (não pending)
         if (data?.found && data.status === "approved") {
+          if (data.sale_id) setConfirmedSaleId(data.sale_id);
           return true;
         }
       }
@@ -673,13 +700,29 @@ const Checkout = () => {
                 {deliveryType === "members" ? "Área de Membros" : "Acesso ao produto"}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Enviámos o seu acesso para o email indicado na compra. Verifique a sua caixa de entrada
-              (e a pasta de spam).
-            </p>
+            {deliveryItems.length > 0 ? (
+              <div className="space-y-2 mt-1">
+                {deliveryItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    size="lg"
+                    className="gap-2 w-full"
+                    disabled={!item.url}
+                    onClick={() => item.url && window.open(item.url, "_blank")}
+                  >
+                    <ExternalLink className="h-5 w-5" /> Aceder: {item.nome}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Enviámos o seu acesso para o email indicado na compra. Verifique a sua caixa de entrada
+                (e a pasta de spam).
+              </p>
+            )}
           </div>
 
-          {acceptedBumps.map((b) => (
+          {acceptedBumps.filter((b) => !deliveryItems.some((i) => i.id === b.id)).map((b) => (
             <div key={b.id} className="mt-4 rounded-lg border border-border bg-card p-4 text-left">
               <p className="text-sm font-semibold mb-2">Oferta extra: {b.product.nome}</p>
               <p className="text-sm text-muted-foreground">
