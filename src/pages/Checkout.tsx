@@ -286,6 +286,7 @@ const Checkout = () => {
         if (cancelled) return;
         if (data?.status === "approved") {
           try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          setConfirmedSaleId(saleId);
           trackEvent('Purchase', {
             content_name: product.nome,
             content_ids: [product.id],
@@ -361,6 +362,7 @@ const Checkout = () => {
       });
       if (data?.found && data.status === "approved") {
         setRefOpen(false);
+        if (data.sale_id) setConfirmedSaleId(data.sale_id);
         trackEvent('Purchase', {
           content_name: product.nome,
           content_ids: [product.id],
