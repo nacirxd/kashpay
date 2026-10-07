@@ -3,6 +3,7 @@ import { Bell, BellRing, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import saleChing from "@/assets/sale-ching.mp3.asset.json";
 
 const VAPID_PUBLIC_KEY = "BMWZMuhR9VI576ObSFez08gU_RJzP0Ofyr__rrPFmeRV2UTjY_gcE_IIfN2_3K7BMdeBeQK1qKuTo2iRb9ww9TQ";
 
