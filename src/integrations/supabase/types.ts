@@ -353,6 +353,8 @@ export type Database = {
           utm_medium: string | null
           utm_source: string | null
           valor: number
+          wa_approved_sent_at: string | null
+          wa_recovery_sent_at: string | null
           zenofy_checkout_id: string | null
         }
         Insert: {
@@ -379,6 +381,8 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           valor: number
+          wa_approved_sent_at?: string | null
+          wa_recovery_sent_at?: string | null
           zenofy_checkout_id?: string | null
         }
         Update: {
@@ -405,6 +409,8 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           valor?: number
+          wa_approved_sent_at?: string | null
+          wa_recovery_sent_at?: string | null
           zenofy_checkout_id?: string | null
         }
         Relationships: [
