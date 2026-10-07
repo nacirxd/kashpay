@@ -696,6 +696,35 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SMS TEMPLATES (todos os utilizadores)
+    if (action === "list_sms_templates") {
+      const { data: tpls } = await supabaseAdmin
+        .from("sms_templates").select("*").order("created_at", { ascending: false }).limit(500);
+      const userIds = [...new Set((tpls || []).map((t: any) => t.user_id))];
+      const prodIds = [...new Set((tpls || []).flatMap((t: any) => t.product_ids || []))];
+      const { data: profiles } = userIds.length
+        ? await supabaseAdmin.from("profiles").select("user_id, nome, email").in("user_id", userIds) : { data: [] };
+      const { data: prods } = prodIds.length
+        ? await supabaseAdmin.from("products").select("id, nome").in("id", prodIds) : { data: [] };
+      const pm = Object.fromEntries((profiles || []).map((p: any) => [p.user_id, p]));
+      const prm = Object.fromEntries((prods || []).map((p: any) => [p.id, p.nome]));
+      const enriched = (tpls || []).map((t: any) => ({
+        ...t,
+        seller_name: pm[t.user_id]?.nome || "—",
+        seller_email: pm[t.user_id]?.email || "—",
+        product_names: (t.product_ids || []).map((id: string) => prm[id] || "—"),
+      }));
+      return new Response(JSON.stringify(enriched), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (action === "toggle_sms_template") {
+      await supabaseAdmin.from("sms_templates").update({ ativo: !!body.ativo }).eq("id", String(body.id));
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (action === "delete_sms_template") {
+      await supabaseAdmin.from("sms_templates").delete().eq("id", String(body.id));
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // LIST SMS LOGS (todos os utilizadores)
     if (action === "list_sms_logs") {
       const { data: logs } = await supabaseAdmin
