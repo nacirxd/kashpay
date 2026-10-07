@@ -240,6 +240,7 @@ Deno.serve(async (req) => {
 
     // Pagamento directo (push no telemóvel) quando o comprador escolheu M-Pesa ou e-Mola
     let directOk = false
+    let paidNow = false
     if (preferred && checkoutId) {
       try {
         const pay = await callApi(`/v1/payment/${preferred}`, `pay-${saleData.id}-${preferred}`, {
@@ -249,13 +250,15 @@ Deno.serve(async (req) => {
         directOk = pay.ok
         const pst = String(pay.data?.status || '').toLowerCase()
         if (pay.ok && ['succeeded','paid','success','approved','completed'].includes(pst)) {
-          try {
-            await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/zenofy-check-status`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-internal-key': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! },
-              body: JSON.stringify({ sale_id: saleData.id, force_approve: true }),
-            })
-          } catch (e) { console.error('[payzeno] aprovação falhou', e) }
+          paidNow = true
+          // Emails/WhatsApp/SMS correm em segundo plano para o cliente não esperar
+          const job = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/zenofy-check-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-internal-key': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! },
+            body: JSON.stringify({ sale_id: saleData.id, force_approve: true }),
+          }).catch((e) => console.error('[payzeno] aprovação falhou', e))
+          // @ts-ignore EdgeRuntime existe no runtime
+          if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(job); else await job
         }
         if (!pay.ok && !checkoutUrl) {
           return new Response(JSON.stringify({
@@ -275,6 +278,7 @@ Deno.serve(async (req) => {
       checkout_id: checkoutId,
       checkout_url: checkoutUrl,
       direct_payment: directOk,
+      paid: paidNow,
       raw: session.data,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

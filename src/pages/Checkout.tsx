@@ -554,6 +554,10 @@ const Checkout = () => {
 
         if (error || !data?.success) {
           toast.error(data?.error || "Erro ao iniciar pagamento. Tente novamente.");
+        } else if (data.paid) {
+          setConfirmedSaleId(data.sale_id);
+          try { localStorage.removeItem(`zenofy_sale_${product.id}`); } catch { /* ignore */ }
+          fireSuccess();
         } else if (data.direct_payment || !data.checkout_url) {
           toast.info("Confirme o pagamento no seu telemóvel com o PIN...");
           const ok = await pollZenofySale(data.sale_id, 30);
