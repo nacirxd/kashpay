@@ -5,14 +5,17 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data?.text() }; }
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'KashPay', {
+  event.waitUntil((async () => {
+    await self.registration.showNotification(data.title || 'KashPay', {
       body: data.body || '',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
       data: { url: data.url || '/dashboard' },
-    })
-  );
+    });
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of list) c.postMessage({ type: 'SALE_PUSH' });
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {
