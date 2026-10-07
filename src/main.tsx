@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "./lib/forgetStoredData";
+
 
 // Proteção contra tradutores automáticos/extensões do navegador que alteram o DOM
 // e fazem o React falhar com "NotFoundError: removeChild / insertBefore".
