@@ -91,7 +91,7 @@ const SmsCampaigns = () => {
             <p className="text-sm text-muted-foreground">Mensagens automáticas que os seus clientes recebem por SMS.</p>
             <p className="text-xs text-muted-foreground mt-1">Dica anti-spam: crie vários modelos para o mesmo evento — o sistema alterna aleatoriamente entre eles em cada disparo, enviando sempre apenas um.</p>
           </div>
-          <Button onClick={() => { setForm(empty); setOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Novo disparo</Button>
+          <Button onClick={() => { setForm(empty); setVariacoes([""]); setOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Novo disparo</Button>
         </div>
 
         {items.length === 0 ? (
@@ -162,17 +162,44 @@ const SmsCampaigns = () => {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Mensagem</Label>
-              <Textarea rows={4} value={form.mensagem} onChange={(e) => setForm({ ...form, mensagem: e.target.value })}
-                placeholder="Olá {nome}, obrigado pela compra de {produto}! Acesso: {link}" />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex gap-1">
-                  {["nome", "produto", "link", "compra"].map((v) => (
-                    <button key={v} type="button" onClick={() => insertVar(v)} className="rounded border border-border px-1.5 py-0.5 hover:bg-muted">{`{${v}}`}</button>
-                  ))}
+              <Label>{form.id ? "Mensagem" : "Mensagens (variações)"}</Label>
+              {!form.id && (
+                <p className="text-xs text-muted-foreground">Adicione várias variações — o sistema alterna aleatoriamente entre elas para evitar bloqueio por spam.</p>
+              )}
+              {(form.id ? [form.mensagem] : variacoes).map((msg, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex gap-2 items-start">
+                    <Textarea rows={3} value={msg}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (form.id) setForm({ ...form, mensagem: v });
+                        else setVariacoes((xs) => xs.map((x, j) => (j === i ? v : x)));
+                      }}
+                      placeholder="Olá {nome}, obrigado pela compra de {produto}! Acesso: {link}" />
+                    {!form.id && variacoes.length > 1 && (
+                      <Button variant="ghost" size="icon" onClick={() => setVariacoes((xs) => xs.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex gap-1">
+                      {["nome", "produto", "link", "compra"].map((v) => (
+                        <button key={v} type="button"
+                          onClick={() => {
+                            if (form.id) setForm((f) => ({ ...f, mensagem: `${f.mensagem}{${v}}` }));
+                            else setVariacoes((xs) => xs.map((x, j) => (j === i ? `${x}{${v}}` : x)));
+                          }}
+                          className="rounded border border-border px-1.5 py-0.5 hover:bg-muted">{`{${v}}`}</button>
+                      ))}
+                    </div>
+                    <span>{msg.length}/480</span>
+                  </div>
                 </div>
-                <span>{form.mensagem.length}/480</span>
-              </div>
+              ))}
+              {!form.id && (
+                <Button variant="outline" size="sm" onClick={() => setVariacoes((xs) => [...xs, ""])}>
+                  <Plus className="h-4 w-4 mr-1" /> Adicionar variação
+                </Button>
+              )}
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} /> Ativo
