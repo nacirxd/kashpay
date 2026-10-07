@@ -472,6 +472,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_templates: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          evento: string
+          id: string
+          mensagem: string
+          nome: string
+          product_ids: string[]
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          evento?: string
+          id?: string
+          mensagem: string
+          nome?: string
+          product_ids?: string[]
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          evento?: string
+          id?: string
+          mensagem?: string
+          nome?: string
+          product_ids?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
