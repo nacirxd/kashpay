@@ -80,8 +80,6 @@ const SmsCampaigns = () => {
   const productLabel = (ids: string[]) =>
     ids.length === 0 ? "Todos os produtos" : ids.map((id) => products.find((p) => p.id === id)?.nome || "—").join(", ");
 
-  const insertVar = (v: string) => setForm((f) => ({ ...f, mensagem: `${f.mensagem}{${v}}` }));
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
