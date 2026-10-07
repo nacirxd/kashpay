@@ -31,6 +31,7 @@ const SmsCampaigns = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Template>(empty);
+  const [variacoes, setVariacoes] = useState<string[]>([""]);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
