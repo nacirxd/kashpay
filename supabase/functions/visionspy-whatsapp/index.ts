@@ -35,12 +35,10 @@ async function send(to: string, message: string) {
 const TSEMBA_SMS_URL = 'https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway/sms/send'
 
 // SMS personalizados configurados pelo vendedor em "Disparos SMS"
-async function sendTemplateSms(supabase: any, sale: any, evento: 'approved' | 'pending', vars: Record<string, string>) {
+async function sendTemplateSms(supabase: any, sale: any, evento: 'approved' | 'pending', vars: Record<string, string>): Promise<string | null> {
   try {
-    const apiKey = Deno.env.get('TSEMBA_API_KEY')
-    if (!apiKey) return
     const digits = toDigits(sale.buyer_whatsapp || sale.payment_phone)
-    if (!digits) return
+    if (!digits) return null
     const { data: tpls } = await supabase.from('sms_templates').select('id, mensagem, product_ids')
       .eq('user_id', sale.user_id).eq('evento', evento).eq('ativo', true)
     // Filtra modelos que combinam com o produto e escolhe UM aleatório por disparo,
@@ -49,15 +47,18 @@ async function sendTemplateSms(supabase: any, sale: any, evento: 'approved' | 'p
       const ids: string[] = t.product_ids || []
       return !ids.length || ids.includes(sale.product_id)
     })
-    if (!matching.length) return
+    if (!matching.length) return null
     const t = matching[Math.floor(Math.random() * matching.length)]
     const message = String(t.mensagem).replace(/\{(\w+)\}/g, (m: string, k: string) => vars[k] ?? m)
+    const apiKey = Deno.env.get('TSEMBA_API_KEY')
+    if (!apiKey) return message
     const body: Record<string, string> = { to: `+${digits}`, message }
     const sender = Deno.env.get('TSEMBA_SENDER_ID'); if (sender) body.sender_id = sender
     const r = await fetch(TSEMBA_SMS_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey }, body: JSON.stringify(body) })
     const txt = await r.text()
     await supabase.from('sms_logs').insert({ user_id: sale.user_id, sale_id: sale.id, recipient_phone: `+${digits}`, sender_id: sender || null, message, status: r.ok ? 'sent' : 'failed', provider_response: txt.slice(0, 1000) })
-  } catch (e) { console.error('[sms-template] erro:', e) }
+    return message
+  } catch (e) { console.error('[sms-template] erro:', e); return null }
 }
 
 const firstName = (n?: string | null) => (n || '').trim().split(/\s+/)[0] || 'Olá'
@@ -80,8 +81,8 @@ Deno.serve(async (req) => {
     const access = await resolveAccessUrl(supabase, sale.products)
     const msg = `${firstName(sale.buyer_name)}, o seu pagamento de *${sale.products?.nome || 'produto'}* foi confirmado! ✅\n\n` +
       (access ? `Aceda aqui: ${access}\n\n` : 'Enviámos o acesso para o seu email.\n\n') + 'Obrigado pela compra!'
-    await sendTemplateSms(supabase, sale, 'approved', { nome: firstName(sale.buyer_name), produto: sale.products?.nome || '', link: access || '', compra: sale.id })
-    const ok = await send(to, msg)
+    const custom = await sendTemplateSms(supabase, sale, 'approved', { nome: firstName(sale.buyer_name), produto: sale.products?.nome || '', link: access || '', compra: sale.id })
+    const ok = await send(to, custom || msg)
     if (ok) await supabase.from('sales').update({ wa_approved_sent_at: new Date().toISOString() }).eq('id', sale.id)
     return ok
   }
@@ -104,8 +105,8 @@ Deno.serve(async (req) => {
     await supabase.from('sales').update({ wa_recovery_sent_at: new Date().toISOString() }).eq('id', (s as any).id)
     if (!to) continue
     const link = `${SITE}/checkout/${(s as any).product_id}`
-    await sendTemplateSms(supabase, s, 'pending', { nome: firstName((s as any).buyer_name), produto: (s as any).products?.nome || '', link, compra: (s as any).id })
-    if (await send(to, `${firstName((s as any).buyer_name)}, notámos que o seu pedido de *${(s as any).products?.nome || 'produto'}* ainda não foi pago. 😊\n\nFinalize aqui: ${link}\n\nSe precisar de ajuda, responda esta mensagem.`)) recovered++
+    const custom = await sendTemplateSms(supabase, s, 'pending', { nome: firstName((s as any).buyer_name), produto: (s as any).products?.nome || '', link, compra: (s as any).id })
+    if (await send(to, custom || `${firstName((s as any).buyer_name)}, notámos que o seu pedido de *${(s as any).products?.nome || 'produto'}* ainda não foi pago. 😊\n\nFinalize aqui: ${link}\n\nSe precisar de ajuda, responda esta mensagem.`)) recovered++
   }
 
   // Reenvio de aprovadas que ficaram sem mensagem (últimas 3 h)
