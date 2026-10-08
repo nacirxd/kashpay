@@ -25,12 +25,18 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
+    const digits = String(phone).replace(/\D/g, '')
+    const last9 = digits.slice(-9)
+    const variants = Array.from(new Set([String(phone), digits, last9].filter(Boolean)))
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+
     const { data: sales, error } = await supabase
       .from('sales')
       .select('id, status')
       .eq('product_id', product_id)
       .eq('buyer_email', email)
-      .eq('payment_phone', phone)
+      .in('payment_phone', variants)
+      .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(1)
 
