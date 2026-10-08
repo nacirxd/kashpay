@@ -199,6 +199,17 @@ const Checkout = () => {
       if (data) {
         setProduct(data);
 
+        // Se o cliente atualizar a página no ecrã de obrigado, mantém o ecrã
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(DONE_KEY) || "null");
+          if (saved?.productId === data.id && saved?.saleId) {
+            setConfirmedSaleId(saved.saleId);
+            setDone(true);
+            upsellFiredRef.current = true; // não reenvia para o upsell no refresh
+          }
+        } catch { /* ignora */ }
+
+
         // Ofertas extra (order bump): lista nova + legado de oferta única
         const rawBumps: any[] = Array.isArray((data as any).order_bumps) ? (data as any).order_bumps : [];
         const bumpCfgs = rawBumps
