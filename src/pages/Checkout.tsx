@@ -528,6 +528,30 @@ const Checkout = () => {
       return false;
     };
 
+    // Procura a venda mais recente deste comprador (sem depender da resposta original)
+    const recoverSale = async (phone: string, maxAttempts: number): Promise<boolean> => {
+      for (let i = 0; i < maxAttempts; i++) {
+        try {
+          const { data } = await supabase.functions.invoke("check-payment-status", {
+            body: { product_id: product.id, email, phone },
+          });
+          if (data?.found && data.status === "approved") {
+            if (data.sale_id) setConfirmedSaleId(data.sale_id);
+            return true;
+          }
+          if (data?.found && data.sale_id && data.status === "pending") {
+            const { data: z } = await supabase.functions.invoke("zenofy-check-status", {
+              body: { sale_id: data.sale_id },
+            });
+            if (z?.status === "approved") { setConfirmedSaleId(data.sale_id); return true; }
+          }
+        } catch { /* tenta de novo */ }
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+      return false;
+    };
+
+
     try {
       if (method === "zenofy" || method === "mpesa" || method === "emola") {
         // Fluxo Zenofy (Moçambique) — M-Pesa/e-Mola processados pela Zenofy
@@ -548,7 +572,12 @@ const Checkout = () => {
         });
 
         if (error || !data?.success) {
-          toast.error(data?.error || "Erro ao iniciar pagamento. Tente novamente.");
+          // A ligação pode cair quando o cliente sai da página para pôr o PIN.
+          // Antes de mostrar erro, verifica se a compra foi paga.
+          toast.info("A verificar o pagamento...");
+          const ok = await recoverSale(payPhone || whatsapp || "", 24);
+          if (ok) fireSuccess();
+          else toast.error(data?.error || "Não confirmámos o pagamento. Se foi debitado, vai receber email em breve.");
         } else if (data.paid) {
           setConfirmedSaleId(data.sale_id);
           fireSuccess();
@@ -628,9 +657,10 @@ const Checkout = () => {
         }
       }
     } catch {
-      const ok = await pollSale();
+      toast.info("A verificar o pagamento...");
+      const ok = await recoverSale(payPhone || whatsapp || "", 24);
       if (ok) fireSuccess();
-      else toast.error("Erro de conexão. Tente novamente.");
+      else toast.error("Não confirmámos o pagamento. Se foi debitado, vai receber email em breve.");
     }
 
     setPaying(false);
