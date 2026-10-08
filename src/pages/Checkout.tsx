@@ -17,6 +17,8 @@ import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
 
+const DONE_KEY = "kp_done_sale";
+
 
 const Checkout = () => {
   const { id } = useParams();
@@ -25,6 +27,16 @@ const Checkout = () => {
   const [paying, setPaying] = useState(false);
   const [done, setDone] = useState(false);
   const [confirmedSaleId, setConfirmedSaleId] = useState<string | null>(null);
+
+  // Guarda a venda confirmada na sessão para que o ecrã de obrigado
+  // continue a aparecer mesmo que o cliente atualize a página.
+  const setConfirmed = (saleId: string) => {
+    try {
+      if (product?.id) sessionStorage.setItem(DONE_KEY, JSON.stringify({ productId: product.id, saleId }));
+    } catch { /* ignora */ }
+    setConfirmedSaleId(saleId);
+  };
+
   const [deliveryItems, setDeliveryItems] = useState<{ id: string; nome: string; url: string | null }[]>([]);
   const deliveryOpenedRef = useRef(false);
   const [name, setName] = useState("");
@@ -187,6 +199,17 @@ const Checkout = () => {
       if (data) {
         setProduct(data);
 
+        // Se o cliente atualizar a página no ecrã de obrigado, mantém o ecrã
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(DONE_KEY) || "null");
+          if (saved?.productId === data.id && saved?.saleId) {
+            setConfirmedSaleId(saved.saleId);
+            setDone(true);
+            upsellFiredRef.current = true; // não reenvia para o upsell no refresh
+          }
+        } catch { /* ignora */ }
+
+
         // Ofertas extra (order bump): lista nova + legado de oferta única
         const rawBumps: any[] = Array.isArray((data as any).order_bumps) ? (data as any).order_bumps : [];
         const bumpCfgs = rawBumps
@@ -283,7 +306,7 @@ const Checkout = () => {
         });
         if (cancelled) return;
         if (data?.status === "approved") {
-          setConfirmedSaleId(saleId);
+          setConfirmed(saleId);
 
           trackEvent('Purchase', {
             content_name: product.nome,
@@ -379,7 +402,7 @@ const Checkout = () => {
       });
       if (data?.found && data.status === "approved") {
         setRefOpen(false);
-        if (data.sale_id) setConfirmedSaleId(data.sale_id);
+        if (data.sale_id) setConfirmed(data.sale_id);
         trackEvent('Purchase', {
           content_name: product.nome,
           content_ids: [product.id],
@@ -412,7 +435,7 @@ const Checkout = () => {
           body: { sale_id: saleId },
         });
         if (data?.status === "approved") {
-          setConfirmedSaleId(saleId); return true;
+          setConfirmed(saleId); return true;
         }
 
         if (data?.status === "failed") return false;
@@ -521,7 +544,7 @@ const Checkout = () => {
 
         // Só considera sucesso real quando aprovado (não pending)
         if (data?.found && data.status === "approved") {
-          if (data.sale_id) setConfirmedSaleId(data.sale_id);
+          if (data.sale_id) setConfirmed(data.sale_id);
           return true;
         }
       }
@@ -536,14 +559,14 @@ const Checkout = () => {
             body: { product_id: product.id, email, phone },
           });
           if (data?.found && data.status === "approved") {
-            if (data.sale_id) setConfirmedSaleId(data.sale_id);
+            if (data.sale_id) setConfirmed(data.sale_id);
             return true;
           }
           if (data?.found && data.sale_id && data.status === "pending") {
             const { data: z } = await supabase.functions.invoke("zenofy-check-status", {
               body: { sale_id: data.sale_id },
             });
-            if (z?.status === "approved") { setConfirmedSaleId(data.sale_id); return true; }
+            if (z?.status === "approved") { setConfirmed(data.sale_id); return true; }
           }
         } catch { /* tenta de novo */ }
         await new Promise((r) => setTimeout(r, 2500));
@@ -579,7 +602,7 @@ const Checkout = () => {
           if (ok) fireSuccess();
           else toast.error(data?.error || "Não confirmámos o pagamento. Se foi debitado, vai receber email em breve.");
         } else if (data.paid) {
-          setConfirmedSaleId(data.sale_id);
+          setConfirmed(data.sale_id);
           fireSuccess();
 
         } else if (data.direct_payment || !data.checkout_url) {

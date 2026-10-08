@@ -9,7 +9,14 @@ export function forgetStoredData() {
       if (k && FORGET_PREFIXES.some((p) => k.startsWith(p))) keys.push(k);
     }
     keys.forEach((k) => localStorage.removeItem(k));
-    sessionStorage.clear();
+    // Mantém "kp_done_sale" para que o ecrã de obrigado sobreviva a um refresh
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k !== "kp_done_sale") keys.push(k);
+    }
+    keys.forEach((k) => {
+      if (sessionStorage.getItem(k) !== null) sessionStorage.removeItem(k);
+    });
   } catch {
     /* ignora */
   }
