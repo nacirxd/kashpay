@@ -295,7 +295,7 @@ const Checkout = () => {
         });
         if (cancelled) return;
         if (data?.status === "approved") {
-          setConfirmedSaleId(saleId);
+          setConfirmed(saleId);
 
           trackEvent('Purchase', {
             content_name: product.nome,
@@ -391,7 +391,7 @@ const Checkout = () => {
       });
       if (data?.found && data.status === "approved") {
         setRefOpen(false);
-        if (data.sale_id) setConfirmedSaleId(data.sale_id);
+        if (data.sale_id) setConfirmed(data.sale_id);
         trackEvent('Purchase', {
           content_name: product.nome,
           content_ids: [product.id],
@@ -424,7 +424,7 @@ const Checkout = () => {
           body: { sale_id: saleId },
         });
         if (data?.status === "approved") {
-          setConfirmedSaleId(saleId); return true;
+          setConfirmed(saleId); return true;
         }
 
         if (data?.status === "failed") return false;
@@ -533,7 +533,7 @@ const Checkout = () => {
 
         // Só considera sucesso real quando aprovado (não pending)
         if (data?.found && data.status === "approved") {
-          if (data.sale_id) setConfirmedSaleId(data.sale_id);
+          if (data.sale_id) setConfirmed(data.sale_id);
           return true;
         }
       }
@@ -548,14 +548,14 @@ const Checkout = () => {
             body: { product_id: product.id, email, phone },
           });
           if (data?.found && data.status === "approved") {
-            if (data.sale_id) setConfirmedSaleId(data.sale_id);
+            if (data.sale_id) setConfirmed(data.sale_id);
             return true;
           }
           if (data?.found && data.sale_id && data.status === "pending") {
             const { data: z } = await supabase.functions.invoke("zenofy-check-status", {
               body: { sale_id: data.sale_id },
             });
-            if (z?.status === "approved") { setConfirmedSaleId(data.sale_id); return true; }
+            if (z?.status === "approved") { setConfirmed(data.sale_id); return true; }
           }
         } catch { /* tenta de novo */ }
         await new Promise((r) => setTimeout(r, 2500));
@@ -591,7 +591,7 @@ const Checkout = () => {
           if (ok) fireSuccess();
           else toast.error(data?.error || "Não confirmámos o pagamento. Se foi debitado, vai receber email em breve.");
         } else if (data.paid) {
-          setConfirmedSaleId(data.sale_id);
+          setConfirmed(data.sale_id);
           fireSuccess();
 
         } else if (data.direct_payment || !data.checkout_url) {
