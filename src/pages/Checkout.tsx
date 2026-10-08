@@ -350,7 +350,7 @@ const Checkout = () => {
         const first = data.items.find((i: any) => i.url);
         if (first && !deliveryOpenedRef.current) {
           deliveryOpenedRef.current = true;
-          window.open(first.url, "_blank");
+          window.location.assign(first.url);
         }
       } catch { /* mantém só a mensagem de email */ }
     })();
