@@ -17,6 +17,8 @@ import emolaLogo from "@/assets/emola.svg";
 import mcxLogo from "@/assets/multicaixa-express.svg";
 import refLogo from "@/assets/referencia.svg";
 
+const DONE_KEY = "kp_done_sale";
+
 
 const Checkout = () => {
   const { id } = useParams();
@@ -25,6 +27,16 @@ const Checkout = () => {
   const [paying, setPaying] = useState(false);
   const [done, setDone] = useState(false);
   const [confirmedSaleId, setConfirmedSaleId] = useState<string | null>(null);
+
+  // Guarda a venda confirmada na sessão para que o ecrã de obrigado
+  // continue a aparecer mesmo que o cliente atualize a página.
+  const setConfirmed = (saleId: string) => {
+    try {
+      if (product?.id) sessionStorage.setItem(DONE_KEY, JSON.stringify({ productId: product.id, saleId }));
+    } catch { /* ignora */ }
+    setConfirmedSaleId(saleId);
+  };
+
   const [deliveryItems, setDeliveryItems] = useState<{ id: string; nome: string; url: string | null }[]>([]);
   const deliveryOpenedRef = useRef(false);
   const [name, setName] = useState("");
