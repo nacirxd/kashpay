@@ -168,6 +168,66 @@ Deno.serve(async (req) => {
       })
     }
 
+    // M-Pesa directo via API oficial Vodacom (produção)
+    const mpesaKey = Deno.env.get('MPESA_API_KEY')
+    const mpesaPub = Deno.env.get('MPESA_PUBLIC_KEY')
+    if (preferred === 'mpesa' && mpesaKey && mpesaPub) {
+      const { publicEncrypt, constants } = await import('node:crypto')
+      const pem = `-----BEGIN PUBLIC KEY-----\n${mpesaPub.replace(/\s/g, '').match(/.{1,64}/g)!.join('\n')}\n-----END PUBLIC KEY-----`
+      const token = publicEncrypt({ key: pem, padding: constants.RSA_PKCS1_PADDING }, new TextEncoder().encode(mpesaKey)).toString('base64')
+      const ref = String(saleData.id).replace(/-/g, '').slice(0, 12).toUpperCase()
+      await supabase.from('sales').update({ payment_method: 'mpesa', gateway: 'mpesa', external_transaction_id: ref }).eq('id', saleData.id)
+      let mr: any = {}
+      let mstatus = 0
+      try {
+        const ctrl = new AbortController()
+        const t = setTimeout(() => ctrl.abort(), 90000)
+        const r = await fetch('https://api.vm.co.mz:18352/ipg/v1x/c2bPayment/singleStage/', {
+          method: 'POST', signal: ctrl.signal,
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'Origin': 'developer.mpesa.vm.co.mz' },
+          body: JSON.stringify({
+            input_TransactionReference: ref.slice(0, 10),
+            input_CustomerMSISDN: `258${localPhone}`,
+            input_Amount: String(Math.round(amountNumber * 100) / 100),
+            input_ThirdPartyReference: ref,
+            input_ServiceProviderCode: Deno.env.get('MPESA_SERVICE_PROVIDER_CODE') || '902914',
+          }),
+        })
+        clearTimeout(t)
+        mstatus = r.status
+        mr = await r.json().catch(() => ({}))
+        console.log(`[mpesa] status=${r.status} body=`, JSON.stringify(mr))
+      } catch (e) {
+        console.error('[mpesa] erro de rede:', e)
+        await supabase.from('sales').update({ status: 'failed' }).eq('id', saleData.id)
+        return new Response(JSON.stringify({ success: false, sale_id: saleData.id, error: 'Não foi possível contactar o M-Pesa. Tente novamente.' }), {
+          status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      if (mr.output_ResponseCode === 'INS-0') {
+        await supabase.from('sales').update({ external_transaction_id: mr.output_TransactionID || ref }).eq('id', saleData.id)
+        const job = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/zenofy-check-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-key': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! },
+          body: JSON.stringify({ sale_id: saleData.id, force_approve: true }),
+        }).catch((e) => console.error('[mpesa] aprovação falhou', e))
+        // @ts-ignore EdgeRuntime existe no runtime
+        if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(job); else await job
+        return new Response(JSON.stringify({ success: true, sale_id: saleData.id, direct_payment: true, paid: true }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      await supabase.from('sales').update({ status: 'failed' }).eq('id', saleData.id)
+      const msgs: Record<string, string> = {
+        'INS-5': 'Transação cancelada pelo cliente.', 'INS-6': 'Falha na transação.', 'INS-9': 'Tempo esgotado. Tente novamente.',
+        'INS-2006': 'Saldo insuficiente.', 'INS-2051': 'Número M-Pesa inválido.', 'INS-996': 'Conta M-Pesa não está activa.',
+      }
+      return new Response(JSON.stringify({
+        success: false, sale_id: saleData.id, status: mstatus,
+        error: msgs[mr.output_ResponseCode] || mr.output_ResponseDesc || 'Pagamento M-Pesa não concluído.',
+      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     const baseReturn = typeof return_url === 'string' && /^https?:\/\//.test(return_url)
       ? return_url
       : null
