@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     const { count } = await supabase.from('phone_otps').select('id', { count: 'exact', head: true })
       .eq('phone', phone).gt('created_at', new Date(Date.now() - 10 * 60e3).toISOString())
     if ((count || 0) >= 3) return json({ error: 'Muitos pedidos. Aguarde alguns minutos.' }, 429)
-    const code = String(Math.floor(100000 + Math.random() * 900000))
+    const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000))
     await supabase.from('phone_otps').insert({ phone, code_hash: await sha(phone + code), expires_at: new Date(Date.now() + 10 * 60e3).toISOString() })
     const r = await fetch(API, {
       method: 'POST',

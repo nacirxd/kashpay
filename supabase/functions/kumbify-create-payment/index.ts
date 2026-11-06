@@ -3,6 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+import { validBuyerToken, phoneIsBusy } from '../_shared/buyerGuard.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { resolvePrice } from '../_shared/pricing.ts'
 
@@ -86,6 +87,18 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
+    const buyerToken = validBuyerToken(body.buyer_token)
+    if (!buyerToken) {
+      return new Response(JSON.stringify({ error: 'Pedido inválido. Atualize a página e tente novamente.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    if (phoneAo && await phoneIsBusy(supabase, phoneAo)) {
+      return new Response(JSON.stringify({ error: 'Já existe um pedido de pagamento recente para este número. Aguarde um minuto e tente novamente.' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Preço autoritativo do servidor (ignora o valor enviado pelo browser)
     const priced = await resolvePrice(supabase, product_id,
       Array.isArray(bump_product_ids) && bump_product_ids.length ? bump_product_ids : bump_product_id)
@@ -107,6 +120,7 @@ Deno.serve(async (req) => {
       buyer_whatsapp: whatsapp || null,
       payment_method: method,
       payment_phone: phoneAo || null,
+      access_token: buyerToken,
       gateway: 'kumbify',
       bump_product_id: priced.bumpProductId,
       bump_valor: priced.bumpValor,

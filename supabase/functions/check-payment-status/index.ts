@@ -11,9 +11,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { product_id, email, phone } = await req.json()
+    const { product_id, buyer_token } = await req.json()
 
-    if (!product_id || !email || !phone) {
+    if (!product_id || typeof buyer_token !== 'string' || buyer_token.length < 32) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -25,17 +25,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const digits = String(phone).replace(/\D/g, '')
-    const last9 = digits.slice(-9)
-    const variants = Array.from(new Set([String(phone), digits, last9].filter(Boolean)))
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString()
 
     const { data: sales, error } = await supabase
       .from('sales')
       .select('id, status')
       .eq('product_id', product_id)
-      .eq('buyer_email', email)
-      .in('payment_phone', variants)
+      .eq('access_token', buyer_token)
       .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -52,7 +48,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: 'Erro interno' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
