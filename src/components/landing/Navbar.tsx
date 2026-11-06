@@ -4,55 +4,74 @@ import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
+const links = [
+  { href: "#inicio", label: "Início" },
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#pagamentos", label: "Métodos de pagamento" },
+  { href: "#faq", label: "FAQ" },
+];
+
 const Navbar = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "border-b border-border/60 bg-background/90 backdrop-blur-xl shadow-soft" : "bg-transparent"}`}>
-      <div className="container flex h-18 items-center justify-between px-4 md:px-6 py-3">
-        <div className="flex items-center gap-2.5">
-          <img src={kashpayLogo} alt="KashPay" className="h-9 w-9 rounded-xl" />
-          <span className="font-bold text-xl tracking-tight">KashPay</span>
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled || open ? "border-b border-border/60 bg-background/80 backdrop-blur-xl" : "border-b border-transparent bg-transparent"
+      }`}
+    >
+      <nav aria-label="Principal" className="container flex h-16 md:h-[72px] items-center justify-between px-5 md:px-8">
+        <a href="#inicio" className="flex items-center gap-2.5" aria-label="KashPay, início">
+          <img src={kashpayLogo} alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
+          <span className="font-display font-bold text-lg tracking-tight">KashPay</span>
+        </a>
+
+        <div className="hidden lg:flex items-center gap-1 text-sm font-medium text-muted-foreground">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="rounded-full px-4 py-2 hover:text-foreground hover:bg-muted/70 transition-colors">
+              {l.label}
+            </a>
+          ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-          <a href="#beneficios" className="hover:text-foreground transition-colors">Benefícios</a>
-          <a href="#como-funciona" className="hover:text-foreground transition-colors">Como funciona</a>
-          <a href="#integracoes" className="hover:text-foreground transition-colors">Integrações</a>
-          <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+        <div className="hidden lg:flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="rounded-full font-semibold" onClick={() => navigate("/login")}>Entrar</Button>
+          <Button size="sm" className="rounded-full font-semibold px-5" onClick={() => navigate("/registro")}>Criar conta</Button>
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="font-medium" onClick={() => navigate("/login")}>Entrar</Button>
-          <Button size="sm" className="rounded-xl font-semibold px-5" onClick={() => navigate("/registro")}>Criar conta grátis</Button>
-        </div>
-
-        <button className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(!open)}>
+        <button
+          className="lg:hidden -mr-2 p-2 rounded-full hover:bg-muted transition-colors"
+          onClick={() => setOpen(!open)}
+          aria-label={open ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={open}
+        >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-      </div>
+      </nav>
 
       {open && (
-        <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl p-5 space-y-1 animate-in slide-in-from-top-2">
-          <a href="#beneficios" className="block text-sm py-3 px-3 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(false)}>Benefícios</a>
-          <a href="#como-funciona" className="block text-sm py-3 px-3 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(false)}>Como funciona</a>
-          <a href="#integracoes" className="block text-sm py-3 px-3 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(false)}>Integrações</a>
-          <a href="#faq" className="block text-sm py-3 px-3 rounded-lg hover:bg-muted transition-colors" onClick={() => setOpen(false)}>FAQ</a>
-          <div className="pt-3 space-y-2">
-            <Button variant="outline" className="w-full rounded-xl" onClick={() => { setOpen(false); navigate("/login"); }}>Entrar</Button>
-            <Button className="w-full rounded-xl" onClick={() => { setOpen(false); navigate("/registro"); }}>Criar conta grátis</Button>
+        <div className="lg:hidden border-t border-border/50 px-5 pb-6 pt-3 animate-in slide-in-from-top-2">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="block py-3 text-base font-medium border-b border-border/40" onClick={() => setOpen(false)}>
+              {l.label}
+            </a>
+          ))}
+          <div className="pt-5 grid grid-cols-2 gap-3">
+            <Button variant="outline" className="rounded-full" onClick={() => { setOpen(false); navigate("/login"); }}>Entrar</Button>
+            <Button className="rounded-full" onClick={() => { setOpen(false); navigate("/registro"); }}>Criar conta</Button>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 };
 

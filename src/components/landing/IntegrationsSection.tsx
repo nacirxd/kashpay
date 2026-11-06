@@ -1,69 +1,48 @@
 import { motion } from "framer-motion";
 import mpesaLogo from "@/assets/mpesa.svg";
 import emolaLogo from "@/assets/emola.svg";
-import zenofyLogo from "@/assets/zenofy.svg";
-import { Webhook, MessageSquare, BarChart3, Target, Tag } from "lucide-react";
 
-interface IntegrationItem {
-  name: string;
-  desc: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  logo?: string;
-}
-
-const integrations: IntegrationItem[] = [
-  { logo: mpesaLogo, name: "M-Pesa", desc: "Pagamentos via M-Pesa" },
-  { logo: emolaLogo, name: "e-Mola", desc: "Pagamentos via e-Mola" },
-  { logo: zenofyLogo, name: "Zenofy", desc: "Pagamentos via Zenofy" },
-  { icon: MessageSquare, name: "WhatsApp", desc: "Entrega automática" },
-  { icon: Target, name: "Meta Ads", desc: "Pixel + Conversion API" },
-  { icon: Tag, name: "Google Tag", desc: "Tags e eventos" },
-  { icon: Webhook, name: "Webhook", desc: "Eventos personalizados" },
-  { icon: BarChart3, name: "Analytics", desc: "Métricas em tempo real" },
+const methods = [
+  { logo: mpesaLogo, name: "M-Pesa", by: "Vodacom", text: "O cliente recebe o pedido no telemóvel e confirma com o PIN M-Pesa." },
+  { logo: emolaLogo, name: "e-Mola", by: "Movitel", text: "Pagamento direto pela carteira e-Mola, confirmado com o PIN." },
 ];
 
-const IntegrationsSection = () => {
-  return (
-    <section className="py-24 md:py-32">
-      <div className="container px-4 md:px-6">
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <span className="inline-block text-sm font-semibold text-primary mb-3 tracking-wide uppercase">Ecossistema</span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Integrações que você precisa</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Conecte com M-Pesa, e-Mola, WhatsApp e mais. Tudo pronto para funcionar.
+const IntegrationsSection = () => (
+  <section id="pagamentos" className="py-20 md:py-28 scroll-mt-20">
+    <div className="container px-5 md:px-8">
+      <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16 items-center">
+        <div>
+          <p className="text-sm font-semibold text-primary">Métodos de pagamento</p>
+          <h2 className="mt-3 font-display text-3xl md:text-[2.75rem] font-bold tracking-tight leading-[1.1]">
+            As carteiras que os seus clientes já usam.
+          </h2>
+          <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
+            Sem cartão, sem conta bancária. Basta o número de telemóvel e o PIN.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          {integrations.map((int, i) => (
-            <motion.div
-              key={int.name}
-              className="flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-card p-6 shadow-soft hover:shadow-card hover:border-primary/20 transition-all duration-300 group"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+        <div className="grid sm:grid-cols-2 gap-4">
+          {methods.map((m, i) => (
+            <motion.article
+              key={m.name}
+              className="group rounded-3xl border border-border/70 bg-card p-7 transition-all hover:-translate-y-1 hover:shadow-elevated"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.1 }}
             >
-              {int.logo ? (
-                <img src={int.logo} alt={int.name} className="h-10 w-10 object-contain" />
-              ) : int.icon ? (
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  <int.icon className="h-5 w-5" />
-                </div>
-              ) : null}
-              <span className="font-semibold text-sm">{int.name}</span>
-              <span className="text-xs text-muted-foreground text-center">{int.desc}</span>
-            </motion.div>
+              <div className="h-16 flex items-center">
+                <img src={m.logo} alt={`Logótipo ${m.name}`} className="h-10 w-auto" loading="lazy" />
+              </div>
+              <h3 className="mt-6 font-display text-xl font-semibold">{m.name}</h3>
+              <p className="text-xs font-medium text-muted-foreground">{m.by}</p>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{m.text}</p>
+            </motion.article>
           ))}
         </div>
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 export default IntegrationsSection;
