@@ -14,6 +14,8 @@ export default {
     },
     fontFamily: {
       sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      display: ['Sora', 'system-ui', 'sans-serif'],
+      body: ['Manrope', 'system-ui', 'sans-serif'],
     },
     extend: {
       colors: {
