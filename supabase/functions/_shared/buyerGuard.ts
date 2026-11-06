@@ -22,7 +22,7 @@ export function validBuyerToken(t: unknown): string | null {
 
 /**
  * Evita pedidos de pagamento repetidos para o mesmo telemóvel:
- * no máximo 1 pedido por minuto e 5 em 30 minutos.
+ * no máximo 1 pedido pendente por minuto e 5 em 30 minutos.
  */
 export async function phoneIsBusy(supabase: any, phone: string): Promise<boolean> {
   const digits = String(phone).replace(/\D/g, '')
@@ -31,13 +31,13 @@ export async function phoneIsBusy(supabase: any, phone: string): Promise<boolean
   const now = Date.now()
   const { data } = await supabase
     .from('sales')
-    .select('created_at')
+    .select('created_at, status')
     .in('payment_phone', variants)
     .gte('created_at', new Date(now - 30 * 60e3).toISOString())
     .limit(10)
-  const rows = (data || []) as { created_at: string }[]
+  const rows = (data || []) as { created_at: string; status: string }[]
   if (rows.length >= 5) return true
-  return rows.some((r) => now - new Date(r.created_at).getTime() < 60e3)
+  return rows.some((r) => r.status === 'pending' && now - new Date(r.created_at).getTime() < 60e3)
 }
 
 export function maskPhone(p: unknown): string {
