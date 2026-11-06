@@ -36,6 +36,13 @@
       "when": 1791400495075,
       "tag": "0004_push_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793978359205,
+      "tag": "0005_restrict_public_bucket_listing",
+      "breakpoints": true
     }
   ]
 }
