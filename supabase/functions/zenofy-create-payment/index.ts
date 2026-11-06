@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
         })
       }
       if (mr.output_ResponseCode === 'INS-0') {
-        await supabase.from('sales').update({ external_transaction_id: mr.output_TransactionID || ref }).eq('id', saleData.id)
+        await supabase.from('sales').update({ external_transaction_id: mr.output_TransactionID || ref, zenofy_checkout_id: `mpesa-${ref}` }).eq('id', saleData.id)
         const job = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/zenofy-check-status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-internal-key': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! },
