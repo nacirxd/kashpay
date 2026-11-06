@@ -32,7 +32,7 @@ const IntegrationsSection = () => (
               transition={{ delay: i * 0.1 }}
             >
               <div className="h-16 flex items-center">
-                <img src={m.logo} alt={`Logótipo ${m.name}`} className="h-10 w-auto" loading="lazy" />
+                <img src={m.logo} alt={`Logótipo ${m.name}`} className="h-14 w-auto rounded-xl" loading="lazy" />
               </div>
               <h3 className="mt-6 font-display text-xl font-semibold">{m.name}</h3>
               <p className="text-xs font-medium text-muted-foreground">{m.by}</p>

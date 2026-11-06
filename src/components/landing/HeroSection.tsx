@@ -29,10 +29,10 @@ const PaymentMock = () => (
       <p className="text-xs font-medium text-muted-foreground mb-2">Método de pagamento</p>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex items-center justify-center rounded-xl border-2 border-primary bg-accent/50 p-3 h-14">
-          <img src={mpesaLogo} alt="M-Pesa" className="h-6 w-auto" loading="eager" />
+          <img src={mpesaLogo} alt="M-Pesa" className="h-9 w-auto rounded-md" loading="eager" />
         </div>
         <div className="flex items-center justify-center rounded-xl border border-border p-3 h-14">
-          <img src={emolaLogo} alt="e-Mola" className="h-6 w-auto" loading="eager" />
+          <img src={emolaLogo} alt="e-Mola" className="h-9 w-auto rounded-md" loading="eager" />
         </div>
       </div>
 
@@ -43,7 +43,7 @@ const PaymentMock = () => (
     </div>
 
     <motion.div
-      className="absolute -left-4 sm:-left-12 top-24 flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-card"
+      className="absolute -left-4 sm:-left-12 top-[52%] flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-card"
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.7, duration: 0.5 }}
