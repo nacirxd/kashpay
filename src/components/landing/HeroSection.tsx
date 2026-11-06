@@ -43,7 +43,7 @@ const PaymentMock = () => (
     </div>
 
     <motion.div
-      className="absolute -left-4 sm:-left-12 top-[52%] flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-card"
+      className="absolute -left-4 sm:-left-12 -top-7 flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-card"
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.7, duration: 0.5 }}
