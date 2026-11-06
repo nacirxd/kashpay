@@ -2,6 +2,7 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+import { maskPhone, maskEmail, validBuyerToken, phoneIsBusy } from '../_shared/buyerGuard.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { deliverOrderBump } from '../_shared/orderBump.ts'
 import { resolveAccessUrl } from '../_shared/deliveryAccess.ts'
@@ -66,7 +67,7 @@ async function sendTsembaSMS(apiKey: string, senderId: string | null, to: string
   if (r.ok) return true
   // Retry apenas se timeout
   if (r.aborted) {
-    console.log('Tsemba SMS retry após timeout para', to)
+    console.log('Tsemba SMS retry após timeout para', maskPhone(to))
     r = await sendTsembaSMSOnce(apiKey, senderId, to, message, 25000)
     if (r.ok) return true
   }
@@ -225,7 +226,7 @@ Deno.serve(async (req) => {
     // Normalizar telefone para o formato exigido pela e2payments (258XXXXXXXXX)
     const e2payPhone = normalizePhoneE2Pay(phone)
     if (!e2payPhone) {
-      console.error('Telefone inválido para e2payments:', phone)
+      console.error('Telefone inválido para e2payments:', maskPhone(phone))
       return new Response(JSON.stringify({
         success: false,
         error: 'Número de telefone inválido. Use formato 84/85 (M-Pesa) ou 86/87 (e-Mola).',
@@ -244,7 +245,7 @@ Deno.serve(async (req) => {
       ? 'https://e2payments.explicador.co.mz/v1/c2b/mpesa-payment/993700'
       : 'https://e2payments.explicador.co.mz/v1/c2b/emola-payment/993699'
 
-    console.log(`[e2pay] ${method} request → phone=${e2payPhone} amount=${amountNumber} sale=${saleData?.id}`)
+    console.log(`[e2pay] ${method} request → phone=${maskPhone(e2payPhone)} amount=${amountNumber} sale=${saleData?.id}`)
 
     let payResp: Response | null = null
     let payData: any = {}
@@ -355,7 +356,7 @@ Deno.serve(async (req) => {
                 },
             idempotencyKey: `purchase-confirm-${saleData?.id || product_id}-${Date.now()}`,
           })
-            console.log('Email de compra enviado para:', email)
+            console.log('Email de compra enviado:', maskEmail(email))
           } catch (emailErr) {
             console.error('Erro ao enviar email de compra:', emailErr)
           }
@@ -374,7 +375,7 @@ Deno.serve(async (req) => {
                   },
             idempotencyKey: `sale-notify-${saleData?.id || product_id}-${Date.now()}`,
           })
-              console.log('Notificação de venda enviada para vendedor:', sellerProfile.email)
+              console.log('Notificação de venda enviada ao vendedor:', maskEmail(sellerProfile.email))
             } catch (sellerEmailErr) {
               console.error('Erro ao notificar vendedor:', sellerEmailErr)
             }
