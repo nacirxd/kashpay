@@ -128,13 +128,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, bump_product_ids, utm_source, utm_medium, utm_campaign, utm_content, referrer_url: body_referrer } = await req.json()
+    const { method, phone, reference, product_id, name, email, whatsapp, bump_product_id, bump_product_ids, utm_source, utm_medium, utm_campaign, utm_content, referrer_url: body_referrer, buyer_token } = await req.json()
 
     if (!method || !phone || !product_id) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios em falta' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    const buyerToken = validBuyerToken(buyer_token)
+    if (!buyerToken) {
+      return new Response(JSON.stringify({ error: 'Pedido inválido. Atualize a página e tente novamente.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    {
+      const guardClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+      if (await phoneIsBusy(guardClient, String(phone))) {
+        return new Response(JSON.stringify({ error: 'Já existe um pedido de pagamento recente para este número. Aguarde um minuto e tente novamente.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
 
     // Global on/off switch for mpesa / emola
@@ -207,6 +222,7 @@ Deno.serve(async (req) => {
       buyer_whatsapp: whatsapp || null,
       payment_method: method || null,
       payment_phone: phone || null,
+      access_token: buyerToken,
       bump_product_id: priced.bumpProductId,
       bump_valor: priced.bumpValor,
       bumps: priced.bumps,
