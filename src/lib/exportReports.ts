@@ -13,6 +13,18 @@ interface Sale {
   products?: { nome: string } | null;
 }
 
+// Neutraliza fórmulas de folha de cálculo e escapa aspas
+function csvCell(v: unknown): string {
+  let t = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+  return `"${t.replace(/"/g, '""')}"`;
+}
+
+// Escapa texto antes de o colocar no relatório HTML
+function esc(v: unknown): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
 function statusLabel(s: string) {
   if (s === "approved") return "Aprovado";
   if (s === "pending") return "Pendente";
@@ -25,13 +37,13 @@ export function exportCSV(sales: Sale[], dateLabel: string) {
   const rows = sales.map((s) =>
     [
       formatDateTimeMZ(s.created_at),
-      `"${(s.products as any)?.nome || "Produto"}"`,
-      `"${s.buyer_name || "-"}"`,
-      `"${s.buyer_email || "-"}"`,
+      csvCell((s.products as any)?.nome || "Produto"),
+      csvCell(s.buyer_name || "-"),
+      csvCell(s.buyer_email || "-"),
       Number(s.valor).toFixed(2),
-      statusLabel(s.status),
-      s.utm_source || "-",
-      s.utm_campaign || "-",
+      csvCell(statusLabel(s.status)),
+      csvCell(s.utm_source || "-"),
+      csvCell(s.utm_campaign || "-"),
     ].join(",")
   );
 
@@ -119,11 +131,11 @@ export function exportPDF(
           .map(
             (s) => `<tr>
           <td>${formatDateTimeMZ(s.created_at)}</td>
-          <td>${(s.products as any)?.nome || "Produto"}</td>
-          <td>${s.buyer_name || "-"}</td>
+          <td>${esc((s.products as any)?.nome || "Produto")}</td>
+          <td>${esc(s.buyer_name || "-")}</td>
           <td style="font-weight:600">${formatMZN(Number(s.valor))}</td>
-          <td><span class="badge badge-${s.status}">${statusLabel(s.status)}</span></td>
-          <td>${s.utm_source || "Direto"}</td>
+          <td><span class="badge badge-${esc(s.status)}">${esc(statusLabel(s.status))}</span></td>
+          <td>${esc(s.utm_source || "Direto")}</td>
         </tr>`
           )
           .join("")}
