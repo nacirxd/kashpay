@@ -13,7 +13,7 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!sessionToken) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/almanaque/login" replace />;
   }
 
   return <>{children}</>;
