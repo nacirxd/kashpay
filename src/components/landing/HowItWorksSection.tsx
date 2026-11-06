@@ -1,72 +1,46 @@
 import { motion } from "framer-motion";
-import { Upload, Palette, Rocket } from "lucide-react";
+import { Link2, Smartphone, PackageCheck } from "lucide-react";
 
 const steps = [
-  {
-    icon: Upload,
-    num: "1",
-    title: "Crie seu produto",
-    desc: "Faça upload do seu arquivo ou adicione o link de acesso. Configure o preço e a descrição em poucos minutos.",
-  },
-  {
-    icon: Palette,
-    num: "2",
-    title: "Compartilhe o link",
-    desc: "Copie o link do seu checkout e divulgue nas redes sociais, WhatsApp ou onde quiser. Sem complicação.",
-  },
-  {
-    icon: Rocket,
-    num: "3",
-    title: "Receba pagamentos",
-    desc: "Seus clientes pagam via M-Pesa ou e-Mola e recebem o produto automaticamente. Você recebe na hora.",
-  },
+  { icon: Link2, title: "Partilhe o link", text: "Crie o seu produto e envie o link do checkout aos clientes." },
+  { icon: Smartphone, title: "O cliente paga", text: "Escolhe M-Pesa ou e-Mola e confirma com o PIN no telemóvel." },
+  { icon: PackageCheck, title: "Acesso imediato", text: "A venda é aprovada e o cliente é levado direto ao material." },
 ];
 
-const HowItWorksSection = () => {
-  return (
-    <section className="py-24 md:py-32 bg-muted/30">
-      <div className="container px-4 md:px-6">
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <span className="inline-block text-sm font-semibold text-primary mb-3 tracking-wide uppercase">Simples e rápido</span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Comece a vender em 3 passos</h2>
-          <p className="text-muted-foreground text-lg">Sem burocracia, sem conhecimento técnico</p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.num}
-              className="relative text-center group"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
-            >
-              {/* Connector line */}
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-px bg-border/60" />
-              )}
-
-              <div className="relative inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-card border border-border/60 shadow-card mb-6 group-hover:border-primary/30 transition-colors">
-                <s.icon className="h-8 w-8 text-primary" />
-                <span className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-sm">
-                  {s.num}
-                </span>
-              </div>
-
-              <h3 className="text-lg font-semibold mb-3">{s.title}</h3>
-              <p className="text-muted-foreground leading-relaxed text-sm max-w-xs mx-auto">{s.desc}</p>
-            </motion.div>
-          ))}
-        </div>
+const HowItWorksSection = () => (
+  <section id="como-funciona" className="py-20 md:py-28 scroll-mt-20">
+    <div className="container px-5 md:px-8">
+      <div className="text-center max-w-2xl mx-auto">
+        <p className="text-sm font-semibold text-primary">Como funciona</p>
+        <h2 className="mt-3 font-display text-3xl md:text-[2.75rem] font-bold tracking-tight leading-[1.1]">
+          Do link ao pagamento em três passos.
+        </h2>
       </div>
-    </section>
-  );
-};
+
+      <ol className="mt-14 grid md:grid-cols-3 gap-6 md:gap-8 relative">
+        <div className="hidden md:block absolute top-7 left-[16%] right-[16%] h-px bg-border" aria-hidden />
+        {steps.map((s, i) => (
+          <motion.li
+            key={s.title}
+            className="relative text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.12 }}
+          >
+            <div className="relative mx-auto h-14 w-14 rounded-2xl bg-foreground text-background flex items-center justify-center shadow-card">
+              <s.icon className="h-6 w-6" />
+              <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                {i + 1}
+              </span>
+            </div>
+            <h3 className="mt-6 font-display text-xl font-semibold">{s.title}</h3>
+            <p className="mt-2 text-muted-foreground leading-relaxed max-w-xs mx-auto">{s.text}</p>
+          </motion.li>
+        ))}
+      </ol>
+    </div>
+  </section>
+);
 
 export default HowItWorksSection;
