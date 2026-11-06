@@ -72,14 +72,14 @@ const App = () => {
               <Route path="/financas" element={<ProtectedRoute><Finances /></ProtectedRoute>} />
 
               {/* Admin routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-              <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
-              <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
-              <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
-              <Route path="/admin/withdrawals" element={<AdminProtectedRoute><AdminWithdrawals /></AdminProtectedRoute>} />
-              <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
-              <Route path="/admin/sms" element={<AdminProtectedRoute><AdminSms /></AdminProtectedRoute>} />
+              <Route path="/almanaque/login" element={<AdminLogin />} />
+              <Route path="/almanaque/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+              <Route path="/almanaque/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
+              <Route path="/almanaque/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
+              <Route path="/almanaque/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
+              <Route path="/almanaque/withdrawals" element={<AdminProtectedRoute><AdminWithdrawals /></AdminProtectedRoute>} />
+              <Route path="/almanaque/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
+              <Route path="/almanaque/sms" element={<AdminProtectedRoute><AdminSms /></AdminProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

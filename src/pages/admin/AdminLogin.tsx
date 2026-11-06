@@ -21,7 +21,7 @@ const AdminLogin = () => {
     if (result.error) {
       toast.error(result.error);
     } else {
-      navigate("/admin/dashboard");
+      navigate("/almanaque/dashboard");
     }
   };
 

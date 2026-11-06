@@ -6,13 +6,13 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-  { icon: Users, label: "Usuários", path: "/admin/users" },
-  { icon: Package, label: "Produtos", path: "/admin/products" },
-  { icon: ShoppingCart, label: "Pedidos", path: "/admin/orders" },
-  { icon: Wallet, label: "Saques", path: "/admin/withdrawals" },
-  { icon: MessageSquare, label: "Disparos SMS", path: "/admin/sms" },
-  { icon: Settings, label: "Configurações", path: "/admin/settings" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/almanaque/dashboard" },
+  { icon: Users, label: "Usuários", path: "/almanaque/users" },
+  { icon: Package, label: "Produtos", path: "/almanaque/products" },
+  { icon: ShoppingCart, label: "Pedidos", path: "/almanaque/orders" },
+  { icon: Wallet, label: "Saques", path: "/almanaque/withdrawals" },
+  { icon: MessageSquare, label: "Disparos SMS", path: "/almanaque/sms" },
+  { icon: Settings, label: "Configurações", path: "/almanaque/settings" },
 ];
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
@@ -22,7 +22,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/admin/login");
+    navigate("/almanaque/login");
   };
 
   return (
