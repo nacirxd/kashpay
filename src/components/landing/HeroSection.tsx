@@ -129,11 +129,11 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.24, duration: 0.6 }}
           >
-            <Button size="lg" className="group h-13 rounded-full px-7 text-base font-semibold" onClick={() => navigate("/registro")}>
+            <Button size="lg" className="group h-12 rounded-full px-7 text-base font-semibold" onClick={() => navigate("/registro")}>
               Criar conta grátis
               <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Button>
-            <Button size="lg" variant="outline" className="h-13 rounded-full px-7 text-base font-semibold" asChild>
+            <Button size="lg" variant="outline" className="h-12 rounded-full px-7 text-base font-semibold" asChild>
               <a href="#como-funciona">Ver como funciona</a>
             </Button>
           </motion.div>
