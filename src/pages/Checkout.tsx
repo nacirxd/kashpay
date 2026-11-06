@@ -27,12 +27,22 @@ const Checkout = () => {
   const [paying, setPaying] = useState(false);
   const [done, setDone] = useState(false);
   const [confirmedSaleId, setConfirmedSaleId] = useState<string | null>(null);
+  // Token secreto desta compra: só este navegador consegue ver o estado e o material
+  const buyerTokenRef = useRef<string>(
+    (() => {
+      try {
+        const zt = new URLSearchParams(window.location.search).get("zt");
+        if (zt && /^[A-Za-z0-9-]{32,64}$/.test(zt)) return zt;
+      } catch { /* ignora */ }
+      return crypto.randomUUID();
+    })()
+  );
 
   // Guarda a venda confirmada na sessão para que o ecrã de obrigado
   // continue a aparecer mesmo que o cliente atualize a página.
   const setConfirmed = (saleId: string) => {
     try {
-      if (product?.id) sessionStorage.setItem(DONE_KEY, JSON.stringify({ productId: product.id, saleId }));
+      if (product?.id) sessionStorage.setItem(DONE_KEY, JSON.stringify({ productId: product.id, saleId, token: buyerTokenRef.current }));
     } catch { /* ignora */ }
     setConfirmedSaleId(saleId);
   };
@@ -203,6 +213,7 @@ const Checkout = () => {
         try {
           const saved = JSON.parse(sessionStorage.getItem(DONE_KEY) || "null");
           if (saved?.productId === data.id && saved?.saleId) {
+            if (typeof saved.token === "string") buyerTokenRef.current = saved.token;
             setConfirmedSaleId(saved.saleId);
             setDone(true);
             upsellFiredRef.current = true; // não reenvia para o upsell no refresh
@@ -343,7 +354,7 @@ const Checkout = () => {
     (async () => {
       try {
         const { data } = await supabase.functions.invoke("get-delivery", {
-          body: { sale_id: confirmedSaleId },
+          body: { sale_id: confirmedSaleId, buyer_token: buyerTokenRef.current },
         });
         if (cancelled || !data?.items) return;
         setDeliveryItems(data.items);
@@ -398,7 +409,7 @@ const Checkout = () => {
     setVerifying(true);
     try {
       const { data } = await supabase.functions.invoke("check-payment-status", {
-        body: { product_id: product.id, email, phone: payPhone || undefined },
+        body: { product_id: product.id, buyer_token: buyerTokenRef.current },
       });
       if (data?.found && data.status === "approved") {
         setRefOpen(false);
@@ -535,11 +546,7 @@ const Checkout = () => {
       for (let i = 0; i < maxAttempts; i++) {
         await new Promise((r) => setTimeout(r, 2500));
         const { data } = await supabase.functions.invoke("check-payment-status", {
-          body: {
-            product_id: product.id,
-            email,
-            phone: payPhone,
-          },
+          body: { product_id: product.id, buyer_token: buyerTokenRef.current },
         });
 
         // Só considera sucesso real quando aprovado (não pending)
@@ -556,7 +563,7 @@ const Checkout = () => {
       for (let i = 0; i < maxAttempts; i++) {
         try {
           const { data } = await supabase.functions.invoke("check-payment-status", {
-            body: { product_id: product.id, email, phone },
+            body: { product_id: product.id, buyer_token: buyerTokenRef.current },
           });
           if (data?.found && data.status === "approved") {
             if (data.sale_id) setConfirmed(data.sale_id);
@@ -580,6 +587,7 @@ const Checkout = () => {
         // Fluxo Zenofy (Moçambique) — M-Pesa/e-Mola processados pela Zenofy
         const { data, error } = await supabase.functions.invoke("zenofy-create-payment", {
           body: {
+            buyer_token: buyerTokenRef.current,
             name,
             email,
             phone: payPhone || whatsapp || undefined,
@@ -619,6 +627,7 @@ const Checkout = () => {
         // Fluxo Kumbify (Angola)
         const { data, error } = await supabase.functions.invoke("kumbify-create-payment", {
           body: {
+            buyer_token: buyerTokenRef.current,
             method,
             phone: method === "mcx" ? payPhone : undefined,
             name,
@@ -653,6 +662,7 @@ const Checkout = () => {
         // Fluxo e2payments (Moçambique)
         const { data, error } = await supabase.functions.invoke("process-payment", {
           body: {
+            buyer_token: buyerTokenRef.current,
             method,
             phone: payPhone,
             name,

@@ -43,6 +43,13 @@
       "when": 1793978359205,
       "tag": "0005_restrict_public_bucket_listing",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793978742389,
+      "tag": "0006_sales_buyer_access_token",
+      "breakpoints": true
     }
   ]
 }

@@ -5,11 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { authenticateCronRequest } from '../_shared/cron-auth.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
+
+  const denied = authenticateCronRequest(req)
+  if (denied) return denied
 
   try {
     const supabase = createClient(
@@ -40,7 +44,7 @@ Deno.serve(async (req) => {
     })
   } catch (err: any) {
     console.error('[cleanup] erro:', err)
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: 'Erro interno' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -3,6 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+import { safeReturnUrl, validBuyerToken, phoneIsBusy } from '../_shared/buyerGuard.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { resolvePrice } from '../_shared/pricing.ts'
 
@@ -132,6 +133,19 @@ Deno.serve(async (req) => {
       })
     }
 
+    const buyerToken = validBuyerToken(body.buyer_token)
+    if (!buyerToken) {
+      return new Response(JSON.stringify({ error: 'Pedido inválido. Atualize a página e tente novamente.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (await phoneIsBusy(supabase, localPhone)) {
+      return new Response(JSON.stringify({
+        error: 'Já existe um pedido de pagamento recente para este número. Aguarde um minuto e tente novamente.',
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     if (zenofyPaymentMethods.length === 0) {
       return new Response(JSON.stringify({
         error: 'Os métodos de pagamento estão temporariamente indisponíveis.',
@@ -150,6 +164,7 @@ Deno.serve(async (req) => {
       buyer_whatsapp: whatsapp || null,
       payment_method: 'zenofy',
       payment_phone: localPhone,
+      access_token: buyerToken,
       gateway: 'zenofy',
       bump_product_id: priced.bumpProductId,
       bump_valor: priced.bumpValor,
@@ -228,10 +243,8 @@ Deno.serve(async (req) => {
       }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const baseReturn = typeof return_url === 'string' && /^https?:\/\//.test(return_url)
-      ? return_url
-      : null
-    const sep = baseReturn && baseReturn.includes('?') ? '&' : '?'
+    const baseReturn = safeReturnUrl(return_url, String(product_id))
+    const sep = '?'
 
     const payload: Record<string, unknown> = {
       amount: Math.round(amountNumber * 100), // unidades menores
@@ -240,8 +253,8 @@ Deno.serve(async (req) => {
       customer: { name, email, phone: toE164MZ(localPhone) },
       payment_methods: zenofyPaymentMethods,
       metadata: { sale_id: saleData.id, product_id, user_id },
-      success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}` : undefined,
-      cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zcancel=1` : undefined,
+      success_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zt=${buyerToken}` : undefined,
+      cancel_url: baseReturn ? `${baseReturn}${sep}zsale=${saleData.id}&zt=${buyerToken}&zcancel=1` : undefined,
     }
 
     const callApi = async (path: string, idem: string, body: unknown) => {

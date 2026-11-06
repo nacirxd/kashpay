@@ -37,10 +37,12 @@ Deno.serve(async (req) => {
 
   try {
     const raw = await req.text()
-    console.log('[zenofy-webhook] payload:', raw)
-
     const secret = Deno.env.get('ZENOFY_WEBHOOK_SECRET')
-    if (secret) {
+    if (!secret) {
+      console.warn('[zenofy-webhook] segredo não configurado: pedido recusado')
+      return json({ ok: false, error: 'webhook not configured' }, 401)
+    }
+    {
       const provided = (req.headers.get('x-signature') || '').replace(/^sha256=/, '').trim()
       const expected = await hmacSha256Hex(secret, raw)
       if (provided.toLowerCase() !== expected.toLowerCase()) {

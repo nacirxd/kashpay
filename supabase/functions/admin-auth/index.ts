@@ -1,3 +1,4 @@
+import { maskEmail } from '../_shared/buyerGuard.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { TOTP, Secret } from "https://esm.sh/otpauth@9.3.6";
 import { sendAppEmail } from '../_shared/sendAppEmail.ts'
@@ -449,7 +450,7 @@ Deno.serve(async (req) => {
                   },
             idempotencyKey: `withdrawal-notify-${body.withdrawal_id}-${body.status}`,
           });
-              console.log("Notificação de saque enviada para:", profile.email);
+              console.log("Notificação de saque enviada:", maskEmail(profile.email));
             }
           }
         } catch (wErr) {
@@ -522,7 +523,7 @@ Deno.serve(async (req) => {
                   },
             idempotencyKey: `purchase-confirm-admin-${sale.id}`,
           });
-              console.log("Email de compra enviado para:", sale.buyer_email);
+              console.log("Email de compra enviado:", maskEmail(sale.buyer_email));
             } catch (emailErr) {
               console.error("Erro ao enviar email de compra:", emailErr);
             }
@@ -542,7 +543,7 @@ Deno.serve(async (req) => {
                   },
             idempotencyKey: `sale-notify-admin-${sale.id}`,
           });
-              console.log("Notificação de venda enviada para vendedor:", sellerProfile.email);
+              console.log("Notificação de venda enviada ao vendedor:", maskEmail(sellerProfile.email));
             } catch (sellerErr) {
               console.error("Erro ao notificar vendedor:", sellerErr);
             }

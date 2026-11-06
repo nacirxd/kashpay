@@ -384,6 +384,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          access_token: string | null
           bump_product_id: string | null
           bump_valor: number | null
           bumps: Json
@@ -412,6 +413,7 @@ export type Database = {
           zenofy_checkout_id: string | null
         }
         Insert: {
+          access_token?: string | null
           bump_product_id?: string | null
           bump_valor?: number | null
           bumps?: Json
@@ -440,6 +442,7 @@ export type Database = {
           zenofy_checkout_id?: string | null
         }
         Update: {
+          access_token?: string | null
           bump_product_id?: string | null
           bump_valor?: number | null
           bumps?: Json

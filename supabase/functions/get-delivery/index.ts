@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { sale_id } = await req.json();
-    if (!sale_id) {
+    const { sale_id, buyer_token } = await req.json();
+    if (!sale_id || typeof buyer_token !== "string" || buyer_token.length < 32) {
       return new Response(JSON.stringify({ error: "sale_id em falta" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -24,11 +24,11 @@ Deno.serve(async (req) => {
 
     const { data: sale } = await supabase
       .from("sales")
-      .select("id, status, product_id, bumps")
+      .select("id, status, product_id, bumps, access_token")
       .eq("id", sale_id)
       .maybeSingle();
 
-    if (!sale || sale.status !== "approved") {
+    if (!sale || !sale.access_token || sale.access_token !== buyer_token || sale.status !== "approved") {
       return new Response(JSON.stringify({ error: "Pagamento ainda não confirmado" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    return new Response(JSON.stringify({ error: "Erro interno" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
